@@ -1,5 +1,6 @@
 
 
+var Console = require('console') ;
 var Games = require('./lib/Games') ;
 var Game = require('./lib/Game') ;
 
@@ -13,4 +14,11 @@ var g = games.get(game.id) ;
 
 var h = games.getByAdminId(game.adminId) ;
 
-games.remove(game.id) ;
+Console.log(g) ;
+Console.log(h) ;
+
+Console.log(games.hasId(game.id)) ;
+
+games.remove(game) ;
+
+Console.log(games.hasId(game.id)) ;
