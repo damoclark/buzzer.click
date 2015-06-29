@@ -1,7 +1,7 @@
 
 
-var Games = require('./lib/games') ;
-var Game = require('./lib/game') ;
+var Games = require('./lib/Games') ;
+var Game = require('./lib/Game') ;
 
 var games = new Games() ;
 var game = new Game() ;
