@@ -3,10 +3,11 @@
 var Console = require('console') ;
 var Games = require('./lib/Games') ;
 var Game = require('./lib/Game') ;
+var Teams = require('./lib/Teams') ;
 
 var games = new Games() ;
 var game = new Game() ;
-
+var teams = new Teams() ;
 
 games.add(game) ;
 
@@ -24,3 +25,15 @@ games.remove(game) ;
 Console.log(games.hasId(game.id)) ;
 
 Console.log(games.hasAdminId(game.id)) ;
+
+var i = {} ;
+
+teams.add(i) ;
+
+Console.log(i) ;
+
+Console.log(teams.hasId(i.id)) ;
+
+teams.remove(i) ;
+
+Console.log(teams.hasId(i.id)) ;
