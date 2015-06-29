@@ -22,3 +22,5 @@ Console.log(games.hasId(game.id)) ;
 games.remove(game) ;
 
 Console.log(games.hasId(game.id)) ;
+
+Console.log(games.hasAdminId(game.id)) ;
