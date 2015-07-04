@@ -4,10 +4,14 @@ var Console = require('console') ;
 var Games = require('./lib/Games') ;
 var Game = require('./lib/Game') ;
 var Teams = require('./lib/Teams') ;
+var MessageFactory = require('./lib/MessageFactory') ;
 
 var games = new Games() ;
 var game = new Game() ;
 var teams = new Teams() ;
+var factory = new MessageFactory() ;
+console.log('messagefactory=') ;
+console.log(factory.validMessages) ;
 
 games.add(game) ;
 
