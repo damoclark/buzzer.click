@@ -1,21 +1,20 @@
 {
-	"name":"buzzer.click",
-	"version":"0.0.1",
-	"description": "Online realtime electronic buzzer for games",
-	"main": "app.js",
-	"scripts":
-	{
-		"test": "echo 'Error: no test specified' && exit 1"
-	},
+  "name": "buzzer.click",
+  "version": "0.0.1",
+  "description": "Online realtime electronic buzzer for games",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
   "author": "Damien Clark",
   "license": "ISC",
-	"private":"true",
-	"dependencies":
-	{
-		"compression": "^1.4.*",
-		"socket.io":"1.3.*",
-		"handlebars": "^3.0.*",
-		"express":"4.13.*",
-		"chance":"^0.7.*"
-	}
+  "private": "true",
+  "dependencies": {
+    "chance": "^0.7.*",
+    "compression": "^1.4.*",
+    "express": "4.13.*",
+    "handlebars": "^3.0.*",
+    "socket.io": "1.3.*",
+    "socket.io-client": "^1.3.6"
+  }
 }
