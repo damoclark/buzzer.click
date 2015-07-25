@@ -1,19 +1,34 @@
 
 var Server = require('./lib/BuzzerServer') ;
-var server = Server.listen(3000) ;
-//var Console = require('console') ;
-//var Games = require('./lib/Games') ;
-//var Game = require('./lib/Game') ;
-//var Teams = require('./lib/Teams') ;
-//var MessageFactory = require('./lib/MessageFactory') ;
-//
-//var games = new Games() ;
-//var game = new Game() ;
-//var teams = new Teams() ;
-////var factory = new MessageFactory() ;
-//var msg = MessageFactory.create() ;
-//console.log('messagefactory=') ;
-//console.log(factory.validMessages) ;
+
+//var server = Server.listen(3000) ;
+
+var Console = require('console') ;
+var Games = require('./lib/Games') ;
+var Game = require('./lib/Game') ;
+var Teams = require('./lib/Teams') ;
+var MessageFactory = require('./lib/MessageFactory') ;
+
+var games = new Games() ;
+var game = new Game() ;
+var teams = new Teams() ;
+
+/**
+ * @type RegisterNameMessage
+ */
+var msg = MessageFactory.create('RegisterNameMessage',{"name":"Fred"}) ;
+console.log('validation='+msg.validate()) ;
+msg.setName('Fred') ;
+if (msg.validate()) {
+	console.log('validated!') ;
+}
+
+var v = msg.get() ;
+v.name = 'Fredderick' ;
+msg = MessageFactory.restore(v) ;
+
+console.log(msg.get()) ;
+
 //
 //games.add(game) ;
 //
