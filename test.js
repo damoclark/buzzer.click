@@ -29,6 +29,15 @@ msg = MessageFactory.restore(v) ;
 
 console.log(msg.get()) ;
 
+var msg2 = MessageFactory.create('JoinGameMessage') ;
+//msg2.setGameCode('abcdefghijkl') ;
+console.log(msg2.schema);
+console.log(msg2.data);
+if(msg2.validate())
+	console.log('JoinGameMessage validated!') ;
+else
+	console.log('JoinGameMessage NOT validated!') ;
+
 //
 //games.add(game) ;
 //
