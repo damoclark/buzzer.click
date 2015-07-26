@@ -29,16 +29,19 @@ socketio.on('connect', function()
 	 */
 	socketio.emitMessage = function(message,fn)
 	{
-		this.emit('message',message.get(),fn) ;
+		this.emit(message.getType(),message.getJSON(),fn) ;
 	} ;
 
-	socketio.onMessage('message',function(message)
+	socketio.onMessage(MessageFactory.JOINGAMEMESSAGE,function(message)
 	{
-			console.log('Received '+message.getType()+' message with data:'+JSON.stringify(message.get())) ;
+			console.log('Received '+message.getType()+' message with data:'+JSON.stringify(message.data)) ;
 	} ) ;
 
-	var m = MessageFactory.create('JoinGameMessage') ;
+	var m = MessageFactory.create(MessageFactory.JOINGAMEMESSAGE) ;
 	m.setGameCode('12345') ;
+	socketio.emitMessage(m) ;
+
+	m = new MessageFactory.JoinGameMessage({"gamecode":"54321"}) ; 
 	
 	socketio.emitMessage(m) ;
 } ) ;
