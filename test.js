@@ -1,7 +1,7 @@
 
 var Server = require('./lib/BuzzerServer') ;
 
-//var server = Server.listen(3000) ;
+var server = Server.listen(3000) ;
 
 var Console = require('console') ;
 var Games = require('./lib/Games') ;
@@ -13,32 +13,33 @@ var games = new Games() ;
 var game = new Game() ;
 var teams = new Teams() ;
 
-/**
- * @type RegisterNameMessage
- */
-var msg = MessageFactory.create('RegisterNameMessage',{"name":"Fred"}) ;
-console.log('validation='+msg.validate()) ;
-msg.setName('Fred') ;
-if (msg.validate()) {
-	console.log('validated!') ;
-}
+///**
+// * @type RegisterNameMessage
+// */
+//var msg = MessageFactory.create('RegisterNameMessage',{"name":"Fred"}) ;
+//console.log('validation='+msg.validate()) ;
+//msg.setName('Fred') ;
+//if (msg.validate()) {
+//	console.log('validated!') ;
+//}
+//
+//var v = msg.get() ;
+//v.name = 'Fredderick' ;
+//msg = MessageFactory.restore(v) ;
+//
+//console.log(msg.get()) ;
+//
+//var msg2 = MessageFactory.create('JoinGameMessage') ;
+////msg2.setGameCode('abcdefghijkl') ;
+//console.log(msg2.schema);
+//console.log(msg2.data);
+//if(msg2.validate())
+//	console.log('JoinGameMessage validated!') ;
+//else
+//	console.log('JoinGameMessage NOT validated!') ;
+//
+//console.log('message is a '+msg2.getType()) ;
 
-var v = msg.get() ;
-v.name = 'Fredderick' ;
-msg = MessageFactory.restore(v) ;
-
-console.log(msg.get()) ;
-
-var msg2 = MessageFactory.create('JoinGameMessage') ;
-//msg2.setGameCode('abcdefghijkl') ;
-console.log(msg2.schema);
-console.log(msg2.data);
-if(msg2.validate())
-	console.log('JoinGameMessage validated!') ;
-else
-	console.log('JoinGameMessage NOT validated!') ;
-
-console.log('message is a '+msg2.getType()) ;
 //
 //games.add(game) ;
 //
