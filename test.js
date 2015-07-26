@@ -38,6 +38,7 @@ if(msg2.validate())
 else
 	console.log('JoinGameMessage NOT validated!') ;
 
+console.log('message is a '+msg2.getType()) ;
 //
 //games.add(game) ;
 //
