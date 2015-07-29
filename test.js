@@ -1,10 +1,13 @@
 
 var Server = require('./lib/BuzzerServer') ;
 
-var server = Server.listen(3000) ;
-
 var Console = require('console') ;
 var Games = require('./lib/Games') ;
+
+var server = Server.listen(3000) ;
+
+
+
 var Game = require('./lib/Game') ;
 var Teams = require('./lib/Teams') ;
 var MessageFactory = require('./lib/MessageFactory') ;
