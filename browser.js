@@ -1,6 +1,7 @@
 
 
 var MessageFactory = require('./lib/MessageFactory') ;
+var Settings = require('./lib/Settings') ;
 
 var socketio = require('socket.io-client')('http://localhost:3000') ;
 socketio.on('connect', function()
@@ -13,7 +14,12 @@ socketio.on('connect', function()
 			console.log('Received '+message.getType()+' message with data:'+JSON.stringify(message.data)) ;
 	} ) ;
 
-	var m = MessageFactory.create(MessageFactory.JOINGAMEMESSAGE) ;
+	var m ;
+	var settings = new Settings() ;
+	settings.setName('Fun Game') ;
+	m = MessageFactory.create(MessageFactory.CREATEGAMEMESSAGE,settings) ;
+	socketio.emitMessage(m) ;
+	m = MessageFactory.create(MessageFactory.JOINGAMEMESSAGE) ;
 	m.setGameCode('12345') ;
 	socketio.emitMessage(m) ;
 
