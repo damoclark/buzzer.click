@@ -1,4 +1,4 @@
-//#!/usr/bin/env node
+#!/usr/bin/env node
 
 var http = require('http') ;
 var express = require('express') ;
