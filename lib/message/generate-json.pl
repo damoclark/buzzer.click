@@ -16,4 +16,4 @@ while (<STDIN>)
 	}
 	
 }
-print "}\n" ;
+print "} ;\n" ;
