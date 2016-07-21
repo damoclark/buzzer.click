@@ -10,7 +10,7 @@
   },
   "author": "Damien Clark",
   "license": "GPL-3.0",
-  "private": "true",
+  "private": true,
   "dependencies": {
     "chance": "^0.7.*",
     "compression": "^1.4.*",
