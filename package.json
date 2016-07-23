@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
     "build": "browserify browser.js -t require-globify -o www/js/bundle.js",
-    "watch": "watchify browser.js -t require-globify -o www/js/bundle.js --debug --verbose"
+    "watch": "watchify browser.js -t require-globify -o www/js/bundle.js --debug --verbose",
+    "beautify-solution" : "node beautify-solution.js"
   },
   "author": "Damien Clark",
   "license": "GPL-3.0",
