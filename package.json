@@ -9,7 +9,7 @@
     "watch": "watchify browser.js -t require-globify -o www/js/bundle.js --debug --verbose",
     "beautify-solution" : "node beautify-solution.js"
   },
-  "author": "Damien Clark",
+  "author": "Damien Clark, Nick Andjelkovic, Wade Baglin",
   "license": "GPL-3.0",
   "private": true,
   "dependencies": {
