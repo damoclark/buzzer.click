@@ -23,7 +23,7 @@ var schema = {
 
 var result = validate(data,schema) ;
 
-if (result)
+if (result.valid)
 	console.log('validated!') ;
 else
 	console.log('not validated!') ;
