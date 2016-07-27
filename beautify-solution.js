@@ -4,7 +4,7 @@ var beautify = require('js-beautify').js;
 var beautifyOptions = JSON.parse(fs.readFileSync(path.join(__dirname,
     '.jsbeautifyrc'), 'utf8'));
 var ignoreFolders = ['$Recycle.Bin', '.vscode', 'node_modules', 'typings',
-    '.git'
+    '.git','bootstrap'
 ];
 var ignoreFiles = ['bundle.js'];
 /**
