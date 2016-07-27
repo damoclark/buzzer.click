@@ -3,8 +3,8 @@ let path = require('path');
 let beautify = require('js-beautify').js;
 let beautifyOptions = JSON.parse(fs.readFileSync(path.join(__dirname,
     '.jsbeautifyrc'), 'utf8'));
-let ignoreFolders = ['$Recycle.Bin', 'node_modules', 'typings',
-    '.git'
+let ignoreFolders = ['$Recycle.Bin', '.vscode', 'node_modules', 'typings',
+    '.git','bootstrap'
 ];
 let ignoreFiles = ['bundle.js'];
 /**

@@ -1,6 +1,12 @@
-<html>
+<!DOCTYPE hml>
+<html lang="en">
 	<head>
+		<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    	<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Buzzer.click with socket.io and node.js</title>
+		<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+		
 		<style>
 			#chat
 			{
@@ -18,28 +24,31 @@
 		</style>
 	</head>
 	<body>
-		<div id="nickWrap">
-			<p>Enter a name:</p>
-			<p id="nameError"></p>
-			<form id="setName">
-				<input size="35" id="name"></input>
-				<input type="submit"></input>
-			</form>
-		</div>
-
-		<div id="contentWrap">
-			<div id="chatWrap">
-				<div id="chat"></div>
-				<form id="send-message">
-					<input size="35" id="message"></input>
+		<div class="container">
+			<div id="nickWrap">
+				<p>Enter a name:</p>
+				<p id="nameError"></p>
+				<form id="setName">
+					<input size="35" id="name"></input>
 					<input type="submit"></input>
 				</form>
 			</div>
-			<div id="users"></div>
+
+			<div id="contentWrap">
+				<div id="chatWrap">
+					<div id="chat"></div>
+					<form id="send-message">
+						<input size="35" id="message"></input>
+						<input type="submit"></input>
+					</form>
+				</div>
+				<div id="users"></div>
+			</div>
 		</div>
 
 		<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 		<!--<script src="/socket.io/socket.io.js"></script>-->
+		<script src="bootstrap/js/bootstrap.min.js"></script>
 		<script src="js/bundle.js"</script>
 		<script>
 			jQuery
