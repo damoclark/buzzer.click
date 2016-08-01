@@ -4,10 +4,11 @@
   "description": "Online realtime electronic buzzer for games",
   "main": "app.js",
   "scripts": {
-    "test": "echo 'Error: no test specified' && exit 1",
+    "tests-bdd": "Mocha --reporter spec tests/BDD/*.js",
+    "tests-functional": "Mocha --reporter spec tests/Functional/*.js",
     "build": "browserify browser.js -t require-globify -o www/js/bundle.js",
     "watch": "watchify browser.js -t require-globify -o www/js/bundle.js --debug --verbose",
-    "beautify-solution" : "node beautify-solution.js"
+    "beautify-solution": "node beautify-solution.js"
   },
   "author": "Damien Clark, Nick Andjelkovic, Wade Baglin",
   "license": "GPL-3.0",
@@ -25,8 +26,10 @@
   "devDependencies": {
     "browserify": "^11.0.0",
     "eslint": "^3.1.1",
+    "jshint": "2.9.*",
+    "mocha": "^3.0.0",
     "require-globify": "^1.2.1",
-    "watchify": "^3.3.0",
-    "jshint": "2.9.*"
+    "should": "^10.0.0",
+    "watchify": "^3.3.0"
   }
 }
