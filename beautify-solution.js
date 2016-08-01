@@ -4,7 +4,7 @@ let beautify = require('js-beautify').js;
 let beautifyOptions = JSON.parse(fs.readFileSync(path.join(__dirname,
     '.jsbeautifyrc'), 'utf8'));
 let ignoreFolders = ['$Recycle.Bin', '.vscode', 'node_modules', 'typings',
-    '.git','bootstrap'
+    '.git', 'bootstrap'
 ];
 let ignoreFiles = ['bundle.js'];
 /**
@@ -25,7 +25,8 @@ let getJsFilesRecursive = function(dirPath) {
             if (ignoreFolders.indexOf(element) >= 0) {
                 return;
             }
-            files = files.concat(getJsFilesRecursive(path.join(dirPath,
+            files = files.concat(getJsFilesRecursive(path.join(
+                dirPath,
                 element)));
         } else {
             if (ignoreFiles.indexOf(element) >= 0 || !element.endsWith(
@@ -40,7 +41,8 @@ let getJsFilesRecursive = function(dirPath) {
 
 let files = getJsFilesRecursive(__dirname);
 files.forEach(filePath => {
-    let beautifiedFileContents = beautify(fs.readFileSync(filePath, 'utf8'),
+    let beautifiedFileContents = beautify(fs.readFileSync(filePath,
+            'utf8'),
         beautifyOptions);
     fs.writeFileSync(filePath, beautifiedFileContents, 'utf8');
 });

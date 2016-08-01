@@ -1,20 +1,17 @@
+var Server = require('./lib/BuzzerServer');
 
-var Server = require('./lib/BuzzerServer') ;
+var Console = require('console');
+var Games = require('./lib/Games');
 
-var Console = require('console') ;
-var Games = require('./lib/Games') ;
+var server = Server.listen(3000);
 
-var server = Server.listen(3000) ;
+var Game = require('./lib/Game');
+var Teams = require('./lib/Teams');
+var MessageFactory = require('./lib/MessageFactory');
 
-
-
-var Game = require('./lib/Game') ;
-var Teams = require('./lib/Teams') ;
-var MessageFactory = require('./lib/MessageFactory') ;
-
-var games = new Games() ;
-var game = new Game() ;
-var teams = new Teams() ;
+var games = new Games();
+var game = new Game();
+var teams = new Teams();
 
 ///**
 // * @type RegisterNameMessage
