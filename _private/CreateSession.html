@@ -27,14 +27,14 @@
 					</div>
 					<div class="form-group row">
 						<div class="col-xs-4 col-xs-offset-2 pull-right">
-							<input onclick="showTeamOptions()" type="checkbox" value="1" name="Teams" />
+							<input id="option_teams" type="checkbox" value="1" name="Teams" />
 							<label for="Teams">Teams</label>
 						</div>
 					</div>
 
 					<!--This gets hidden when the Teams checkbox is clicked. -->
 					<div id="options_max_players" class="form-group row">
-						<label class="col-sm-3 col-form-label" for="max_players">Max Players</label>
+						<label class="col-sm-3 col-form-label" for="max_players" >Max Players</label>
 						<div class="col-sm-9">
 							<input class="form-control" type="number" id="max_players" placeholder="25" name="max_players" />
 						</div>
@@ -94,11 +94,11 @@
 	<script src="bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript">
 		
-		function showTeamOptions()
-		{
+
+		$("#option_teams").click(function(){
 			$('#options_max_players').toggle('slow');
 			$('#options_teams').toggle('slow');
-		}
+		});
 
 		$("#num_teams").on('keyup mouseup',function(){
 			$('#optionsManualNameSelection').empty();
