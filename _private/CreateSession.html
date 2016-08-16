@@ -20,60 +20,60 @@
 				<h2>Create New Session</h2>
 				<form class="form">
 					<div class="form-group row">
-						<label class="col-sm-3 col-form-label" for="session_name">Session Name</label>
+						<label class="col-sm-3 col-form-label" for="session-name">Session Name</label>
 						<div class="col-sm-9">
-							<input class="form-control" type="text" id="session_name" name="session_name" />
+							<input class="form-control" type="text" id="session-name" name="session-name" />
 						</div>
 					</div>
 					<div class="form-group row">
 						<div class="col-xs-4 col-xs-offset-2 pull-right">
-							<input id="option_teams" type="checkbox" value="1" name="Teams" />
+							<input id="option-teams" type="checkbox" value="1" name="option-teams" />
 							<label for="Teams">Teams</label>
 						</div>
 					</div>
 
 					<!--This gets hidden when the Teams checkbox is clicked. -->
-					<div id="options_max_players" class="form-group row">
-						<label class="col-sm-3 col-form-label" for="max_players">Max Players</label>
+					<div id="options-max-players" class="form-group row">
+						<label class="col-sm-3 col-form-label" for="max-players">Max Players</label>
 						<div class="col-sm-9">
-							<input class="form-control" type="number" id="max_players" placeholder="25" name="max_players" />
+							<input class="form-control" type="number" id="max-players" placeholder="25" name="max-players" />
 						</div>
 					</div>
 
 					<!--This gets hidden when the Teams checkbox is unclicked. -->
-					<div id="options_teams" style="display:none">
+					<div id="options-teams" style="display:none">
 						<div class="form-group row">
-							<label class="col-sm-3 col-form-label" for="num_teams">Teams</label>
+							<label class="col-sm-3 col-form-label" for="num-teams">Teams</label>
 							<div class="col-sm-9">
-								<input class="form-control" type="number" id="num_teams" placeholder="3" name="num_teams" />
+								<input class="form-control" type="number" id="num-teams" placeholder="3" name="num-teams" />
 							</div>
 						</div>
 						<div class="form-group row">
-							<label class="col-sm-3 col-form-label" for="max_players_teams">Max players per team</label>
+							<label class="col-sm-3 col-form-label" for="max-players-teams">Max players per team</label>
 							<div class="col-sm-9">
-								<input class="form-control" type="number" id="max_players_teams" placeholder="3" name="max_players_teams" />
+								<input class="form-control" type="number" id="max-players-teams" placeholder="3" name="max-players-teams" />
 							</div>
 						</div>
 						<div class="form-group row">
-							<label class="col-sm-3 col-form-label" for="team_leader_selection">Team leader selection</label>
+							<label class="col-sm-3 col-form-label" for="team-leader-selection">Team leader selection</label>
 							<div class="col-sm-9">
-								<select class="form-control" id="team_leader_selection">
+								<select class="form-control" id="team-leader-selection">
 									<option>Random</option>
 									<option>Player Choice</option>
 								</select>
 							</div>
 						</div>
 						<div class="form-group row">
-							<label class="col-sm-3 col-form-label" for="team_name_selection">Team name selection</label>
+							<label class="col-sm-3 col-form-label" for="team-name-selection">Team name selection</label>
 							<div class="col-sm-9">
-								<select class="form-control" id="team_name_selection">
+								<select class="form-control" id="team-name-selection">
 									<option value="Auto">Auto</option>
 									<option value="Manual">Manual</option>
 								</select>
 							</div>
 						</div>
 						<!--Usually hidden unless Manual is chosen from the team name selection -->
-						<div id="optionsManualNameSelection" style="display:none">
+						<div id="options-manual-name-selection" style="display:none">
 
 						</div>
 					</div>
@@ -97,39 +97,54 @@
 		function showManualNameSelection()
 		{
 			
-			$('#optionsManualNameSelection').show('slow');
+			$('#options-manual-name-selection').show('slow');
 		}
 
 		function hideManualNameSelection()
 		{
-			$('#optionsManualNameSelection').hide('slow');
+			$('#options-manual-name-selection').hide('slow');
 		}
 
 		$(function(){
-			$("#option_teams").click(function(){
-				$('#options_max_players').toggle('slow');
-				$('#options_teams').toggle('slow');
+			var teamNames = [];
+
+			$("#option-teams").click(function(){
+				$('#options-max-players').toggle('slow');
+				$('#options-teams').toggle('slow');
 			});
 
-			$("#num_teams").on('keyup mouseup',function(){
-				$('#optionsManualNameSelection').empty();
-				var loops = $('#num_teams').val();
-
-				for(i = 0; i < loops; i++)
+			$("#num-teams").on('keyup mouseup',function(){
+				
+				var loops = parseInt($('#num-teams').val());
+				if(loops == ""){return;}
+				if(loops > teamNames.length)
 				{
-					var label = i + 1;
-					$('#optionsManualNameSelection').append(
-						`<div class="form-group row">
-							<label class="col-sm-3 col-form-label" for="Team_Name_${label}">Team ${label}</label>
-							<div class="col-sm-9">
-								<input class="form-control" type="text" id="Team_Name_${label}" name="Team_Name_${label}" />
-							</div>
-						</div>`
-					);
+					for(i=teamNames.length; i < loops;i++)
+					{
+						var label = i+1;
+						var x = teamNames.push(`<div id="team-name-div-${label}" class="form-group row">
+								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
+								<div class="col-sm-9">
+									<input class="form-control" type="text" id="team-name-${label}" name="team-name-${label}" />
+								</div>
+							</div>`);
+						$('#options-manual-name-selection').append(teamNames[x-1]);
+					}
 				}
+				else if(loops < teamNames.length)
+				{
+					for(i = loops; i <= teamNames.length;i++)
+					{
+						var label = i+1;
+						$('#team-name-div-'+ label).remove();
+						
+					}
+					teamNames.splice(loops,teamNames.length)
+				}
+				
 			});
 			
-			$("#team_name_selection").change(function(){
+			$("#team-name-selection").change(function(){
 				if ($(this).val() == "Manual")
 				{
 					showManualNameSelection();
