@@ -17,6 +17,20 @@ app.use(express.static(__dirname + '/www'));
 app.get(
     '/',
     function(req, res) {
-        res.sendfile(__dirname + '/www/index.html');
+        res.sendFile(__dirname + '/www/index.html');
+    }
+);
+
+app.get(
+    '/New',
+    function(req,res){
+        res.sendFile(__dirname + '/_private/CreateSession.html');
+    }
+);
+
+app.get(
+    '/Contestant',
+    function(req,res){
+        res.sendFile(__dirname + '/_private/ContestantScreen.html');
     }
 );

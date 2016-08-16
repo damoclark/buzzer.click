@@ -1,0 +1,164 @@
+<!DOCTYPE hml>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Create Session</title>
+	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="content/style.css" rel="stylesheet">
+</head>
+
+<body>
+	<nav class="navbar navbar-inverse">
+		<div class="navbar-brand">Buzzer</div>
+	</nav>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-10 col-xs-offset-1 col-sm-9 col-sm-offset-2">
+				<h2>Create New Session</h2>
+				<form class="form">
+					<div class="form-group row">
+						<label class="col-sm-3 col-form-label" for="session-name">Session Name</label>
+						<div class="col-sm-9">
+							<input class="form-control" type="text" id="session-name" name="session-name" />
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-xs-4 col-xs-offset-2 pull-right">
+							<input id="option-teams" type="checkbox" value="1" name="option-teams" />
+							<label for="Teams">Teams</label>
+						</div>
+					</div>
+
+					<!--This gets hidden when the Teams checkbox is clicked. -->
+					<div id="options-max-players" class="form-group row">
+						<label class="col-sm-3 col-form-label" for="max-players">Max Players</label>
+						<div class="col-sm-9">
+							<input class="form-control" type="number" id="max-players" placeholder="25" name="max-players" />
+						</div>
+					</div>
+
+					<!--This gets hidden when the Teams checkbox is unclicked. -->
+					<div id="options-teams" style="display:none">
+						<div class="form-group row">
+							<label class="col-sm-3 col-form-label" for="num-teams">Teams</label>
+							<div class="col-sm-9">
+								<input class="form-control" type="number" id="num-teams" placeholder="3" name="num-teams" />
+							</div>
+						</div>
+						<div class="form-group row">
+							<label class="col-sm-3 col-form-label" for="max-players-teams">Max players per team</label>
+							<div class="col-sm-9">
+								<input class="form-control" type="number" id="max-players-teams" placeholder="3" name="max-players-teams" />
+							</div>
+						</div>
+						<div class="form-group row">
+							<label class="col-sm-3 col-form-label" for="team-leader-selection">Team leader selection</label>
+							<div class="col-sm-9">
+								<select class="form-control" id="team-leader-selection">
+									<option>Random</option>
+									<option>Player Choice</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label class="col-sm-3 col-form-label" for="team-name-selection">Team name selection</label>
+							<div class="col-sm-9">
+								<select class="form-control" id="team-name-selection">
+									<option value="Auto">Auto</option>
+									<option value="Manual">Manual</option>
+								</select>
+							</div>
+						</div>
+						<!--Usually hidden unless Manual is chosen from the team name selection -->
+						<div id="options-manual-name-selection" style="display:none">
+
+						</div>
+					</div>
+
+					<!--Submit and cancel buttons -->
+					<div class="form-group row">
+						<div class="col-xs-9 col-xs-offset-4">
+							<button type="submit" class="btn btn-primary">Create</button>
+							<a href="index.html"><button type="button" class="btn">Cancel</button></a>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+
+		function showManualNameSelection()
+		{
+			
+			$('#options-manual-name-selection').show('slow');
+		}
+
+		function hideManualNameSelection()
+		{
+			$('#options-manual-name-selection').hide('slow');
+		}
+
+		$(function(){
+			var teamNames = [];
+
+			$("#option-teams").click(function(){
+				$('#options-max-players').toggle('slow');
+				$('#options-teams').toggle('slow');
+			});
+
+			$("#num-teams").on('keyup mouseup',function(){
+				
+				var loops = parseInt($('#num-teams').val());
+				if(loops == ""){return;}
+				if(loops > teamNames.length)
+				{
+					for(i=teamNames.length; i < loops;i++)
+					{
+						var label = i+1;
+						var x = teamNames.push(`<div id="team-name-div-${label}" class="form-group row">
+								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
+								<div class="col-sm-9">
+									<input class="form-control" type="text" id="team-name-${label}" name="team-name-${label}" />
+								</div>
+							</div>`);
+						$('#options-manual-name-selection').append(teamNames[x-1]);
+					}
+				}
+				else if(loops < teamNames.length)
+				{
+					for(i = loops; i <= teamNames.length;i++)
+					{
+						var label = i+1;
+						$('#team-name-div-'+ label).remove();
+						
+					}
+					teamNames.splice(loops,teamNames.length)
+				}
+				
+			});
+			
+			$("#team-name-selection").change(function(){
+				if ($(this).val() == "Manual")
+				{
+					showManualNameSelection();
+				}
+				else if($(this).val() == "Auto")
+				{
+					hideManualNameSelection();
+				}
+			});
+		});
+
+		
+	</script>
+
+</body>
+
+</html>
