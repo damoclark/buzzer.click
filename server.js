@@ -34,3 +34,10 @@ app.get(
         res.sendFile(__dirname + '/_private/ContestantScreen.html');
     }
 );
+
+app.get(
+    '/Join',
+    function(req,res){
+        res.sendFile(__dirname + '/_private/JoinSession.html');
+    }
+);
