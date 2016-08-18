@@ -15,16 +15,62 @@
 		<div class="navbar-brand">Buzzer</div>
 	</nav>
 	<div class="container">
+		<!-- Main Row encapsulates whole interface -->
 		<div class="row">
-			
+			<!-- This is the LEFT column that only shows on sm+ screens, xs screens interface is stacked-->
+			<div class="col-sm-6"> 
+				<!-- This creates a small space and pads the content nicely using bootstrap grids -->
+				<div class="col-sm-12">
+					<div class="row">
+						<div>Session</div>
+						<h4 class="text-center" id="session-name">PLACEHOLDER</h4>
+					</div>
+					<div class="row">
+						<div class="row">
+							<div class="col-xs-6">Username</div>
+							<div class="col-xs-6">Team</div>
+						</div>
+						<div class="row">
+							<div class="col-xs-6"><h4 id="session-username">PLACEHOLDER</h4></div>
+							<div class="col-xs-6"><h4 id="session-team">PLACEHOLDER</h4></div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="jumbotron">
+							<h2 class="hidden-xs" >Buzzer</h2>
+							<div class="circle">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- This is the RIGHT column that only shows on sm+ screens, xs screens interface is stacked-->
+			<div class="col-sm-6">
+				<!-- This creates a small space and pads the content nicely using bootstrap grids -->
+				<div class="col-sm-12">
+					<div class="row">
+						<div><h4>Round winner</h4></div>
+						<div id="session-round-winner" class="well"></div>
+					</div>
+					<div class="row">
+						<div><h4>Previous Winners</h4></div>
+						<div id="session-previous-winners" class="well"></div>
+					</div>
+					<div class="row">
+						<div><h4>Team members</h4></div>
+						<div id="session-team-members" class="well"></div>
+					</div>
+					<div class="row">
+						<div><h4>Teams</h4></div>
+						<div id="session-teams" class="well"></div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
-	<script type="text/javascript">
-	
-	</script>
 
 </body>
 
