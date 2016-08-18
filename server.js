@@ -41,3 +41,10 @@ app.get(
         res.sendFile(__dirname + '/_private/JoinSession.html');
     }
 );
+
+app.get(
+    '/Share',
+    function(req,res){
+        res.sendFile(__dirname + '/_private/PresentationScreen.html');
+    }
+);

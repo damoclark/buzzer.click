@@ -46,3 +46,31 @@
 .circle-disabled:after{
     background: #555555;
 }
+
+.no-bullets-all *,
+.no-bullets{
+    list-style: none;
+}
+
+.no-bullets-all > li,
+.no-bullets > li{
+    padding: 5px 0px;
+}
+
+
+.badge-primary{
+    background-color: dodgerblue;
+}
+
+.top-header > li{
+    font-size:1.4em;
+    font-weight: bold;
+}
+
+.top-header > li > ul{
+    font-weight: normal;
+}
+
+.row-buffer{
+    margin-top:20px;
+}
