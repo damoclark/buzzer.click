@@ -48,3 +48,10 @@ app.get(
         res.sendFile(__dirname + '/_private/PresentationScreen.html');
     }
 );
+
+app.get(
+    '/Manage',
+    function(req,res){
+        res.sendFile(__dirname + '/_private/ManageSession.html');
+    }
+);
