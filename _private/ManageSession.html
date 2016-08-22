@@ -1,0 +1,319 @@
+<!DOCTYPE hml>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Session</title>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="content/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="navbar-brand">Buzzer</div>
+    </nav>
+    <div class="container">
+        <!-- Main Row encapsulates whole interface -->
+        <div class="row">
+            <h2>Buzzer control</h2>
+        </div>
+        <!-- Buttons row -->
+        <div class="row">
+            <div class="col-sm-5">
+                <div class="row row-buffer">
+                    <div class="col-xs-12">
+                        <button type="button" class="btn btn-lg btn-primary">Enable</button>
+                        <button type="button" class="btn btn-lg btn-default">Disable</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-5">
+                <div class="row row-buffer">
+                    <div class="col-xs-12">
+                        <button type="button" class="btn btn-lg btn-success"><span class="glyphicon glyphicon-thumbs-up"></span> Accept</button>
+                        <button type="button" class="btn btn-lg btn-warning"><span class="glyphicon glyphicon-thumbs-down"></span> Reject</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <div class="row row-buffer">
+                    <div class="col-xs-12">
+                        <button type="button" class="btn btn-lg btn-default"><span class="glyphicon glyphicon-refresh"></span> Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Settings row -->
+        <div class="row row-buffer">
+            <div class="col-xs-4 col-sm-2 text-right">
+                <h2>Settings</h2>
+            </div>
+            <div class="col-xs-8 col-sm-10">
+                <button type="button" data-toggle="modal" data-target="#modal-settings-teams" style="margin-top:20px;" class="btn btn-default"><span class="glyphicon glyphicon-cog"></span> Edit</button>
+            </div>
+        </div>
+        <!-- Info row -->
+        <div class="row row-buffer h5">
+            <!-- Left column - This holds main data -->
+            <div class="col-sm-6">
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Session Name:
+                    </div>
+                    <div id="session-name" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Teams:
+                    </div>
+                    <div id="session-teams" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer hide-if-teams">
+                    <div class="col-xs-5 text-right">
+                        Max players:
+                    </div>
+                    <div id="session-max-players" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Time limit:
+                    </div>
+                    <div id="session-time-limit" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 hide-if-not-teams">
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Max teams:
+                    </div>
+                    <div id="session-max-teams" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Max players per teams:
+                    </div>
+                    <div id="session-max-team-players" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Team leader selection:
+                    </div>
+                    <div id="session-leader-selection" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
+                        Team name editing:
+                    </div>
+                    <div id="session-name-edit" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <!-- Session stats -->
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="row">
+                    <h4>Round winner</h4>
+                    <div class="well"></div>
+                </div>
+                <div class="row">
+                    <h4>Previous winners</h4>
+                    <div class="well"></div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <h4>Teams</h4>
+                <div id="teams-info" class="well well-lg">
+                    <ul class="no-bullets-all top-header">
+                        <li>test <span class="badge badge-primary">3</span></li>
+
+                        <li>
+                            <ul>
+                                <li>test (Teamleader)</li>
+                                <li>test2</li>
+                            </ul>
+                        </li>
+                        <li>test</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!--Settings Modals, modal-settings-teams -->
+        <div class="modal fade" id="modal-settings-teams">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Settings</h4>
+                    </div>
+                    <form class="form">
+                        <div class="modal-body">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label" for="session-name">Session Name</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" type="text" id="session-name" name="session-name" />
+                                </div>
+                            </div>
+                            <div id="options-teams">
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label" for="num-teams">Teams</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" type="number" id="num-teams" placeholder="3" name="num-teams" />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label" for="max-players-teams">Max players per team</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" type="number" id="max-players-teams" placeholder="3" name="max-players-teams" />
+                                    </div>
+                                </div>
+                                <div id="options-manual-name-selection">
+                                </div>
+                                <div id="teamleader-table">
+                                    <table class="table table-responsive table-hover table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th data-toggle="tooltip" title="Selected contestant is leader">Team leader</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Each of these will be generated -->
+                                            <tr>
+                                                <td>
+                                                    Alpha
+                                                </td>
+                                                <td>
+                                                    <!-- we would generate these and append the teamname to the end for identification -->
+                                                    <select class="full-width" name="team-leader-Alpha">
+                                                        <option value="Nick">Nick</option>
+                                                        <option value="Wade">Wade</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    Beta
+                                                </td>
+                                                <td>
+                                                    <!-- we would generate these and append the teamname to the end for identification -->
+                                                    <select class="full-width" name="team-leader-Alpha">
+                                                        <option value="Nick">Ben</option>
+                                                        <option value="Wade">Will</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Settings Modals, modal-settings -->
+        <div class="modal fade" id="modal-settings">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Settings</h4>
+                    </div>
+                    <form class="form">
+                        <div class="modal-body">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label" for="session-name">Session Name</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" type="text" id="session-name" name="session-name" />
+                                </div>
+                            </div>
+
+                            <div id="options-max-players" class="form-group row">
+                                <label class="col-sm-3 col-form-label" for="max-players">Max Players</label>
+                                <div class="col-sm-9">
+                                    <input class="form-control" type="number" id="max-players" placeholder="25" name="max-players" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+
+		$(function(){
+
+			var teamNames = [];
+
+			$("#num-teams").on('keyup mouseup',function(){
+				
+				var loops = parseInt($('#num-teams').val());
+				if(loops == ""){return;}
+				if(loops > teamNames.length)
+				{
+					for(i=teamNames.length; i < loops;i++)
+					{
+						var label = i+1;
+						var x = teamNames.push(`<div id="team-name-div-${label}" class="form-group row">
+								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
+								<div class="col-sm-9">
+									<input class="form-control" type="text" id="team-name-${label}" name="team-name-${label}" />
+								</div>
+							</div>`);
+						$('#options-manual-name-selection').append(teamNames[x-1]);
+					}
+				}
+				else if(loops < teamNames.length)
+				{
+					for(i = loops; i <= teamNames.length;i++)
+					{
+						var label = i+1;
+						$('#team-name-div-'+ label).remove();
+						
+					}
+					teamNames.splice(loops,teamNames.length)
+				}
+				
+			});
+			
+			
+		});
+
+		
+	</script>
+
+</body>
+
+</html>

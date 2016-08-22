@@ -14,3 +14,71 @@
 .form-group > label{
     text-align:right;
 }
+
+.circle{
+    position:relative;
+    width: 250px;
+    height: 250px;
+    border: red 25px solid;
+    -moz-border-radius: 50%;
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+    box-shadow: 5px 3px 7px #888888;
+    margin:auto;
+}
+.circle:after{
+    content:"";
+    position:absolute;
+    width: 50%;
+    height: 50%;
+    background: red;
+    -moz-border-radius: 50%;
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+    box-shadow: 5px 3px 7px #888888;
+    top: 25%;
+    left: 25%;
+    margin: auto;
+}
+.circle-disabled{
+    border-color: #555555;
+}
+.circle-disabled:after{
+    background: #555555;
+}
+
+.no-bullets-all *,
+.no-bullets{
+    list-style: none;
+}
+
+.no-bullets-all > li,
+.no-bullets > li{
+    padding: 5px 0px;
+}
+
+
+.badge-primary{
+    background-color: dodgerblue;
+}
+
+.top-header > li{
+    font-size:1.4em;
+    font-weight: bold;
+}
+
+.top-header > li > ul{
+    font-weight: normal;
+}
+
+.row-buffer{
+    margin-top:20px;
+}
+
+.btn-lg{
+    width:125px;
+}
+
+.full-width{
+    width:100%;
+}

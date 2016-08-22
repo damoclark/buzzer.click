@@ -1,0 +1,95 @@
+<!DOCTYPE hml>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Create Session</title>
+	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="content/style.css" rel="stylesheet">
+</head>
+
+<body>
+	<nav class="navbar navbar-inverse">
+		<div class="navbar-brand">Buzzer</div>
+	</nav>
+	<div class="container">
+        <div class="row">
+            <div class="col-sm-6 col-sm-offset-3">
+                <h5>Joining Session</h5>
+                <h4 class="text-center" id="session-name">PLACEHOLDER</h4>
+                <form class="form" id="join-session-form">
+                    <div class="form-group">
+                        <label for="session-username">Enter a username</label>
+                        <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" />
+                    </div>
+                    <button class="btn btn-lg pull-right btn-primary" type="submit" id="session-submit">Join</button>
+                </form>
+            </div>
+        </div>
+	</div>
+
+    
+    <!-- MODALS - modal-teamleader and modal-team-name, these will be called via JS depending on the session 
+    options returned from the ajax request -->
+    <div class="modal fade" id="modal-teamleader">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Teamleader</h4>
+                </div>
+                <div class="modal-body">
+                    Would you like to be teamleader?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary" id="session-teamleader">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-team-name">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="team-name-form" class="form">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Update your team name</h4>
+                    </div>
+                    <div class="modal-body">
+                        
+                            <div class="form-group">
+                                <label for="team-name">Team name</label>
+                                <input type="text" class="form-control" id="session-team-name" name="session-team-name" />
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" id="update-team-name">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#join-session-form').submit(function(event){
+                event.preventDefault();
+                $("#modal-teamleader").modal("show");
+                
+            });
+            //For the moment bind the yes click on teamleader modal to show team name update modal (mainly for testing)
+            $('#session-teamleader').click(function(){
+                $("#modal-teamleader").modal("hide");
+                $("#modal-team-name").modal("show");
+            });
+        });
+    </script>
+
+</body>
+
+</html>
