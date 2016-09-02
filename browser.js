@@ -18,12 +18,7 @@ socketio.on('connect', function() {
             ', and message=' + message.getMessage());
     });
 
-    var m;
-    var settings = new Settings();
-    settings.setName('Fun Game');
-    m = MessageFactory.create(MessageFactory.CREATEGAMEMESSAGE,
-        settings);
-    socketio.emitMessage(m);
+    
 
     //m = MessageFactory.create(MessageFactory.JOINGAMEMESSAGE) ;
     //m.setGameCode('12345') ;
@@ -33,3 +28,12 @@ socketio.on('connect', function() {
     //
     //socketio.emitMessage(m) ;
 });
+
+global.createGame  = function (sessionName){
+        var m;
+        var settings = new Settings();
+        settings.setName(sessionName);
+        m = MessageFactory.create(CREATEGAMEMESSAGE,
+            settings);
+        socketio.emitMessage(m);
+}
