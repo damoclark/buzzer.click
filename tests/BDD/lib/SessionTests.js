@@ -7,6 +7,7 @@ var Settings = require('../../../lib/Settings');
 var Host = require('../../../lib/Host');
 var Contestant = require('../../../lib/Contestant');
 var Observer = require('../../../lib/Observer');
+var AddContestantResponse = require('../../../lib/AddContestantResponse');
 
 var id = 'id_test';
 var settings = new Settings();
@@ -109,5 +110,8 @@ describe('Session', function() {
                 s.incrementRoundsPlayed();
                 s.roundsPlayed.should.equal(2);
             });
+    });
+    describe('#addContestant(contestant)', function() {
+        //TODO: add tests. Requires method to be completed.
     });
 });

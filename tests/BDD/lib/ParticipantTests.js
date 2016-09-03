@@ -10,13 +10,13 @@ describe('Participant', function() {
             function() {
                 var p = new Participant();
                 p.id = 'id_test';
-                p._id.should.be.equal('id_test');
+                p._id.should.equal('id_test');
             });
         it('should get value',
             function() {
                 var p = new Participant();
                 p._id = 'id_test';
-                p.id.should.be.equal('id_test');
+                p.id.should.equal('id_test');
             });
     });
     describe('#isDisconnected', function() {
@@ -31,7 +31,7 @@ describe('Participant', function() {
             function() {
                 var p = new Participant();
                 p._id = 'id_test';
-                p.id.should.be.equal('id_test');
+                p.id.should.equal('id_test');
             });
     });
     describe('#disconnect()', function() {

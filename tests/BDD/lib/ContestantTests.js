@@ -10,13 +10,13 @@ describe('Contestant', function() {
             function() {
                 var c = new Contestant();
                 c.username = 'username_test';
-                c._username.should.be.equal('username_test');
+                c._username.should.equal('username_test');
             });
         it('should get value',
             function() {
                 var c = new Contestant();
                 c._username = 'username_test';
-                c.username.should.be.equal('username_test');
+                c.username.should.equal('username_test');
             });
     });
     describe('#score', function() {
@@ -31,7 +31,7 @@ describe('Contestant', function() {
             function() {
                 var c = new Contestant();
                 c._score = 1;
-                c.score.should.be.equal(1);
+                c.score.should.equal(1);
             });
     });
     describe('#incrementScore()', function() {
@@ -39,7 +39,7 @@ describe('Contestant', function() {
             function() {
                 var c = new Contestant();
                 c.incrementScore();
-                c.score.should.be.equal(1);
+                c.score.should.equal(1);
             });
     });
 });
