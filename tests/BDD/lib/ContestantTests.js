@@ -34,8 +34,8 @@ describe('Contestant', function() {
                 c.score.should.be.equal(1);
             });
     });
-    describe('#incrementScore', function() {
-        it('should increment the contestant\' score',
+    describe('#incrementScore()', function() {
+        it('should increment the contestant\'s score',
             function() {
                 var c = new Contestant();
                 c.incrementScore();
