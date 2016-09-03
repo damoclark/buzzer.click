@@ -35,7 +35,7 @@ global.createGame  = function (sessionName){
         var m;
         var settings = new Settings();
         settings.setName(sessionName);
-        m = MessageFactory.create(MessageFactory.CREATEGAMEMESSAGE,
+        m = MessageFactory.create(CREATEGAMEMESSAGE,
             settings);
         socketio.emitMessage(m);
 }
@@ -453,14 +453,14 @@ var AbstractMessage = require('../AbstractMessage');
  *
  * @returns {ConfirmMessage} An instance
  */
-var ConfirmMessage = function(args) {
+var ConfirmMessage = function (args) {
     AbstractMessage.call(this, args);
     this.set(args);
     //If a code has been set that is non-zero, see if a matching message string
     //exists in messages and if so, automatically set message to this string
     //unless the message has already been manually set
     if (this.data.confirm.code && this.messages.hasOwnProperty(this.data.confirm
-            .code) && this.data.confirm.message == '')
+        .code) && this.data.confirm.message == '')
         this.data.confirm.message = this.messages[code];
 };
 
@@ -473,13 +473,19 @@ ConfirmMessage.prototype = Object.create(AbstractMessage.prototype);
  * Set the code and message based on the values from a BuzzerError instance
  *
  * @param {BuzzerError} error An error instance to use for code and message
- * 
+ * @write-only
+ * @throws on get value
  * @public
  */
-ConfirmMessage.prototype.setBuzzerError = function(error) {
-    this.setCode(error.getCode());
-    this.setMessage(error.getMessage());
-};
+Object.defineProperty(ConfirmMessage, "buzzerError", {
+    get: function () { throw new Error('Property is write-only.'); },
+    set: function (error) {
+        if (error.type == Error) {
+            this.code = error.getCode();
+            this.message = error.getMessage();
+        }
+    }
+});
 
 /**
  * Set the confirmation code for this message object
@@ -490,50 +496,38 @@ ConfirmMessage.prototype.setBuzzerError = function(error) {
  *
  * @returns {ConfirmMessage} Returns instance of self
  */
-ConfirmMessage.prototype.setCode = function(code) {
-    if (code !== undefined) {
-        this.data.confirm.code = code;
-        if (this.data.confirm.hasOwnProperty(code) && this.data.confirm.message ==
-            '')
-            this.data.confirm.message = this.messages[code];
+Object.defineProperty(ConfirmMessage, "code", {
+    get: function () { return this.data.confirm._code },
+    set: function (code) {
+        if (code !== undefined) {
+            this.data.confirm._code = code;
+            if (this.data.confirm.hasOwnProperty(code) && this.data.confirm._message ==
+                '')
+                this.data.confirm._message = this._messages[code];
+        }
+        return this;
     }
-    return this;
-};
-
-/**
- * Get the confirmation code for this message object
- *
- * @public
- * @returns {Integer} The confirmation code value
- */
-ConfirmMessage.prototype.getCode = function() {
-    return this.data.confirm.code;
-};
+});
 
 /**
  * Set the confirmation message for this message object.  No message means OK
  *
  * @param {Integer} code The confirmation code value (if not set default 0 - OK)
- * 
  * @public
  *
  * @returns {ConfirmMessage} Returns instance of self
  */
-ConfirmMessage.prototype.setMessage = function(message) {
-    if (message !== undefined)
-        this.data.confirm.message = message;
-    return this;
-};
+Object.defineProperty(ConfirmMessage, "message", {
+    get: function () {
+        return this.data.confirm._message;
+    },
+    set: function (message) {
+        if (message !== undefined)
+            this.data.confirm._message = message;
+        return this;
+    }
+});
 
-/**
- * Get the confirmation message for this message object
- *
- * @public
- * @returns {String} The confirmation message value
- */
-ConfirmMessage.prototype.getMessage = function() {
-    return this.data.confirm.message;
-};
 
 /**
  * The type of this class
