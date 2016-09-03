@@ -21,7 +21,8 @@
     "jsonschema": "^1.0.2",
     "semver": "^5.0.1",
     "socket.io": "1.3.*",
-    "socket.io-client": "^1.3.6"
+    "socket.io-client": "^1.3.6",
+    "node-uuid": "^1.4.7"
   },
   "devDependencies": {
     "browserify": "^11.0.0",

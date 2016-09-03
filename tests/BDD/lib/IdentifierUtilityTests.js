@@ -5,7 +5,6 @@ var should = require('should');
 //var ParamCheck = require('../../lib/ParamCheck');
 var IdentifierUtility = require('../../../lib/IdentifierUtility');
 var Sessions = require('../../../lib/Sessions');
-
 var sessions = new Sessions();
 
 describe('IdentifierUtility', function() {
@@ -20,6 +19,15 @@ describe('IdentifierUtility', function() {
                 new IdentifierUtility(sessions).generateSessionId()
                     .length.should.be.Number().and.equal(
                         new IdentifierUtility(sessions).keyLength
+                    );
+            });
+    });
+    describe('#generateParticipantId()', function() {
+        it('should return a UUID',
+            function() {
+                new IdentifierUtility(sessions).generateParticipantId()
+                    .should.match(
+                        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
                     );
             });
     });
