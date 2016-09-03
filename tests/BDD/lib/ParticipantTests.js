@@ -34,7 +34,7 @@ describe('Participant', function() {
                 p.id.should.be.equal('id_test');
             });
     });
-    describe('#disconnect', function() {
+    describe('#disconnect()', function() {
         it('should change participant state to disconnected',
             function() {
                 var p = new Participant();
@@ -43,7 +43,7 @@ describe('Participant', function() {
                 p.isDisconnected.should.be.true();
             });
     });
-    describe('#reconnect', function() {
+    describe('#reconnect()', function() {
         it('should change participant state to connected',
             function() {
                 var p = new Participant();
