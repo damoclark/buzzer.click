@@ -2,7 +2,7 @@
 var should = require('should');
 /* eslint-enable no-unused-vars */
 
-var ConfirmMessage = require('../../lib/message/ConfirmMessage');
+var ConfirmMessage = require('../../../../lib/message/ConfirmMessage');
 
 describe('ConfirmMessage', function() {
     describe('#buzzerError', function () {
