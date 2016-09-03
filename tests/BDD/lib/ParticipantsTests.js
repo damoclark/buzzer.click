@@ -1,9 +1,35 @@
 /* eslint-disable no-unused-vars */
 var should = require('should');
 /* eslint-enable no-unused-vars */
+
 var Participants = require('../../../lib/Participants');
 var Participant = require('../../../lib/Participant');
+
 describe('Participants', function() {
+    describe('#all', function() {
+        it('should throw on set value', function() {
+                var collection = new Participants();
+                (function() {
+                    collection.all = [];
+                }).should.throw();
+            });
+        it('should get value', function() {
+                p = new Participant();
+                p.id = 'p1';
+                var collection = new Participants();
+                collection._participants.push(p);
+                collection.all[0].should.equal(p);
+            });
+        it('should get copy of val and not reference',
+            function() {
+                p = new Participant();
+                p.id = 'p1';
+                var collection = new Participants();
+                collection._participants.push(p);
+                collection.all.pop();
+                collection.all[0].should.equal(p);
+            });            
+    });    
     describe('#contains(id)', function() {
         it('should return true when id does exist', function() {
             p = new Participant();
