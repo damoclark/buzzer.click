@@ -4,8 +4,8 @@
   "description": "Online realtime electronic buzzer for games",
   "main": "app.js",
   "scripts": {
-    "tests-bdd": "Mocha --reporter spec tests/BDD/*.js",
-    "tests-functional": "Mocha --reporter spec tests/Functional/*.js",
+    "tests-bdd": "Mocha --reporter spec tests/BDD/**/*.js",
+    "tests-functional": "Mocha --reporter spec tests/Functional/**/*.js",
     "build": "browserify browser.js -t require-globify -o www/js/bundle.js",
     "watch": "watchify browser.js -t require-globify -o www/js/bundle.js --debug --verbose",
     "beautify-solution": "node beautify-solution.js"
