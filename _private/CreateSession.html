@@ -81,7 +81,7 @@
 					<!--Submit and cancel buttons -->
 					<div class="form-group row">
 						<div class="col-xs-9 col-xs-offset-4">
-							<button type="submit" class="btn btn-primary">Create</button>
+							<button id="create-game" type="submit" class="btn btn-primary">Create</button>
 							<a href="index.html"><button type="button" class="btn">Cancel</button></a>
 						</div>
 					</div>
@@ -92,6 +92,7 @@
 
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
+	<script src="js/bundle.js"></script>
 	<script type="text/javascript">
 
 		function showManualNameSelection()
@@ -107,6 +108,11 @@
 
 		$(function(){
 			var teamNames = [];
+			$("#create-game").click(function(event){
+				event.preventDefault()
+				var sessionName = $('#session-name').val();
+				createGame(sessionName);
+			});
 
 			$("#option-teams").click(function(){
 				$('#options-max-players').toggle('slow');
