@@ -43,12 +43,12 @@ describe('Host', function() {
                 var settings = new Settings();
                 settings.maxContestants = 5;
 
-                var createGameMessage = messageFactory.CreateGameMessage;
-                createGameMessage.settings = settings;
+                var createSessionMessage = messageFactory.create(constants.socketMessageNames.CREATE_SESSION_MESSAGE);
+                createSessionMessage.settings = settings;
 
                 var client = createClient();
-                client.emit(constants.socketMessageTypeNames.CREATE_GAME_MESSAGE,
-                    createGameMessage,
+                client.emit(constants.socketMessageNames.CREATE_SESSION_MESSAGE,
+                    createSessionMessage,
                     function(response) {
                         console.log('Server replied with ' + response);
                         done();
