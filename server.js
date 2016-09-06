@@ -6,7 +6,6 @@ var express = require('express');
 var BuzzerServer = require('./lib/BuzzerServer');
 
 var app = express();
-
 var server = http.createServer(app).listen('3000');
 BuzzerServer.listen(server);
 
