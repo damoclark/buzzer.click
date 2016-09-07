@@ -6,27 +6,35 @@ var CreateSessionMessage = require('../../../../lib/message/CreateSessionMessage
 var Settings = require('../../../../lib/Settings');
 
 describe('CreateSessionMessage', function() {
-    describe('#settings', function () {
+    describe('#settings', function() {
         it('should set value',
-            function () {
-                var g = new CreateSessionMessage();
+            function() {
+                var m = new CreateSessionMessage();
                 var s = new Settings();
-                g.settings = s;
-                g.data._settings.should.equal(s);
+                m.settings = s;
+                m.data._settings.should.equal(s);
             });
         it('should get value',
-            function () {
-                var g = new CreateSessionMessage();
+            function() {
+                var m = new CreateSessionMessage();
                 var s = new Settings();
-                g.data._settings = s;
-                g.settings.should.equal(s);
-            });            
-        it('should throw on set wrong object type',
-            function () {
-                var g = new CreateSessionMessage();
-               (function () {
-                    g.settings = 'test';
-                }).should.throw();
+                m.data._settings = s;
+                m.settings.should.equal(s);
+            });
+    });
+    describe('#isValid()', function() {
+        it('should return true when valid', function() {
+            var m = new CreateSessionMessage();
+            var s = new Settings();
+            m.settings = s;
+            m.isValid().should.be.true();
+        });
+        it('should return false when invalid', function() {
+            var m = new CreateSessionMessage();
+            var s = new Settings();
+            s._maxTeams = 'invalid';
+            m.settings = s;
+            m.isValid().should.be.false();
         });
     });
 });

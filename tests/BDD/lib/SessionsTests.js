@@ -8,6 +8,28 @@ var Settings = require('../../../lib/Settings');
 var Session = require('../../../lib/Session');
 
 describe('Sessions', function() {
+    describe('#all', function() {
+        it('should throw on set value', function() {
+            var collection = new Sessions();
+            (function() {
+                collection.all = [];
+            }).should.throw();
+        });
+        it('should get value', function() {
+            s = new Session('s1', new Settings(), new Host());
+            var collection = new Sessions();
+            collection._sessions.push(s);
+            collection.all[0].should.equal(s);
+        });
+        it('should get copy of val and not reference',
+            function() {
+                s = new Session('s1', new Settings(), new Host());
+                var collection = new Sessions();
+                collection._sessions.push(s);
+                collection.all.pop();
+                collection.all[0].should.equal(s);
+            });
+    });    
     describe('#add(host, settings)', function() {
         it('add and return session', function() {
             var sessions = new Sessions();

@@ -3,19 +3,25 @@ var should = require('should');
 /* eslint-enable no-unused-vars */
 var io = require('socket.io-client');
 var console = require('console');
-
 var http = require('http');
+var socketIoWildcardPatch = require('socketio-wildcard')(io.Manager);
 var BuzzerServer = require('../../../lib/BuzzerServer');
 var Settings = require('../../../lib/Settings');
 var messageFactory = require('../../../lib/MessageFactory');
 var constants = require('../../../lib/constants');
+var messageConstants = constants.socketMessageNames;
 
 var url = 'http://127.0.0.1:3001';
 var server = null;
 var clients = [];
 var sessions = null;
 var createClient = function() {
-    return clients[clients.push(io(url)) - 1];
+    var socket = io(url);
+    socketIoWildcardPatch(socket);
+    socket.on('*', function(message) {
+        console.log('Inbound `' + message.data[0] + '` from server. Message `' + JSON.stringify(message.data[1]) + '`');
+    });
+    return clients[clients.push(socket) - 1];
 };
 
 describe('Host', function() {
@@ -24,7 +30,7 @@ describe('Host', function() {
         server = http.createServer();
         BuzzerServer.listen(server);
         server.listen('3001');
-        sessions = exports.sessions;
+        sessions = BuzzerServer.sessions;
     });
     after(function() {
         if (server) {
@@ -37,9 +43,9 @@ describe('Host', function() {
         }
         clients = [];
     });
-    describe('game', function() {
+    describe('session', function() {
         describe('create', function() {
-            it('for session with max players', function(done) {
+            it('should create a session', function(done) {
                 var settings = new Settings();
                 settings.maxContestants = 5;
 
@@ -47,32 +53,21 @@ describe('Host', function() {
                 createSessionMessage.settings = settings;
 
                 var client = createClient();
-                client.emit(constants.socketMessageNames.CREATE_SESSION_MESSAGE,
-                    createSessionMessage,
-                    function(response) {
-                        console.log('Server replied with ' + response);
+                client.emit(constants.socketMessageNames.CREATE_SESSION_MESSAGE, createSessionMessage,
+                    function(data) {
+                        data.should.be.Object();
+                        data.type.should.equal(messageConstants.CREATE_SESSION_RESPONSE_MESSAGE);
+
+                        sessions.all.length.should.equal(1);
+                        var session = sessions.all.pop();
+
+                        var message = messageFactory.restore(messageConstants.CREATE_SESSION_RESPONSE_MESSAGE,
+                            data);
+                        message.sessionId.should.equal(session.id);
+                        message.hostId.should.equal(session.host.id);
+
                         done();
                     });
-            });
-            it('test', function(done) {
-                var client = createClient();
-                client.on('connect', function() {
-                    console.log(
-                        'The client has connected to server'
-                    );
-                });
-                client.emit('client message',
-                    'Hello server from client',
-                    function(response) {
-                        console.log('Server replied with ' +
-                            response);
-                    });
-                client.on('server message', function(data) {
-                    console.log(
-                        'The server sent message of ' +
-                        data);
-                    done();
-                });
             });
         });
     });
