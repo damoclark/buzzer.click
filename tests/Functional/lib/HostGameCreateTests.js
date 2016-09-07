@@ -49,11 +49,11 @@ describe('Host', function() {
                 var settings = new Settings();
                 settings.maxContestants = 5;
 
-                var createSessionMessage = messageFactory.create(constants.socketMessageNames.CREATE_SESSION_MESSAGE);
+                var createSessionMessage = messageFactory.create(messageConstants.CREATE_SESSION_MESSAGE);
                 createSessionMessage.settings = settings;
 
                 var client = createClient();
-                client.emit(constants.socketMessageNames.CREATE_SESSION_MESSAGE, createSessionMessage,
+                client.emit(messageConstants.CREATE_SESSION_MESSAGE, createSessionMessage,
                     function(data) {
                         data.should.be.Object();
                         data.type.should.equal(messageConstants.CREATE_SESSION_RESPONSE_MESSAGE);
