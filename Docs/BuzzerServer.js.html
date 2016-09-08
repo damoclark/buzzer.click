@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: BuzzerServer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: BuzzerServer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * This is the server for buzzer.click
+ */
+
+var socketio = require('socket.io');
+var MessageFactory = require('./MessageFactory');
+var console = require('console');
+var BuzzerError = require('./BuzzerError');
+
+var Games = require('./Games');
+var Game = require('./Game');
+//@todo add other state related objects here as written
+
+//Declare the socket.io object globally within the module
+var io;
+
+//Create our global state object games here so accessible to rest of module
+var games = new Games();
+
+// maps socket.id to user's nickname
+var nicknames = {};
+// list of socket ids
+var clients = [];
+var namesUsed = [];
+exports.listen = function(server) {
+    //An event has occurred on the listening socket
+    io = socketio.listen(server);
+
+    //We have a new connection, so let's handle it
+    io.on('connection', function(socket) {
+        console.log('Connection made');
+
+        //Add the emitMessage and onMessage methods to our socket
+        MessageFactory.updateSocket(socket);
+
+        //Moved game create into a handler function
+        handleCreateGame(socket)
+
+        //
+        //Testing for send/receive messages
+        //
+        socket.onMessage(MessageFactory.JOINGAMEMESSAGE, function(
+            message) {
+            console.log('Received ' + message.getType() +
+                ' message with object:' + JSON.stringify(
+                    message));
+
+            socket.emitMessage(MessageFactory.create(
+                MessageFactory.JOINGAMEMESSAGE, {
+                    'gamecode': '123456'
+                }));
+        });
+
+        //Log errors to console
+        socket.on('error',function(er){
+            console.log("socket error="+er);
+        });
+        
+        //    initializeConnection(socket) ;
+        handleChoosingNicknames(socket) ;
+        //    handleClientDisconnections(socket) ;
+        //    handleMessageBroadcasting(socket) ;
+        //    handlePrivateMessaging(socket) ;
+    });
+}
+
+function handleCreateGame(socket)
+{ 
+    socket.onMessage(MessageFactory.CREATEGAMEMESSAGE, function(
+            message) {
+            console.log('Received ' + message.getType() +
+                ' message with object:' + JSON.stringify(
+                    message));
+            //Create game object and pass in settings provided by client
+            try {
+                var game = new Game(message.get());
+                var e = new BuzzerError(BuzzerError.INVALID_CODE,
+                    "Bla bla bla!");
+                
+                //Add the game to the system
+                games.add(game);
+
+                throw e;
+            } catch (err) {
+                if (err instanceof BuzzerError) {
+                    console.log(
+                        'Inside catch for BuzzerError');
+                    var r = MessageFactory.create(
+                        MessageFactory.CREATEGAMECONFIRMMESSAGE
+                    );
+                    r.setBuzzerError(err);
+                    socket.emitMessage(r);
+                }
+                //@todo return ConfirmMessage with code = error
+                console.log('error=' + err.message);
+                console.log('name=' + err.name);
+                if (err instanceof ReferenceError) {
+                    console.log('Syntax error!!');
+                }
+                //@todo UP TO HERE USE BuzzerError here
+            }
+            //@todo return ConfirmCreateGameMessage (subclass of ConfirmMessage) with gameCode &amp; hostCode
+            //var confirm = MessageFactory.create(MessageFactory.CONFIRMMESSAGE,{confirm:{code:0,message:""}}) ;
+            var confirm = MessageFactory.create(
+                MessageFactory.CONFIRMMESSAGE);
+            confirm.setCode(0).setMessage("");
+            socket.emitMessage(confirm);
+        });
+}
+function initializeConnection(socket) {
+    //This isn't right.  This should be done when the attempt
+    //to create or join a game
+    var game = new Game();
+    games.add(game);
+    socket.clientId
+    showActiveUsers(socket);
+    showOldMsgs(socket);
+}
+
+function showActiveUsers(socket) {
+    var activeNames = [];
+    var usersInRoom = io.sockets.clients();
+    for (var index in usersInRoom) {
+        var userSocketId = usersInRoom[index].id;
+        if (userSocketId !== socket.id &amp;&amp; nicknames[userSocketId]) {
+            var name = nicknames[userSocketId];
+            activeNames.push({
+                id: namesUsed.indexOf(name),
+                nick: name
+            });
+        }
+    }
+    socket.emit('names', activeNames);
+}
+
+function showOldMsgs(socket) {
+    db.getOldMsgs(5, function(err, docs) {
+        socket.emit('load old msgs', docs);
+    });
+}
+
+function handleChoosingNicknames(socket) {
+    socket.on('choose nickname', function(nick, cb) {
+        if (namesUsed.indexOf(nick) !== -1) {
+            cb(
+                'That name is already taken!  Please choose another one.'
+            );
+            return;
+        }
+        var ind = namesUsed.push(nick) - 1;
+        clients[ind] = socket;
+        nicknames[socket.id] = nick;
+        cb(null);
+        io.sockets.emit('new user', {
+            id: ind,
+            nick: nick
+        });
+    });
+}
+
+function handleMessageBroadcasting(socket) {
+    socket.on('message', function(msg) {
+        var nick = nicknames[socket.id];
+        db.saveMsg({
+            nick: nick,
+            msg: msg
+        }, function(err) {
+            if (err) throw err;
+            io.sockets.emit('message', {
+                nick: nick,
+                msg: msg
+            });
+        });
+    });
+}
+
+function handlePrivateMessaging(socket) {
+    socket.on('private message', function(data) {
+        var from = nicknames[socket.id];
+        clients[data.userToPM].emit('private message', {
+            from: from,
+            msg: data.msg
+        });
+    });
+}
+
+function handleClientDisconnections(socket) {
+    socket.on('disconnect', function() {
+        var ind = namesUsed.indexOf(nicknames[socket.id]);
+        delete namesUsed[ind];
+        delete clients[ind];
+        delete nicknames[socket.id];
+        io.sockets.emit('user disconnect', ind);
+    });
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:01:09 GMT+1000 (AEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
