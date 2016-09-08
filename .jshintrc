@@ -2,7 +2,7 @@
   "esversion": 6,
   "camelcase": true,
   "curly": true,
-  "eqeqeq": false,
+  "eqeqeq": true,
   "freeze": true,
   "indent": 2,
   "newcap": true,
