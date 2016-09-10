@@ -6,6 +6,7 @@ var BuzzerServer = require('../../../lib/BuzzerServer');
 var messageFactory = require('../../../lib/MessageFactory');
 var constants = require('../../../lib/constants');
 var messageConstants = constants.socketMessageNames;
+var isDebug = false;
 
 /**
  * Server test helper
@@ -36,10 +37,12 @@ ServerTestHelper.prototype.sessions = null;
 
 ServerTestHelper.prototype.createClient = function() {
     var socket = io(this.serverUrl);
-    socketIoWildcardPatch(socket);
-    socket.on('*', function(message) {
-        console.log('Inbound `' + message.data[0] + '` from server. Message `' + JSON.stringify(message.data[1]) + '`');
-    });
+    if (isDebug) {
+        socketIoWildcardPatch(socket);
+        socket.on('*', function(message) {
+            console.log('Inbound `' + message.data[0] + '` from server. Message `' + JSON.stringify(message.data[1]) + '`');
+        });
+    }
     return this.clients[this.clients.push(socket) - 1];
 };
 
@@ -74,6 +77,12 @@ ServerTestHelper.prototype.createSession = function(settings, client, afterCreat
             var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE_MESSAGE);
             afterCreateCallback(response);
         });
+};
+
+ServerTestHelper.prototype.forceObserveUpdate = function(sessionId) {
+    var sessions = BuzzerServer.sessions;
+    var session = sessions.getById(sessionId);
+    BuzzerServer.updateObservers(session);
 };
 
 var helper = new ServerTestHelper();
