@@ -14,6 +14,10 @@ var settings = new Settings();
 var host = new Host();
 
 describe('Session', function() {
+    afterEach(function() {
+        settings = new Settings();
+        host = new Host();
+    });
     describe('#id', function() {
         it('should throw on set value',
             function() {
@@ -112,6 +116,39 @@ describe('Session', function() {
             });
     });
     describe('#addContestant(contestant)', function() {
-        //TODO: add tests. Requires method to be completed.
+        describe('when in individual mode', function() {
+            it('should add contestant when session is not full', function() {
+                settings.maxContestants = 2;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c2';
+                var s = new Session(id, settings, host);
+                var response = s.addContestant(c1);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
+                response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
+            });
+            it('should not add contestant when session is full', function() {
+                settings.maxContestants = 2;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c2';
+                var c3 = new Contestant();
+                c3.username = 'c3';
+                var s = new Session(id, settings, host);
+                s.addContestant(c1);
+                s.addContestant(c2);
+                var response = s.addContestant(c3);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+            });
+        });
+        describe('when in team mode', function() {
+            //TODO: add tests. Requires method to be completed.
+        });
     });
 });

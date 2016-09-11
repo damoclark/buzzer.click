@@ -102,15 +102,15 @@
             var settings = new buzzapi.Settings();
             settings.maxContestants = 5;
 
-            var createSessionMessage = buzzapi.messageFactory.create(messageConstants.CREATE_SESSION_MESSAGE);
+            var createSessionMessage = buzzapi.messageFactory.create(messageConstants.CREATE_SESSION);
             createSessionMessage.settings = settings;
 
-            client.emit(messageConstants.CREATE_SESSION_MESSAGE, createSessionMessage, function(message) {
-                var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE_MESSAGE);
+            client.emit(messageConstants.CREATE_SESSION, createSessionMessage, function(message) {
+                var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE);
 
 				$("body div.container")
 					.prepend('<div>Connected to the server<br />Server replied with `' + 
-					messageConstants.CREATE_SESSION_RESPONSE_MESSAGE  + '`<br />Server said: ' + JSON.stringify(response));
+					messageConstants.CREATE_SESSION_RESPONSE  + '`<br />Server said: ' + JSON.stringify(response));
 
                 if (console) {
                     console.log('Connected to server', response);

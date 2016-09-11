@@ -23,17 +23,97 @@ describe('Buzzer server', function() {
 
     describe('contestant', function() {
         describe('join', function() {
-            describe('as individual', function() {
-                it('should allow when request is valid', function(){
+            describe('as individual', function(done) {
+                it('should allow when request is valid', function() {
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
 
-                });
-                it('should not allow when session is full', function(){
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var contestantClient = helper.createClient();
 
-                });
-                it('should not allow when session does not exist', function(){
+                        // Join
+                        var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        requestMessage.sessionId = responseMessage.sessionId;
+                        requestMessage.username = 'Test Person';
 
+                        contestantClient.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
+                            requestMessage,
+                            function(message) {
+                                var responseMessage = messageFactory.restore(message,
+                                    messageConstants.CONTESTANT_JOIN_RESPONSE);
+                                responseMessage.should.not.be.null();
+                                responseMessage.wasSuccessful.should.be.true();
+                                done();
+                            });
+                    });
                 });
-                it('should not allow when session is completed', function(){
+                it('should not allow when session is full', function(done) {
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
+
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var cc1 = helper.createClient();
+                        var cc2 = helper.createClient();
+
+                        // Join
+                        var rm1 = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        rm1.sessionId = responseMessage.sessionId;
+                        rm1.username = 'TP1';
+
+                        var rm2 = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        rm2.sessionId = responseMessage.sessionId;
+                        rm2.username = 'TP2';
+
+                        // Contestant 1 join
+                        cc1.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rm1, function(
+                            message1) {
+                            var rm1 = messageFactory.restore(message1,
+                                messageConstants.CONTESTANT_JOIN_RESPONSE);
+                            rm1.wasSuccessful.should.be.true();
+
+                            // Contestant 2 join
+                            cc2.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rm2,
+                                function(message2) {
+                                    var rm2 = messageFactory.restore(message2,
+                                        messageConstants.CONTESTANT_JOIN_RESPONSE
+                                    );
+                                    rm2.wasSuccessful.should.be.false();
+                                    rm2.failedRequestReason.should.equal(constants.messages.MAXIMUM_SESSION_SIZED_REACHED);
+                                    done();
+                                });
+                        });
+                    });
+                });
+                it('should not allow when session does not exist', function() {
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
+
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var contestantClient = helper.createClient();
+
+                        // Join
+                        var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        requestMessage.sessionId = idUtility.generateSessionId();
+                        requestMessage.username = 'Test Person';
+
+                        contestantClient.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
+                            requestMessage,
+                            function(message) {
+                                var responseMessage = messageFactory.restore(message, messageConstants.CONTESTANT_JOIN_RESPONSE);
+                                responseMessage.should.not.be.null();
+                                responseMessage.wasSuccessful.should.be.false();
+                                responseMessage.failedRequestReason.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                done();
+                            });
+                    });
+                });
+                it('should subscribe contests to contestant room', function() {
+                    // TODO
+                });
+                it('should not allow when session is completed', function() {
                     // TODO
                 });
             });
@@ -95,13 +175,12 @@ describe('Buzzer server', function() {
                             var errorMessage = messageFactory.restore(message,
                                 messageConstants.ERROR);
                             errorMessage.should.not.be.null();
-                            errorMessage.error.should.containEql(
-                                'Session could not be found');
+                            errorMessage.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
                             done();
                         });
                 });
             });
-            it('should not allow when session is completed', function(){
+            it('should not allow when session is completed', function() {
                 // TODO
             });
         });
@@ -209,8 +288,6 @@ describe('Buzzer server', function() {
                         client.emit(messageConstants.REJOIN_SESSION, rejoinMessage,
                             function(data) {
                                 data.type.should.equal(messageConstants.SUCCESS);
-                                // force observer update
-                                helper.forceObserveUpdate(responseMessage.sessionId);
                             });
                     });
                 });
@@ -234,8 +311,7 @@ describe('Buzzer server', function() {
                                 var errorMessage = messageFactory.restore(message,
                                     messageConstants.ERROR);
                                 errorMessage.should.not.be.null();
-                                errorMessage.error.should.containEql(
-                                    'Could not rejoin as host');
+                                errorMessage.error.should.equal(constants.messages.COULD_NOT_REJOIN_NOT_HOST);
                                 done();
                             });
                     });
@@ -260,15 +336,14 @@ describe('Buzzer server', function() {
                                 var errorMessage = messageFactory.restore(message,
                                     messageConstants.ERROR);
                                 errorMessage.should.not.be.null();
-                                errorMessage.error.should.containEql(
-                                    'Session could not be found');
+                                errorMessage.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
                                 done();
                             });
                     });
                 });
-                it('should not allow when session is completed', function(){
+                it('should not allow when session is completed', function() {
                     // TODO
-                });                
+                });
             });
         });
     });
