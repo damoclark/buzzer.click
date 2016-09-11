@@ -46,6 +46,10 @@ ServerTestHelper.prototype.createClient = function() {
     return this.clients[this.clients.push(socket) - 1];
 };
 
+ServerTestHelper.prototype.clearGameState = function() {
+    BuzzerServer.sessions._sessions = [];
+};
+
 ServerTestHelper.prototype.startServer = function() {
     this.server = http.createServer();
     BuzzerServer.listen(this.server);
@@ -69,12 +73,12 @@ ServerTestHelper.prototype.stopServer = function() {
 };
 
 ServerTestHelper.prototype.createSession = function(settings, client, afterCreateCallback) {
-    var createSessionMessage = messageFactory.create(messageConstants.CREATE_SESSION_MESSAGE);
+    var createSessionMessage = messageFactory.create(messageConstants.CREATE_SESSION);
     createSessionMessage.settings = settings;
 
-    client.emit(messageConstants.CREATE_SESSION_MESSAGE, createSessionMessage,
+    client.emit(messageConstants.CREATE_SESSION, createSessionMessage,
         function(data) {
-            var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE_MESSAGE);
+            var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
             afterCreateCallback(response);
         });
 };
