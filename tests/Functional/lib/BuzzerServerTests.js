@@ -23,8 +23,8 @@ describe('Buzzer server', function() {
 
     describe('contestant', function() {
         describe('join', function() {
-            describe('as individual', function(done) {
-                it('should allow when request is valid', function() {
+            describe('as individual', function() {
+                it('should allow when request is valid', function(done) {
                     var settings = new Settings();
                     settings.maxContestants = 1;
 
@@ -80,10 +80,44 @@ describe('Buzzer server', function() {
                                         messageConstants.CONTESTANT_JOIN_RESPONSE
                                     );
                                     rm2.wasSuccessful.should.be.false();
-                                    rm2.failedRequestReason.should.equal(constants.messages.MAXIMUM_SESSION_SIZED_REACHED);
+                                    rm2.failedRequestReason.should.equal(
+                                        constants.messages.MAXIMUM_SESSION_SIZED_REACHED
+                                    );
                                     done();
                                 });
                         });
+                    });
+                });
+                it('should subscribe contests to contestant room', function(done) {
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
+
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var contestantClient = helper.createClient();
+                        var sessionId = responseMessage.sessionId;
+
+                        // Join
+                        var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        requestMessage.sessionId = sessionId;
+                        requestMessage.username = 'Test Person';
+
+                        // list for Contestant update
+                        contestantClient.on('testMessage', function(message) {
+                            message.should.equal('test');
+                            done();
+                        });
+
+                        contestantClient.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
+                            requestMessage,
+                            function(message) {
+                                var responseMessage = messageFactory.restore(message,
+                                    messageConstants.CONTESTANT_JOIN_RESPONSE);
+                                responseMessage.should.not.be.null();
+                                responseMessage.wasSuccessful.should.be.true();
+                                helper.sendMessageToContestants(sessionId,
+                                    'testMessage', 'test');
+                            });
                     });
                 });
                 it('should not allow when session does not exist', function() {
@@ -102,16 +136,16 @@ describe('Buzzer server', function() {
                         contestantClient.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
                             requestMessage,
                             function(message) {
-                                var responseMessage = messageFactory.restore(message, messageConstants.CONTESTANT_JOIN_RESPONSE);
+                                var responseMessage = messageFactory.restore(message,
+                                    messageConstants.CONTESTANT_JOIN_RESPONSE);
                                 responseMessage.should.not.be.null();
                                 responseMessage.wasSuccessful.should.be.false();
-                                responseMessage.failedRequestReason.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                responseMessage.failedRequestReason.should.equal(
+                                    constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED
+                                );
                                 done();
                             });
                     });
-                });
-                it('should subscribe contests to contestant room', function() {
-                    // TODO
                 });
                 it('should not allow when session is completed', function() {
                     // TODO

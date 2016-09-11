@@ -89,6 +89,12 @@ ServerTestHelper.prototype.forceObserveUpdate = function(sessionId) {
     BuzzerServer.updateObservers(session);
 };
 
+ServerTestHelper.prototype.sendMessageToContestants = function(sessionId, messageName, message) {
+    var sessions = BuzzerServer.sessions;
+    var session = sessions.getById(sessionId);
+    BuzzerServer.sendMessageToContestants(session, messageName, message);
+};
+
 var helper = new ServerTestHelper();
 
 //Export the class
