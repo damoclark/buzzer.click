@@ -152,6 +152,9 @@ describe('Buzzer server', function() {
                 it('should not allow when session is completed', function() {
                     // TODO
                 });
+                it('should not allow when username is taken', function() {
+                    // TODO
+                });
             });
             describe('with teams', function() {
                 // TODO
@@ -379,6 +382,50 @@ describe('Buzzer server', function() {
                 });
                 it('should not allow when session is completed', function() {
                     // TODO
+                });
+            });
+        });
+        describe('complete', function(){
+            describe('session', function(){
+                it('should allow when request is valid', function(done) {
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
+
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var sessionCompleteMessage = messageFactory.create(messageConstants.SESSION_COMPLETE);
+                        sessionCompleteMessage.sessionId = responseMessage.sessionId;
+                        sessionCompleteMessage.hostId = responseMessage.hostId;
+
+                        hostClient.emit(messageConstants.SESSION_COMPLETE, sessionCompleteMessage, function(message) {
+                            var responseMessage = messageFactory.restore(message, messageConstants.SUCCESS);
+                            responseMessage.should.not.be.null();
+                            done();
+                        });
+                    });
+                });
+                it('should not allow when host id is invalid', function() {
+                    // TODO
+                });
+                it('should not allow when session id is invalid', function() {
+                    // TODO
+                });
+                it('should not allow when session is already completed', function() {
+                    // TODO
+                });
+                it('should notify observers', function() {
+                    // var settings = new Settings();
+                    // settings.maxContestants = 1;
+
+                    // var hostClient = helper.createClient();
+                    // helper.createSession(settings, hostClient, function(responseMessage) {
+                    //     var contestantClient = helper.createClient();
+
+                    //     helper.contestantJoin(contestantClient, 'user1', responseMessage.sessionId, function() {
+                    //         done();
+                    //     });
+                    // });
+
                 });
             });
         });

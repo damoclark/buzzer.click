@@ -1,3 +1,6 @@
+/* eslint-disable no-unused-vars */
+var should = require('should');
+/* eslint-enable no-unused-vars */
 var io = require('socket.io-client');
 var console = require('console');
 var http = require('http');
@@ -80,6 +83,21 @@ ServerTestHelper.prototype.createSession = function(settings, client, afterCreat
         function(data) {
             var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
             afterCreateCallback(response);
+        });
+};
+
+ServerTestHelper.prototype.contestantJoin = function(client, username, sessionId, afterJoinCallback){
+    var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+    requestMessage.sessionId = sessionId;
+    requestMessage.username = username;
+
+    client.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
+        requestMessage,
+        function(message) {
+            var responseMessage = messageFactory.restore(message, messageConstants.CONTESTANT_JOIN_RESPONSE);
+            responseMessage.should.not.be.null();
+            responseMessage.wasSuccessful.should.be.true();
+            afterJoinCallback(responseMessage);
         });
 };
 
