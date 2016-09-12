@@ -8,7 +8,8 @@
     "tests-functional": "Mocha --reporter spec tests/Functional/**/*.js",
     "build": "browserify browser.js --standalone buzzapi -o www/js/bundle.js",
     "watch": "watchify browser.js --standalone buzzapi -o www/js/bundle.js -verbose",
-    "beautify-solution": "node beautify-solution.js"
+    "beautify-solution": "node beautify-solution.js",
+    "document": "jsdoc lib/* -r -d ./Docs/Html && jsdoc2md lib/**/*.js > ./Docs/Docs.md"
   },
   "author": "Damien Clark, Nick Andjelkovic, Wade Baglin",
   "license": "GPL-3.0",
@@ -29,6 +30,8 @@
   "devDependencies": {
     "browserify": "^11.0.0",
     "eslint": "^3.1.1",
+    "jsdoc": "3.4.0",
+    "jsdoc-to-markdown": "^1.3.7",
     "jshint": "2.9.*",
     "mocha": "^3.0.0",
     "require-globify": "^1.2.1",
