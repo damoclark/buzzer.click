@@ -27,7 +27,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-xs-4 col-xs-offset-2 pull-right">
-                            <input id="option-teams" type="checkbox" value="1" name="option-teams" />
+                            <input id="option-teams" type="checkbox" value="false" name="option-teams" />
                             <label for="Teams">Teams</label>
                         </div>
                     </div>
@@ -58,8 +58,8 @@
                             <label class="col-sm-3 col-form-label" for="team-leader-selection">Team leader selection</label>
                             <div class="col-sm-9">
                                 <select class="form-control" id="team-leader-selection">
-									<option>Random</option>
-									<option>Player Choice</option>
+									<option value="Random">Random</option>
+									<option Value="PlayerChoice">Player Choice</option>
 								</select>
                             </div>
                         </div>
@@ -94,32 +94,7 @@
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="/js/socket.io.js"></script>
     <script src="/js/bundle.js"></script>
-    <script>
-        $(function() {
-            var client = io(window.location.protocol + '//' + window.location.hostname + ':3000');
-            var messageConstants = buzzapi.constants.socketMessageNames;
-
-            var settings = new buzzapi.Settings();
-            settings.maxContestants = 5;
-
-            var createSessionMessage = buzzapi.messageFactory.create(messageConstants.CREATE_SESSION);
-            createSessionMessage.settings = settings;
-
-            client.emit(messageConstants.CREATE_SESSION, createSessionMessage, function(message) {
-                var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE);
-
-				$("body div.container")
-					.prepend('<div>Connected to the server<br />Server replied with `' + 
-					messageConstants.CREATE_SESSION_RESPONSE  + '`<br />Server said: ' + JSON.stringify(response));
-
-                if (console) {
-                    console.log('Connected to server', response);
-                } else {
-                    alter('Connected to server.')
-                }
-            });
-        });
-    </script>
+    <script src="/js/controller.js"></script>
     <script type="text/javascript">
         var showManualNameSelection = function() {
             $('#options-manual-name-selection').show('slow');
@@ -133,11 +108,15 @@
             var teamNames = [];
             $("#create-game").click(function(event) {
                 event.preventDefault()
-                var sessionName = $('#session-name').val();
-                createGame(sessionName);
+                var values = {};
+                $('input, select').each(function(){
+                    values[this.id] = $(this).val();
+                });
+                createSession(values);
             });
 
-            $("#option-teams").click(function() {
+            $("#option-teams").change(function() {
+                $(this).val($(this).prop('checked'));
                 $('#options-max-players').toggle('slow');
                 $('#options-teams').toggle('slow');
             });
