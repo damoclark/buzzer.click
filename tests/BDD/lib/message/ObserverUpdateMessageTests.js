@@ -5,15 +5,14 @@ var ObserverUpdateMessage = require('../../../../lib/message/ObserverUpdateMessa
 var Session = require('../../../../lib/Session');
 var Settings = require('../../../../lib/Settings');
 var Host = require('../../../../lib/Host');
-var IdentifierUtility = require('../../../../lib/IdentifierUtility');
-var idUtil = new IdentifierUtility();
+var idUtility = require('../../../../lib/IdentifierUtility');
 
 var settings = new Settings();
 
 var host = new Host();
-host.id = idUtil.generateParticipantId();
+host.id = idUtility.generateParticipantId();
 
-var session = new Session(idUtil.generateSessionId(), settings, host);
+var session = new Session(idUtility.generateSessionId(), settings, host);
 
 describe('ObserverUpdateMessage', function() {
     describe('#gameState', function() {

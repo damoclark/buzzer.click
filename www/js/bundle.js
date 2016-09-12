@@ -559,9 +559,9 @@ IdentifierUtility.prototype.generateParticipantId = function() {
 };
 
 //Export the class
-module.exports = IdentifierUtility;
+module.exports = new IdentifierUtility();
 
-},{"./ParamCheck":8,"node-uuid":252}],6:[function(require,module,exports){
+},{"./ParamCheck":8,"node-uuid":253}],6:[function(require,module,exports){
 var AbstractMessage = require('./message/AbstractMessage');
 var semver = require('semver');
 
@@ -655,7 +655,7 @@ MessageFactory.prototype.restore = function(message, expectedType) {
 //Export the class
 module.exports = new MessageFactory();
 
-},{"./message/AbstractMessage":14,"./message/ContestantJoinRequestMessage":15,"./message/ContestantJoinResponseMessage":16,"./message/CreateSessionMessage":17,"./message/CreateSessionResponseMessage":18,"./message/ErrorMessage":19,"./message/ObserverUpdateMessage":20,"./message/RejoinSessionMessage":21,"./message/SuccessMessage":22,"semver":253}],7:[function(require,module,exports){
+},{"./message/AbstractMessage":14,"./message/ContestantJoinRequestMessage":15,"./message/ContestantJoinResponseMessage":16,"./message/CreateSessionMessage":17,"./message/CreateSessionResponseMessage":18,"./message/ErrorMessage":19,"./message/ObserverUpdateMessage":20,"./message/RejoinSessionMessage":21,"./message/SuccessMessage":22,"semver":254}],7:[function(require,module,exports){
 var Participant = require('./Participant');
 
 /**
@@ -961,10 +961,9 @@ var Observer = require('./Observer');
 var Contestant = require('./Contestant');
 var Settings = require('./Settings');
 var AddContestantResponse = require('./AddContestantResponse');
-var IdentifierUtility = require('./IdentifierUtility');
+var StateMachine = require('javascript-state-machine');
+var idUtility = require('./IdentifierUtility');
 var constants = require('./Constants');
-var idUtility = new IdentifierUtility();
-
 
 /**
  * Session module.
@@ -995,6 +994,22 @@ function Session(id, settings, host) {
     this._settings = settings;
     this._host = host;
     this._participants = new Participants();
+    /* beautify ignore:start */
+    /* eslint-disable */
+    this._state = StateMachine.create({
+        initial: 'ready',
+        events: [
+            { name: 'buzzerPressed', from: 'ready', to: 'pending' }, 
+            { name: 'disableBuzzers', from: ['ready', 'pending'], to: 'buzzerLock' }, 
+            { name: 'enabledBuzzers', from: 'buzzerLock', to: 'pending' },
+            { name: 'acceptBuzz', from: 'pending', to: 'ready' },
+            { name: 'rejectBuzz', from: 'pending', to: 'ready' },
+            { name: 'resetBuzz', from: 'pending', to: 'ready' },
+            { name: 'finish', from: ['ready', 'pending', 'buzzerLock'], to: 'completed' },
+        ]
+    });
+    /* eslint-enable */
+    /* beautify ignore:end */
 }
 
 /**
@@ -1090,8 +1105,7 @@ Object.defineProperty(Session.prototype, 'settings', {
  */
 Object.defineProperty(Session.prototype, 'isSessionCompleted', {
     get: function() {
-        //TODO: Implement this function. Requires FSM
-        throw new Error('Not implemented');
+        return this._state.current === 'completed';
     },
     /* eslint-disable no-unused-vars */
     set: function(val) {
@@ -1200,9 +1214,9 @@ Session.prototype.addContestant = function(contestant) {
 //Export the class
 module.exports = Session;
 
-},{"./AddContestantResponse":1,"./Constants":2,"./Contestant":3,"./Host":4,"./IdentifierUtility":5,"./Observer":7,"./ParamCheck":8,"./Participants":10,"./Settings":13}],12:[function(require,module,exports){
+},{"./AddContestantResponse":1,"./Constants":2,"./Contestant":3,"./Host":4,"./IdentifierUtility":5,"./Observer":7,"./ParamCheck":8,"./Participants":10,"./Settings":13,"javascript-state-machine":248}],12:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
-var IdentifierUtility = require('./IdentifierUtility');
+var idUtility = require('./IdentifierUtility');
 var Session = require('./Session');
 var Host = require('./Host');
 var Settings = require('./Settings');
@@ -1269,8 +1283,7 @@ Sessions.prototype.add = function(host, settings) {
         );
     }
 
-    var identifierUtility = new IdentifierUtility();
-    var id = identifierUtility.generateSessionId();
+    var id = idUtility.generateSessionId();
     var session = new Session(id, settings, host);
     this._sessions.push(session);
     return session;
@@ -1544,7 +1557,7 @@ AbstractMessage.prototype.protocol = '0.0.1';
 //Export the class
 module.exports = AbstractMessage;
 
-},{"jsonschema":250}],15:[function(require,module,exports){
+},{"jsonschema":251}],15:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -24373,6 +24386,235 @@ module.exports = function(arr, obj){
   return -1;
 };
 },{}],248:[function(require,module,exports){
+/*
+
+  Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
+
+  Copyright (c) 2012, 2013, 2014, 2015, Jake Gordon and contributors
+  Released under the MIT license - https://github.com/jakesgordon/javascript-state-machine/blob/master/LICENSE
+
+*/
+
+(function () {
+
+  var StateMachine = {
+
+    //---------------------------------------------------------------------------
+
+    VERSION: "2.3.5",
+
+    //---------------------------------------------------------------------------
+
+    Result: {
+      SUCCEEDED:    1, // the event transitioned successfully from one state to another
+      NOTRANSITION: 2, // the event was successfull but no state transition was necessary
+      CANCELLED:    3, // the event was cancelled by the caller in a beforeEvent callback
+      PENDING:      4  // the event is asynchronous and the caller is in control of when the transition occurs
+    },
+
+    Error: {
+      INVALID_TRANSITION: 100, // caller tried to fire an event that was innapropriate in the current state
+      PENDING_TRANSITION: 200, // caller tried to fire an event while an async transition was still pending
+      INVALID_CALLBACK:   300 // caller provided callback function threw an exception
+    },
+
+    WILDCARD: '*',
+    ASYNC: 'async',
+
+    //---------------------------------------------------------------------------
+
+    create: function(cfg, target) {
+
+      var initial      = (typeof cfg.initial == 'string') ? { state: cfg.initial } : cfg.initial; // allow for a simple string, or an object with { state: 'foo', event: 'setup', defer: true|false }
+      var terminal     = cfg.terminal || cfg['final'];
+      var fsm          = target || cfg.target  || {};
+      var events       = cfg.events || [];
+      var callbacks    = cfg.callbacks || {};
+      var map          = {}; // track state transitions allowed for an event { event: { from: [ to ] } }
+      var transitions  = {}; // track events allowed from a state            { state: [ event ] }
+
+      var add = function(e) {
+        var from = (e.from instanceof Array) ? e.from : (e.from ? [e.from] : [StateMachine.WILDCARD]); // allow 'wildcard' transition if 'from' is not specified
+        map[e.name] = map[e.name] || {};
+        for (var n = 0 ; n < from.length ; n++) {
+          transitions[from[n]] = transitions[from[n]] || [];
+          transitions[from[n]].push(e.name);
+
+          map[e.name][from[n]] = e.to || from[n]; // allow no-op transition if 'to' is not specified
+        }
+      };
+
+      if (initial) {
+        initial.event = initial.event || 'startup';
+        add({ name: initial.event, from: 'none', to: initial.state });
+      }
+
+      for(var n = 0 ; n < events.length ; n++)
+        add(events[n]);
+
+      for(var name in map) {
+        if (map.hasOwnProperty(name))
+          fsm[name] = StateMachine.buildEvent(name, map[name]);
+      }
+
+      for(var name in callbacks) {
+        if (callbacks.hasOwnProperty(name))
+          fsm[name] = callbacks[name]
+      }
+
+      fsm.current     = 'none';
+      fsm.is          = function(state) { return (state instanceof Array) ? (state.indexOf(this.current) >= 0) : (this.current === state); };
+      fsm.can         = function(event) { return !this.transition && (map[event].hasOwnProperty(this.current) || map[event].hasOwnProperty(StateMachine.WILDCARD)); }
+      fsm.cannot      = function(event) { return !this.can(event); };
+      fsm.transitions = function()      { return transitions[this.current]; };
+      fsm.isFinished  = function()      { return this.is(terminal); };
+      fsm.error       = cfg.error || function(name, from, to, args, error, msg, e) { throw e || msg; }; // default behavior when something unexpected happens is to throw an exception, but caller can override this behavior if desired (see github issue #3 and #17)
+
+      if (initial && !initial.defer)
+        fsm[initial.event]();
+
+      return fsm;
+
+    },
+
+    //===========================================================================
+
+    doCallback: function(fsm, func, name, from, to, args) {
+      if (func) {
+        try {
+          return func.apply(fsm, [name, from, to].concat(args));
+        }
+        catch(e) {
+          return fsm.error(name, from, to, args, StateMachine.Error.INVALID_CALLBACK, "an exception occurred in a caller-provided callback function", e);
+        }
+      }
+    },
+
+    beforeAnyEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbeforeevent'],                       name, from, to, args); },
+    afterAnyEvent:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafterevent'] || fsm['onevent'],      name, from, to, args); },
+    leaveAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleavestate'],                        name, from, to, args); },
+    enterAnyState:   function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenterstate'] || fsm['onstate'],      name, from, to, args); },
+    changeState:     function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onchangestate'],                       name, from, to, args); },
+
+    beforeThisEvent: function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onbefore' + name],                     name, from, to, args); },
+    afterThisEvent:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onafter'  + name] || fsm['on' + name], name, from, to, args); },
+    leaveThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onleave'  + from],                     name, from, to, args); },
+    enterThisState:  function(fsm, name, from, to, args) { return StateMachine.doCallback(fsm, fsm['onenter'  + to]   || fsm['on' + to],   name, from, to, args); },
+
+    beforeEvent: function(fsm, name, from, to, args) {
+      if ((false === StateMachine.beforeThisEvent(fsm, name, from, to, args)) ||
+          (false === StateMachine.beforeAnyEvent( fsm, name, from, to, args)))
+        return false;
+    },
+
+    afterEvent: function(fsm, name, from, to, args) {
+      StateMachine.afterThisEvent(fsm, name, from, to, args);
+      StateMachine.afterAnyEvent( fsm, name, from, to, args);
+    },
+
+    leaveState: function(fsm, name, from, to, args) {
+      var specific = StateMachine.leaveThisState(fsm, name, from, to, args),
+          general  = StateMachine.leaveAnyState( fsm, name, from, to, args);
+      if ((false === specific) || (false === general))
+        return false;
+      else if ((StateMachine.ASYNC === specific) || (StateMachine.ASYNC === general))
+        return StateMachine.ASYNC;
+    },
+
+    enterState: function(fsm, name, from, to, args) {
+      StateMachine.enterThisState(fsm, name, from, to, args);
+      StateMachine.enterAnyState( fsm, name, from, to, args);
+    },
+
+    //===========================================================================
+
+    buildEvent: function(name, map) {
+      return function() {
+
+        var from  = this.current;
+        var to    = map[from] || map[StateMachine.WILDCARD] || from;
+        var args  = Array.prototype.slice.call(arguments); // turn arguments into pure array
+
+        if (this.transition)
+          return this.error(name, from, to, args, StateMachine.Error.PENDING_TRANSITION, "event " + name + " inappropriate because previous transition did not complete");
+
+        if (this.cannot(name))
+          return this.error(name, from, to, args, StateMachine.Error.INVALID_TRANSITION, "event " + name + " inappropriate in current state " + this.current);
+
+        if (false === StateMachine.beforeEvent(this, name, from, to, args))
+          return StateMachine.Result.CANCELLED;
+
+        if (from === to) {
+          StateMachine.afterEvent(this, name, from, to, args);
+          return StateMachine.Result.NOTRANSITION;
+        }
+
+        // prepare a transition method for use EITHER lower down, or by caller if they want an async transition (indicated by an ASYNC return value from leaveState)
+        var fsm = this;
+        this.transition = function() {
+          fsm.transition = null; // this method should only ever be called once
+          fsm.current = to;
+          StateMachine.enterState( fsm, name, from, to, args);
+          StateMachine.changeState(fsm, name, from, to, args);
+          StateMachine.afterEvent( fsm, name, from, to, args);
+          return StateMachine.Result.SUCCEEDED;
+        };
+        this.transition.cancel = function() { // provide a way for caller to cancel async transition if desired (issue #22)
+          fsm.transition = null;
+          StateMachine.afterEvent(fsm, name, from, to, args);
+        }
+
+        var leave = StateMachine.leaveState(this, name, from, to, args);
+        if (false === leave) {
+          this.transition = null;
+          return StateMachine.Result.CANCELLED;
+        }
+        else if (StateMachine.ASYNC === leave) {
+          return StateMachine.Result.PENDING;
+        }
+        else {
+          if (this.transition) // need to check in case user manually called transition() but forgot to return StateMachine.ASYNC
+            return this.transition();
+        }
+
+      };
+    }
+
+  }; // StateMachine
+
+  //===========================================================================
+
+  //======
+  // NODE
+  //======
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = StateMachine;
+    }
+    exports.StateMachine = StateMachine;
+  }
+  //============
+  // AMD/REQUIRE
+  //============
+  else if (typeof define === 'function' && define.amd) {
+    define(function(require) { return StateMachine; });
+  }
+  //========
+  // BROWSER
+  //========
+  else if (typeof window !== 'undefined') {
+    window.StateMachine = StateMachine;
+  }
+  //===========
+  // WEB WORKER
+  //===========
+  else if (typeof self !== 'undefined') {
+    self.StateMachine = StateMachine;
+  }
+
+}());
+
+},{}],249:[function(require,module,exports){
 'use strict';
 
 var helpers = require('./helpers');
@@ -25159,7 +25401,7 @@ validators.not = validators.disallow = function validateNot (instance, schema, o
 
 module.exports = attribute;
 
-},{"./helpers":249}],249:[function(require,module,exports){
+},{"./helpers":250}],250:[function(require,module,exports){
 'use strict';
 
 var uri = require('url');
@@ -25440,7 +25682,7 @@ exports.encodePath = function encodePointer(a){
 	return a.map(function(v){ return '/'+encodeURIComponent(v).replace(/~/g,'%7E'); }).join('');
 };
 
-},{"url":245}],250:[function(require,module,exports){
+},{"url":245}],251:[function(require,module,exports){
 'use strict';
 
 var Validator = module.exports.Validator = require('./validator');
@@ -25454,7 +25696,7 @@ module.exports.validate = function (instance, schema, options) {
   return v.validate(instance, schema, options);
 };
 
-},{"./helpers":249,"./validator":251}],251:[function(require,module,exports){
+},{"./helpers":250,"./validator":252}],252:[function(require,module,exports){
 'use strict';
 
 var urilib = require('url');
@@ -25776,7 +26018,7 @@ types.object = function testObject (instance) {
 
 module.exports = Validator;
 
-},{"./attribute":248,"./helpers":249,"url":245}],252:[function(require,module,exports){
+},{"./attribute":249,"./helpers":250,"url":245}],253:[function(require,module,exports){
 (function (Buffer){
 //     uuid.js
 //
@@ -26052,7 +26294,7 @@ module.exports = Validator;
 })('undefined' !== typeof window ? window : null);
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":24,"crypto":28}],253:[function(require,module,exports){
+},{"buffer":24,"crypto":28}],254:[function(require,module,exports){
 (function (process){
 exports = module.exports = SemVer;
 
@@ -27259,7 +27501,7 @@ function prerelease(version, loose) {
 }
 
 }).call(this,require('_process'))
-},{"_process":223}],254:[function(require,module,exports){
+},{"_process":223}],255:[function(require,module,exports){
 module.exports = {
     Sessions: require('./lib/Sessions'),
     Settings: require('./lib/Settings'),
@@ -27267,5 +27509,5 @@ module.exports = {
     constants: require('./lib/Constants')
 };
 
-},{"./lib/Constants":2,"./lib/MessageFactory":6,"./lib/Sessions":12,"./lib/Settings":13}]},{},[254])(254)
+},{"./lib/Constants":2,"./lib/MessageFactory":6,"./lib/Sessions":12,"./lib/Settings":13}]},{},[255])(255)
 });

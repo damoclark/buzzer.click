@@ -6,8 +6,7 @@ var messageFactory = require('../../../lib/MessageFactory');
 var constants = require('../../../lib/constants');
 var messageConstants = constants.socketMessageNames;
 var helper = require('./ServerTestHelper');
-var IdentifierUtility = require('../../../lib/IdentifierUtility');
-var idUtility = new IdentifierUtility();
+var idUtility = require('../../../lib/IdentifierUtility');
 
 describe('Buzzer server', function() {
     this.timeout(15000);
@@ -119,6 +118,9 @@ describe('Buzzer server', function() {
                                     'testMessage', 'test');
                             });
                     });
+                });
+                it('should subscribe contests to observer room', function() { 
+                    // todo
                 });
                 it('should not allow when session does not exist', function() {
                     var settings = new Settings();
