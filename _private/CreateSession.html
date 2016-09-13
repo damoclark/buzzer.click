@@ -67,7 +67,8 @@
                             <label class="col-sm-3 col-form-label" for="team-name-selection">Team name selection</label>
                             <div class="col-sm-9">
                                 <select class="form-control" id="team-name-selection">
-									<option value="Auto">Auto</option>
+									<option value="AutoEdit">Auto, editable by teamleader</option>
+                                    <option value="Auto">Auto</option>
 									<option value="Manual">Manual</option>
 								</select>
                             </div>
@@ -105,12 +106,23 @@
         }
 
         $(function() {
+            //Check if cookie exists and notify host
+            var sessionCookie = buzzapi.Cookie.get('sessionId');
+            var hostCookie = buzzapi.Cookie.get('hostId');
+            if(sessionCookie != undefined && hostCookie != undefined){
+                alert('Session: ' + sessionCookie + '\nHostId: '+ hostCookie);
+            }
+
             var teamNames = [];
             $("#create-game").click(function(event) {
                 event.preventDefault()
                 var values = {};
-                $('input, select').each(function(){
+                $('input:not(.team-name-input), select').each(function(){
                     values[this.id] = $(this).val();
+                });
+                values['team-names'] = [];
+                $('input.team-name-input').each(function(){
+                    values['team-names'].push($(this).val());
                 });
                 createSession(values);
             });
@@ -134,7 +146,7 @@
                             `<div id="team-name-div-${label}" class="form-group row">
 								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
 								<div class="col-sm-9">
-									<input class="form-control" type="text" id="team-name-${label}" name="team-name-${label}" />
+									<input class="form-control team-name-input" type="text" id="team-name-${label}" name="team-name-${label}" />
 								</div>
 							</div>`
                         );
@@ -154,7 +166,7 @@
             $("#team-name-selection").change(function() {
                 if ($(this).val() == "Manual") {
                     showManualNameSelection();
-                } else if ($(this).val() == "Auto") {
+                } else {
                     hideManualNameSelection();
                 }
             });
