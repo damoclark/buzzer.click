@@ -4,10 +4,10 @@ function createSession(values) {
         var messageConstants = buzzapi.constants.socketMessageNames;
 
         var settings = new buzzapi.Settings();
-        if (values['session-name']){
+        if (values['session-name']) {
             settings.sessionName = values['session-name'];
         }
-        if (values['option-teams'] === 'true'){
+        if (values['option-teams'] === 'true') {
             settings.hasTeams = true;
             if (validateNumber(values['max-players-teams'])) {
                 settings.teamSize = parseInt(values['max-players-teams']);
@@ -36,7 +36,7 @@ function createSession(values) {
                 }
             }
         } else { //set max-players if teams option is false
-            if (!isNaN(parseInt(values['max-players']))){
+            if (!isNaN(parseInt(values['max-players']))) {
                 settings.maxContestants = parseInt(values['max-players']);
             }
         }
@@ -46,10 +46,6 @@ function createSession(values) {
 
         client.emit(messageConstants.CREATE_SESSION, createSessionMessage, function (message) {
             var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE);
-
-            $('body div.container')
-                .prepend('<div>Connected to the server<br />Server replied with `' +
-                messageConstants.CREATE_SESSION_RESPONSE + '`<br />Server said: sessionId: ' + response.data._sessionId + ', hostid: ' + response.data._hostId);
 
             buzzapi.Cookie.set(
                 'sessionId',
@@ -70,13 +66,63 @@ function createSession(values) {
             } else {
                 alter('Connected to server.');
             }
+            joinHost();
         });
     }
 
 }
 
+function checkExistingSession(sessionId, hostId) {
+    var client = io(window.location.protocol + '//' + window.location.hostname + ':3000');
+    var messageConstants = buzzapi.constants.socketMessageNames;
+
+    var rjm = buzzapi.messageFactory.create(messageConstants.REJOIN_SESSION);
+    rjm.sessionId = sessionId;
+    rjm.participantId = hostId;
+    rjm.rejoinAs = buzzapi.constants.rejoinAs.HOST;
+
+    client.emit(messageConstants.REJOIN_SESSION, rjm, function (m) {
+
+        if (m.type === messageConstants.SUCCESS) {
+            $('#modal-rejoin').modal();
+        } else { //Remove cookies if session doesn't exist
+            buzzapi.Cookie.remove('sessionId');
+            buzzapi.Cookie.remove('hostId');
+        }
+    });
+}
+
+function closeSession(sessionId,hostId) {
+    var client = io(window.location.protocol + '//' + window.location.hostname + ':3000');
+    var messageConstants = buzzapi.constants.socketMessageNames;
+
+    var scm = buzzapi.messageFactory.create(messageConstants.SESSION_COMPLETE);
+    scm.sessionId = sessionId;
+    scm.hostId = hostId;
+    client.emit(messageConstants.SESSION_COMPLETE, scm, function (m) {
+
+        if (m.type === messageConstants.SUCCESS) {
+            if (console) {
+                console.log('Session Closed');
+            }
+            buzzapi.Cookie.remove('sessionId');
+            buzzapi.Cookie.remove('hostId');
+        } else {
+            if (console) {
+                console.log('Error: '+ m);
+            }
+        }
+    });
+}
+
+function joinHost() {
+    window.open('/Share','share');
+    window.location.href = '/Manage';
+
+}
+
 function validateNumber(val) {
-    if (isNaN(parseInt(val))){
+    if (isNaN(parseInt(val))) {
         return false;
     } else {
         return true;

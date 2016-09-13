@@ -91,6 +91,28 @@
         </div>
     </div>
 
+    
+    
+    <div class="modal fade" id="modal-rejoin">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Rejoin Existing Session?</h4>
+                </div>
+                <div class="modal-body">
+                    It looks like you already have an existing session.<br />
+                    Would you like to rejoin the existing session, <br />or would you like to close the existing session and create a new one?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id='close-existing'>Close existing session</button>
+                    <button type="button" class="btn btn-primary" id='rejoin-existing'>Rejoin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="/js/socket.io.js"></script>
@@ -110,11 +132,17 @@
             var sessionCookie = buzzapi.Cookie.get('sessionId');
             var hostCookie = buzzapi.Cookie.get('hostId');
             if(sessionCookie != undefined && hostCookie != undefined){
-                alert('Session: ' + sessionCookie + '\nHostId: '+ hostCookie);
+                checkExistingSession(sessionCookie,hostCookie);
             }
 
             var teamNames = [];
-            $("#create-game").click(function(event) {
+            $('#close-existing').click(function(event){
+                closeSession(sessionCookie,hostCookie);
+            })
+            $('#rejoin-existing').click(function(event){
+                joinHost();
+            });
+            $('#create-game').click(function(event) {
                 event.preventDefault()
                 var values = {};
                 $('input:not(.team-name-input), select').each(function(){
