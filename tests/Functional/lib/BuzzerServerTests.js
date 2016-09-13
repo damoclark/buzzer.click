@@ -119,8 +119,38 @@ describe('Buzzer server', function() {
                             });
                     });
                 });
-                it('should subscribe contests to observer room', function() { 
-                    // todo
+                it('should subscribe contests to observer room', function(done) { 
+                    var settings = new Settings();
+                    settings.maxContestants = 1;
+
+                    var hostClient = helper.createClient();
+                    helper.createSession(settings, hostClient, function(responseMessage) {
+                        var contestantClient = helper.createClient();
+                        var sessionId = responseMessage.sessionId;
+
+                        // Join
+                        var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        requestMessage.sessionId = sessionId;
+                        requestMessage.username = 'Test Person';
+
+                        // list for observer update
+                        contestantClient.on(messageConstants.OBSERVER_UPDATE, function(message) {
+                            var observerMessage = messageFactory.restore(message,
+                                messageConstants.OBSERVER_UPDATE);
+                            observerMessage.should.not.be.null();
+                            done();
+                        });
+
+                        contestantClient.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
+                            requestMessage,
+                            function(message) {
+                                var responseMessage = messageFactory.restore(message,
+                                    messageConstants.CONTESTANT_JOIN_RESPONSE);
+                                responseMessage.should.not.be.null();
+                                responseMessage.wasSuccessful.should.be.true();
+                                helper.forceObserveUpdate(sessionId);
+                            });
+                    });
                 });
                 it('should not allow when session does not exist', function() {
                     var settings = new Settings();
