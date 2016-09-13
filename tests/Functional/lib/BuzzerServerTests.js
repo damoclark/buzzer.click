@@ -13,6 +13,9 @@ describe('Buzzer server', function() {
     before(function() {
         helper.startServer();
     });
+    beforeEach(function() {
+        helper.clearGameState();
+    });
     after(function() {
         helper.stopServer();
     });
@@ -40,6 +43,7 @@ describe('Buzzer server', function() {
                             var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
                             rm.should.not.be.null();
                             rm.wasSuccessful.should.be.true();
+                            rm.contestantId.should.not.be.null();
                             done();
                         });
                     });
@@ -161,8 +165,30 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should not allow when session is completed', function() {
-                    // TODO
+                it('should not allow when session is completed', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var cc = helper.createClient();
+
+                        var session = helper.sessions.all.pop();
+                        session.complete();
+
+                        // Join
+                        var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        rqm.sessionId = rm.sessionId;
+                        rqm.username = 'Test Person';
+
+                        cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                            var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+                            rm.should.not.be.null();
+                            rm.wasSuccessful.should.be.false();
+                            rm.failedRequestReason.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
                 });
                 it('should not allow when username is taken', function(done) {
                     var s = new Settings();
@@ -200,6 +226,78 @@ describe('Buzzer server', function() {
                 // TODO
             });
         });
+        describe('buzzerPress', function() {
+            it('should allow when state is ready', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(s, hc, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', rm.sessionId, function(rm) {
+                        var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                        bpm.sessionId = sessionId;
+                        bpm.contestantId = rm.contestantId;
+
+                        cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                            var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                            sm.should.not.be.null();
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should ignore when state is not ready', function(done) {
+                var s = new Settings();
+                s.maxContestants = 2;
+
+                var hc = helper.createClient();
+                helper.createSession(s, hc, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc1 = helper.createClient();
+
+                    helper.contestantJoin(cc1, 'username1', sessionId, function(rm) {
+                        var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                        bpm.sessionId = sessionId;
+                        bpm.contestantId = rm.contestantId;
+
+                        cc1.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                            var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                            sm.should.not.be.null();
+                            
+                            var cc2 = helper.createClient();
+
+                            helper.contestantJoin(cc2, 'username2', sessionId, function(rm) {
+                                var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                                bpm.sessionId = sessionId;
+                                bpm.contestantId = rm.contestantId;
+
+                                cc1.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                                    var em = messageFactory.restore(m, messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.BUZZER_PRESS_NOT_ACCEPTED);
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+            it ('should not allow when session is completed', function(done){
+                // TODO
+                done();
+            });
+            it ('should not allow when session does not exist', function(done){
+                // TODO
+                done();
+            });
+            it ('should not allow when contestant does not exits', function(done){
+                // TODO
+                done();
+            });
+        });
     });
 
     describe('observer', function() {
@@ -235,14 +333,17 @@ describe('Buzzer server', function() {
             it('should not allow when session does not exist', function(done) {
                 var s = new Settings();
                 s.maxContestants = 5;
+
                 var c = helper.createClient();
                 helper.createSession(s, c, function(rm) {
                     var ob = helper.createClient();
+
                     // Rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = idUtility.generateSessionId();
                     rjm.participantId = rm.hostId;
                     rjm.rejoinAs = constants.rejoinAs.OBSERVER;
+
                     ob.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
                         var em = messageFactory.restore(m, messageConstants.ERROR);
                         em.should.not.be.null();
@@ -251,8 +352,30 @@ describe('Buzzer server', function() {
                     });
                 });
             });
-            it('should not allow when session is completed', function() {
-                // TODO
+            it('should not allow when session is completed', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+
+                var c = helper.createClient();
+                helper.createSession(s, c, function(rm) {
+                    var ob = helper.createClient();
+
+                    var session = helper.sessions.all.pop();
+                    session.complete();
+
+                    // Rejoin
+                    var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                    rjm.sessionId = idUtility.generateSessionId();
+                    rjm.participantId = rm.hostId;
+                    rjm.rejoinAs = constants.rejoinAs.OBSERVER;
+
+                    ob.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                        done();
+                    });
+                });
             });
         });
     });
@@ -261,7 +384,6 @@ describe('Buzzer server', function() {
         describe('create', function() {
             describe('session', function() {
                 it('should allow when request is valid and create a session', function(done) {
-                    helper.clearGameState();
                     var s = new Settings();
                     s.maxContestants = 5;
 
@@ -397,8 +519,31 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should not allow when session is completed', function() {
-                    // TODO
+                it('should not allow when session is completed', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 5;
+
+                    var c = helper.createClient();
+                    helper.createSession(s, c, function(rm) {
+                        c.disconnect();
+                        c = helper.createClient();
+
+                        var session = helper.sessions.all.pop();
+                        session.complete();
+
+                        // Rejoin
+                        var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rjm.sessionId = rm.sessionId;
+                        rjm.participantId = rm.hostId;
+                        rjm.rejoinAs = constants.rejoinAs.HOST;
+
+                        c.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
+                            var rm = messageFactory.restore(m, messageConstants.ERROR);
+                            rm.should.not.be.null();
+                            rm.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
                 });
             });
         });
@@ -458,8 +603,6 @@ describe('Buzzer server', function() {
                     });
                 });
                 it('should not allow when session is already completed', function(done) {
-                    helper.clearGameState();
-
                     var s = new Settings();
                     s.maxContestants = 1;
 
