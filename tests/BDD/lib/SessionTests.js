@@ -7,7 +7,7 @@ var Settings = require('../../../lib/Settings');
 var Host = require('../../../lib/Host');
 var Contestant = require('../../../lib/Contestant');
 var Observer = require('../../../lib/Observer');
-var AddContestantResponse = require('../../../lib/AddContestantResponse');
+var constants = require('../../../lib/Constants');
 
 var id = 'id_test';
 var settings = new Settings();
@@ -145,6 +145,19 @@ describe('Session', function() {
                 var response = s.addContestant(c3);
                 response.should.not.be.null();
                 response.wasSuccessful.should.be.false();
+            });
+            it('should not add contestant when username is already taken', function() {
+                settings.maxContestants = 2;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c1';
+                var s = new Session(id, settings, host);
+                s.addContestant(c1);
+                var response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+                response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
             });
         });
         describe('when in team mode', function() {
