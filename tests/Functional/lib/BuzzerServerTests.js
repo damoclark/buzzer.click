@@ -119,7 +119,7 @@ describe('Buzzer server', function() {
                             });
                     });
                 });
-                it('should subscribe contests to observer room', function(done) { 
+                it('should subscribe contests to observer room', function(done) {
                     var settings = new Settings();
                     settings.maxContestants = 1;
 
@@ -134,7 +134,8 @@ describe('Buzzer server', function() {
                         requestMessage.username = 'Test Person';
 
                         // list for observer update
-                        contestantClient.on(messageConstants.OBSERVER_UPDATE, function(message) {
+                        contestantClient.on(messageConstants.OBSERVER_UPDATE, function(
+                            message) {
                             var observerMessage = messageFactory.restore(message,
                                 messageConstants.OBSERVER_UPDATE);
                             observerMessage.should.not.be.null();
@@ -182,8 +183,37 @@ describe('Buzzer server', function() {
                 it('should not allow when session is completed', function() {
                     // TODO
                 });
-                it('should not allow when username is taken', function() {
-                    // TODO
+                it('should not allow when username is taken', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 2;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var sessionId = rm.sessionId;
+
+                        var cc1 = helper.createClient();
+                        helper.contestantJoin(cc1, 'username', sessionId, function() {
+
+                            var cc2 = helper.createClient();
+
+                            // Join
+                            var rm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                            rm.sessionId = sessionId;
+                            rm.username = 'username';
+
+                            cc2.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rm,
+                                function(message) {
+                                    var responseMessage = messageFactory.restore(
+                                        message, messageConstants.CONTESTANT_JOIN_RESPONSE
+                                    );
+                                    responseMessage.should.not.be.null();
+                                    responseMessage.wasSuccessful.should.be.false();
+                                    responseMessage.failedRequestReason.should.equal(
+                                        constants.messages.USERNAME_TAKEN);
+                                    done();
+                                });
+                        });
+                    });
                 });
             });
             describe('with teams', function() {
@@ -415,23 +445,27 @@ describe('Buzzer server', function() {
                 });
             });
         });
-        describe('complete', function(){
-            describe('session', function(){
+        describe('complete', function() {
+            describe('session', function() {
                 it('should allow when request is valid', function(done) {
                     var settings = new Settings();
                     settings.maxContestants = 1;
 
                     var hostClient = helper.createClient();
                     helper.createSession(settings, hostClient, function(responseMessage) {
-                        var sessionCompleteMessage = messageFactory.create(messageConstants.SESSION_COMPLETE);
+                        var sessionCompleteMessage = messageFactory.create(messageConstants
+                            .SESSION_COMPLETE);
                         sessionCompleteMessage.sessionId = responseMessage.sessionId;
                         sessionCompleteMessage.hostId = responseMessage.hostId;
 
-                        hostClient.emit(messageConstants.SESSION_COMPLETE, sessionCompleteMessage, function(message) {
-                            var responseMessage = messageFactory.restore(message, messageConstants.SUCCESS);
-                            responseMessage.should.not.be.null();
-                            done();
-                        });
+                        hostClient.emit(messageConstants.SESSION_COMPLETE,
+                            sessionCompleteMessage,
+                            function(message) {
+                                var responseMessage = messageFactory.restore(message,
+                                    messageConstants.SUCCESS);
+                                responseMessage.should.not.be.null();
+                                done();
+                            });
                     });
                 });
                 it('should not allow when host id is invalid', function() {
