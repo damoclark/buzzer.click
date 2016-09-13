@@ -114,4 +114,18 @@ describe('Settings', function() {
                 s.maxContestants.should.be.equal(1);
             });
     });
+    describe('#sessionName', function() {
+        it('should set value',
+            function() {
+                var s = new Settings();
+                s.sessionName = 'sessionName';
+                s._sessionName.should.be.equal('sessionName');
+            });
+        it('should get value',
+            function() {
+                var s = new Settings();
+                s._sessionName = 'sessionName';
+                s.sessionName.should.be.equal('sessionName');
+            });
+    });
 });
