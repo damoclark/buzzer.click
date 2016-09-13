@@ -128,4 +128,22 @@ describe('Settings', function() {
                 s.sessionName.should.be.equal('sessionName');
             });
     });
+    describe('#teamNames', function() {
+        it('should set value',
+            function() {
+                var s = new Settings();
+                s.teamNames = ['n1', 'n2'];
+                s._teamNames.should.be.Array();
+                s._teamNames.length.should.equal(2);
+                s._teamNames[0].should.equal('n1');
+            });
+        it('should get value',
+            function() {
+                var s = new Settings();
+                s._teamNames = ['n1', 'n2'];
+                s.teamNames.should.be.Array();
+                s.teamNames.length.should.equal(2);
+                s.teamNames[0].should.equal('n1');
+            });
+    });
 });
