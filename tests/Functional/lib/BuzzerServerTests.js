@@ -236,7 +236,7 @@ describe('Buzzer server', function() {
                     var sessionId = rm.sessionId;
                     var cc = helper.createClient();
 
-                    helper.contestantJoin(cc, 'username', rm.sessionId, function(rm) {
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
                         var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
                         bpm.sessionId = sessionId;
                         bpm.contestantId = rm.contestantId;
@@ -286,16 +286,73 @@ describe('Buzzer server', function() {
                 });
             });
             it ('should not allow when session is completed', function(done){
-                // TODO
-                done();
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(s, hc, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                        bpm.sessionId = sessionId;
+                        bpm.contestantId = rm.contestantId;
+
+                        var session = helper.sessions.all.pop();
+                        session.complete();
+
+                        cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                            var sm = messageFactory.restore(m, messageConstants.ERROR);
+                            sm.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
+                });
             });
             it ('should not allow when session does not exist', function(done){
-                // TODO
-                done();
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(s, hc, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                        bpm.sessionId = idUtility.generateSessionId();
+                        bpm.contestantId = rm.contestantId;
+
+                        cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                            var sm = messageFactory.restore(m, messageConstants.ERROR);
+                            sm.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
+                });
             });
             it ('should not allow when contestant does not exits', function(done){
-                // TODO
-                done();
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(s, hc, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                        bpm.sessionId = sessionId;
+                        bpm.contestantId = idUtility.generateParticipantId();
+
+                        cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                            var sm = messageFactory.restore(m, messageConstants.ERROR);
+                            sm.error.should.equal(constants.messages.COULD_NOT_ACCEPT_BUZZER_PRESS_NOT_CONTESTANT);
+                            done();
+                        });
+                    });
+                });
             });
         });
     });
