@@ -8,6 +8,7 @@ var Host = require('../../../lib/Host');
 var Contestant = require('../../../lib/Contestant');
 var Observer = require('../../../lib/Observer');
 var constants = require('../../../lib/Constants');
+var idUtility = require('../../../lib/IdentifierUtility');
 
 var id = 'id_test';
 var settings = new Settings();
@@ -48,7 +49,10 @@ describe('Session', function() {
             });
     });
     describe('#isSessionCompleted', function() {
-        //TODO: add tests. Requires FSM.
+        var s = new Session(id, settings, host);
+        s.isSessionCompleted.should.be.false();
+        s.complete();
+        s.isSessionCompleted.should.be.true();
     });
     describe('#observers', function() {
         it('should throw on set value',
@@ -104,6 +108,13 @@ describe('Session', function() {
             function() {
                 var s = new Session(id, settings, host);
                 s.host.should.equal(host);
+            });
+    });
+    describe('#currentState', function() {
+        it('should get value',
+            function() {
+                var s = new Session(id, settings, host);
+                s.currentState.should.equal('ready');
             });
     });
     describe('#incrementRoundsPlayed()', function() {
@@ -162,6 +173,74 @@ describe('Session', function() {
         });
         describe('when in team mode', function() {
             //TODO: add tests. Requires method to be completed.
+        });
+    });
+    describe('#subscribeForStateChange(event, callback)', function() {
+        it('should subscribe callback to the correct event', function(done) {
+            var c = new Contestant();
+            c.username = 'testUser';
+
+            settings.maxContestants = 1;
+            var s = new Session(id, settings, host);
+
+            var r = s.addContestant(c);
+            r.wasSuccessful.should.be.true();
+
+            s.subscribeForStateChange('onpending', function(session, event, from, to) {
+                session.should.equal(s);
+                event.should.equal('buzzerPressed');
+                from.should.equal('ready');
+                to.should.equal('pending');
+                done();
+            });
+
+            s.tryBuzzerPressRegister(c.id).should.be.true();
+        });
+    });
+    describe('tryBuzzerPressRegister(contestantId)', function() {
+        it('should register when state is ready', function() {
+            var c = new Contestant();
+            c.username = 'testUser';
+
+            settings.maxContestants = 1;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c).wasSuccessful.should.be.true();
+            s.currentState.should.equal('ready');
+            s.tryBuzzerPressRegister(c.id).should.be.true();
+            s.currentState.should.equal('pending');
+
+        });
+        it('should not register when state is not ready', function() {
+            var c1 = new Contestant();
+            c1.username = 'testUser1';
+
+            var c2 = new Contestant();
+            c2.username = 'testUser2';
+
+            settings.maxContestants = 2;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c1).wasSuccessful.should.be.true();
+            s.addContestant(c2).wasSuccessful.should.be.true();
+
+            s.currentState.should.equal('ready');
+            s.tryBuzzerPressRegister(c1.id).should.be.true();
+            s.currentState.should.equal('pending');
+
+            s.tryBuzzerPressRegister(c2.id).should.be.false();
+        });
+        it('should not register when contestant does not exists', function() {
+            var c = new Contestant();
+            c.username = 'testUser';
+
+            settings.maxContestants = 1;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c).wasSuccessful.should.be.true();
+            s.currentState.should.equal('ready');
+            s.tryBuzzerPressRegister(idUtility.generateParticipantId()).should.be.false();
+            s.currentState.should.equal('ready');
         });
     });
 });
