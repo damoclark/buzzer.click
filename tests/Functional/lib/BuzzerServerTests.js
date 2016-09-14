@@ -99,7 +99,7 @@ describe('Buzzer server', function() {
                         rqm.sessionId = sessionId;
                         rqm.username = 'Test Person';
 
-                        // list for Contestant update
+                        // listen for Contestant update
                         cc.on('testMessage', function(m) {
                             m.should.equal('test');
                             done();
@@ -128,7 +128,7 @@ describe('Buzzer server', function() {
                         rqm.sessionId = sessionId;
                         rqm.username = 'Test Person';
 
-                        // list for observer update
+                        // listen for observer update
                         cc.on(messageConstants.OBSERVER_UPDATE, function(m) {
                             var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                             om.should.not.be.null();
@@ -367,13 +367,13 @@ describe('Buzzer server', function() {
                 helper.createSession(s, c, function(rm) {
                     var oc = helper.createClient();
 
-                    // Rejoin
+                    // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = rm.sessionId;
                     rjm.participantId = rm.hostId;
                     rjm.rejoinAs = constants.rejoinAs.OBSERVER;
 
-                    // list for observer update
+                    // listen for observer update
                     oc.on(messageConstants.OBSERVER_UPDATE, function(message) {
                         var ob = messageFactory.restore(message, messageConstants.OBSERVER_UPDATE);
                         ob.should.not.be.null();
@@ -395,7 +395,7 @@ describe('Buzzer server', function() {
                 helper.createSession(s, c, function(rm) {
                     var ob = helper.createClient();
 
-                    // Rejoin
+                    // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = idUtility.generateSessionId();
                     rjm.participantId = rm.hostId;
@@ -420,7 +420,7 @@ describe('Buzzer server', function() {
                     var session = helper.sessions.all.pop();
                     session.complete();
 
-                    // Rejoin
+                    // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = idUtility.generateSessionId();
                     rjm.participantId = rm.hostId;
@@ -465,7 +465,7 @@ describe('Buzzer server', function() {
 
                     var c = helper.createClient();
 
-                    // list for observer update
+                    // listen for observer update
                     c.on(messageConstants.OBSERVER_UPDATE, function(m) {
                         var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                         om.should.not.be.null();
@@ -491,7 +491,7 @@ describe('Buzzer server', function() {
                         c.disconnect();
                         c = helper.createClient();
 
-                        // Rejoin
+                        // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                         rjm.sessionId = rm.sessionId;
                         rjm.participantId = rm.hostId;
@@ -512,13 +512,13 @@ describe('Buzzer server', function() {
                         c.disconnect();
                         c = helper.createClient();
 
-                        // Rejoin
+                        // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                         rjm.sessionId = rm.sessionId;
                         rjm.participantId = rm.hostId;
                         rjm.rejoinAs = constants.rejoinAs.HOST;
 
-                        // list for observer update
+                        // listen for observer update
                         c.on(messageConstants.OBSERVER_UPDATE, function(m) {
                             var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                             om.should.not.be.null();
@@ -539,7 +539,7 @@ describe('Buzzer server', function() {
                         c.disconnect();
                         c = helper.createClient();
 
-                        // Rejoin
+                        // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                         rjm.sessionId = rm.sessionId;
                         rjm.participantId = idUtility.generateParticipantId();
@@ -562,7 +562,7 @@ describe('Buzzer server', function() {
                         c.disconnect();
                         c = helper.createClient();
 
-                        // Rejoin
+                        // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                         rjm.sessionId = idUtility.generateSessionId();
                         rjm.participantId = rm.hostId;
@@ -588,7 +588,7 @@ describe('Buzzer server', function() {
                         var session = helper.sessions.all.pop();
                         session.complete();
 
-                        // Rejoin
+                        // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                         rjm.sessionId = rm.sessionId;
                         rjm.participantId = rm.hostId;
@@ -691,7 +691,7 @@ describe('Buzzer server', function() {
                         scm.sessionId = rm.sessionId;
                         scm.hostId = rm.hostId;
 
-                        // list for observer update
+                        // listen for observer update
                         hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
                             var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                             om.should.not.be.null();
@@ -702,6 +702,68 @@ describe('Buzzer server', function() {
                             var rm = messageFactory.restore(m, messageConstants.SUCCESS);
                             rm.should.not.be.null();
                         });
+                    });
+                });
+            });
+        });
+        describe('respond', function() {
+            describe('buzzer press', function() {
+                it('should allow accept when valid', function(done){
+                    done();
+                    // Todo
+                });
+                it('should allow reject when valid', function(done){
+                    done();
+                    // Todo
+                });
+                it('should allow reset when valid', function(done){
+                    done();
+                    // Todo
+                });
+                it('should not allow accept when state is not pending', function(done){
+                    done();
+                    // Todo
+                });
+                it('should not allow reject when state is not pending', function(done){
+                    done();
+                    // Todo
+                });
+                it('should allow reset when game state is anything but complete', function(done){
+                    done();
+                    // Todo
+                });
+                it('should not allow response when host id is invalid', function(done){
+                    done();
+                    // Todo
+                });
+                it('should not allow response when session id is invalid', function(done){
+                    done();
+                    // Todo
+                });
+                it('should not allow response when session is complete', function(done){
+                    done();
+                    // Todo
+                });
+                describe('when accepted', function(){
+                    it('should update session with last round won by', function(done){
+                        done();
+                        // Todo
+                    });
+                    it('should update session and move previous round won by to previous winners list', function(done){
+                        done();
+                        // Todo
+                    });
+                    it('should increment contestants score', function(done){
+                        done();
+                        // Todo
+                    });
+                    it('should increment teams score', function(done){
+                        done();
+                        // Todo
+                    });
+                    it('should update observers', function(done){
+                        done();
+                        // Todo
                     });
                 });
             });
