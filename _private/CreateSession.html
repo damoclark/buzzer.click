@@ -115,7 +115,7 @@
 
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script src="/js/socket.io.js"></script>
+    <!--<script src="/js/socket.io.js"></script>  This has been moved to bundle.js-->
     <script src="/js/bundle.js"></script>
     <script src="/js/controller.js"></script>
     <script type="text/javascript">
@@ -140,7 +140,7 @@
                 closeSession(sessionCookie,hostCookie);
             })
             $('#rejoin-existing').click(function(event){
-                joinHost();
+                redirectHost();
             });
             $('#create-game').click(function(event) {
                 event.preventDefault()

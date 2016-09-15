@@ -17,12 +17,15 @@
 	<div class="container">
         <div class="row">
             <div class="col-sm-6 col-sm-offset-3">
-                <h5>Joining Session</h5>
-                <h4 class="text-center" id="session-name">PLACEHOLDER</h4>
+                <h2>Join Session</h2>
                 <form class="form" id="join-session-form">
                     <div class="form-group">
+                        <label for="session-id">Session</label>
+                        <input class="form-control"  type="text" id="session-id" name="session-id" required />
+                    </div>
+                    <div class="form-group">
                         <label for="session-username">Enter a username</label>
-                        <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" />
+                        <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" required />
                     </div>
                     <button class="btn btn-lg pull-right btn-primary" type="submit" id="session-submit">Join</button>
                 </form>
@@ -75,11 +78,24 @@
     
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/bundle.js"></script>
+    <script src="js/controller.js"></script>
     <script type="text/javascript">
         $(function(){
+            //Check parameter for ?sessionid=
+            var session = getParameterByName('sessionid');
+            if(session){
+                $('#session-id').prop('readonly',true);
+                $('#session-id').val(session);
+            }
             $('#join-session-form').submit(function(event){
                 event.preventDefault();
-                $("#modal-teamleader").modal("show");
+                var values = []
+                $('input',this).each(function(){
+                    values[this.id] = $(this).val();
+                });
+                joinSession(values);
+                //$("#modal-teamleader").modal("show");
                 
             });
             //For the moment bind the yes click on teamleader modal to show team name update modal (mainly for testing)
