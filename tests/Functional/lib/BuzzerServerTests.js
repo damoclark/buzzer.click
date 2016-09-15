@@ -54,13 +54,14 @@ describe('Buzzer server', function() {
 
                     var hc = helper.createClient();
                     helper.createSession(s, hc, function(rm) {
-                        
+
                         // listen for observer update
                         hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
                             var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                             om.should.not.be.null();
                             om.gameState.contestants.length.should.equal(1);
-                            om.gameState.contestants[0].username.should.equal('Test Person');
+                            om.gameState.contestants[0].username.should.equal(
+                                'Test Person');
                             done();
                         });
 
@@ -161,6 +162,8 @@ describe('Buzzer server', function() {
 
                         // listen for observer update
                         cc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            // Hack: this event may fire twice
+                            helper.closeClients();
                             var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
                             om.should.not.be.null();
                             done();
@@ -296,26 +299,35 @@ describe('Buzzer server', function() {
                         cc1.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
                             var sm = messageFactory.restore(m, messageConstants.SUCCESS);
                             sm.should.not.be.null();
-                            
+
                             var cc2 = helper.createClient();
 
-                            helper.contestantJoin(cc2, 'username2', sessionId, function(rm) {
-                                var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
-                                bpm.sessionId = sessionId;
-                                bpm.contestantId = rm.contestantId;
+                            helper.contestantJoin(cc2, 'username2', sessionId,
+                                function(rm) {
+                                    var bpm = messageFactory.create(
+                                        messageConstants.CONTESTANT_BUZZER_PRESS
+                                    );
+                                    bpm.sessionId = sessionId;
+                                    bpm.contestantId = rm.contestantId;
 
-                                cc1.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
-                                    var em = messageFactory.restore(m, messageConstants.ERROR);
-                                    em.should.not.be.null();
-                                    em.error.should.equal(constants.messages.BUZZER_PRESS_NOT_ACCEPTED);
-                                    done();
+                                    cc1.emit(messageConstants.CONTESTANT_BUZZER_PRESS,
+                                        bpm,
+                                        function(m) {
+                                            var em = messageFactory.restore(
+                                                m, messageConstants.ERROR
+                                            );
+                                            em.should.not.be.null();
+                                            em.error.should.equal(constants
+                                                .messages.BUZZER_PRESS_NOT_ACCEPTED
+                                            );
+                                            done();
+                                        });
                                 });
-                            });
                         });
                     });
                 });
             });
-            it ('should not allow when session is completed', function(done){
+            it('should not allow when session is completed', function(done) {
                 var s = new Settings();
                 s.maxContestants = 1;
 
@@ -339,7 +351,7 @@ describe('Buzzer server', function() {
                     });
                 });
             });
-            it ('should not allow when session does not exist', function(done){
+            it('should not allow when session does not exist', function(done) {
                 var s = new Settings();
                 s.maxContestants = 1;
 
@@ -361,7 +373,7 @@ describe('Buzzer server', function() {
                     });
                 });
             });
-            it ('should not allow when contestant does not exits', function(done){
+            it('should not allow when contestant does not exits', function(done) {
                 var s = new Settings();
                 s.maxContestants = 1;
 
@@ -477,7 +489,7 @@ describe('Buzzer server', function() {
                         m.should.be.Object();
                         m.type.should.equal(messageConstants.CREATE_SESSION_RESPONSE);
                         helper.sessions.all.length.should.equal(1);
-                        
+
                         var session = helper.getLatestSession();
                         session.complete();
 
@@ -732,9 +744,9 @@ describe('Buzzer server', function() {
                 });
             });
         });
-        describe('respond', function() {
-            describe('buzzer press', function() {
-                it('should allow accept when valid', function(done){
+        describe('buzzer', function() {
+            describe('action', function() {
+                it('should allow accept when valid', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -749,30 +761,42 @@ describe('Buzzer server', function() {
                             bpm.sessionId = sessionId;
                             bpm.contestantId = rm.contestantId;
 
-                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
-                                messageFactory.restore(m, messageConstants.SUCCESS);
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    messageFactory.restore(m, messageConstants.SUCCESS);
 
-                                helper.getLatestSession().currentState.should.equal(constants.gameStates.PENDING);
+                                    helper.getLatestSession().currentState.should
+                                        .equal(constants.gameStates.PENDING);
 
-                                var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
-                                hrm.sessionId = sessionId;
-                                hrm.hostId = hostId;
-                                hrm.action = constants.buzzerActionCommands.ACCEPT;
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = sessionId;
+                                    hrm.hostId = hostId;
+                                    hrm.action = constants.buzzerActionCommands
+                                        .ACCEPT;
 
-                                hc.emit(messageConstants.BUZZER_ACTION_COMMAND, hrm, function(rm) {
-                                    var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
-                                    sm.should.not.be.null();
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var sm = messageFactory.restore(
+                                                rm, messageConstants.SUCCESS
+                                            );
+                                            sm.should.not.be.null();
 
-                                    helper.getLatestSession().currentState.should.equal(constants.gameStates.READY);
-                                    helper.getLatestSession().roundWinner.should.equal('username');
+                                            helper.getLatestSession().currentState
+                                                .should.equal(constants.gameStates
+                                                    .READY);
+                                            helper.getLatestSession().roundWinner
+                                                .should.equal('username');
 
-                                    done();
+                                            done();
+                                        });
                                 });
-                            });
                         });
                     });
                 });
-                it('should allow reject when valid', function(done){
+                it('should allow reject when valid', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -787,30 +811,42 @@ describe('Buzzer server', function() {
                             bpm.sessionId = sessionId;
                             bpm.contestantId = rm.contestantId;
 
-                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
-                                messageFactory.restore(m, messageConstants.SUCCESS);
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    messageFactory.restore(m, messageConstants.SUCCESS);
 
-                                helper.getLatestSession().currentState.should.equal(constants.gameStates.PENDING);
+                                    helper.getLatestSession().currentState.should
+                                        .equal(constants.gameStates.PENDING);
 
-                                var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
-                                hrm.sessionId = sessionId;
-                                hrm.hostId = hostId;
-                                hrm.action = constants.buzzerActionCommands.REJECT;
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = sessionId;
+                                    hrm.hostId = hostId;
+                                    hrm.action = constants.buzzerActionCommands
+                                        .REJECT;
 
-                                hc.emit(messageConstants.BUZZER_ACTION_COMMAND, hrm, function(rm) {
-                                    var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
-                                    sm.should.not.be.null();
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var sm = messageFactory.restore(
+                                                rm, messageConstants.SUCCESS
+                                            );
+                                            sm.should.not.be.null();
 
-                                    helper.getLatestSession().currentState.should.equal(constants.gameStates.READY);
-                                    should(helper.getLatestSession().roundWinner).be.null();
+                                            helper.getLatestSession().currentState
+                                                .should.equal(constants.gameStates
+                                                    .READY);
+                                            should(helper.getLatestSession()
+                                                .roundWinner).be.null();
 
-                                    done();
+                                            done();
+                                        });
                                 });
-                            });
                         });
                     });
                 });
-                it('should allow reset when valid', function(done){
+                it('should allow reset when valid', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -830,7 +866,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should not allow accept when state is not pending', function(done){
+                it('should not allow accept when state is not pending', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -849,7 +885,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should not allow reject when state is not pending', function(done){
+                it('should not allow reject when state is not pending', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -868,7 +904,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should allow reset when game state is ready', function(done){
+                it('should allow reset when game state is ready', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -887,7 +923,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                it('should allow reset when game state is pending', function(done){
+                it('should allow reset when game state is pending', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
 
@@ -902,59 +938,177 @@ describe('Buzzer server', function() {
                             bpm.sessionId = sessionId;
                             bpm.contestantId = rm.contestantId;
 
-                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
-                                messageFactory.restore(m, messageConstants.SUCCESS);
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    messageFactory.restore(m, messageConstants.SUCCESS);
 
-                                helper.getLatestSession().currentState.should.equal(constants.gameStates.PENDING);
+                                    helper.getLatestSession().currentState.should
+                                        .equal(constants.gameStates.PENDING);
 
-                                var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
-                                hrm.sessionId = sessionId;
-                                hrm.hostId = hostId;
-                                hrm.action = constants.buzzerActionCommands.RESET;
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = sessionId;
+                                    hrm.hostId = hostId;
+                                    hrm.action = constants.buzzerActionCommands
+                                        .RESET;
 
-                                hc.emit(messageConstants.BUZZER_ACTION_COMMAND, hrm, function(rm) {
-                                    var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
-                                    sm.should.not.be.null();
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var sm = messageFactory.restore(
+                                                rm, messageConstants.SUCCESS
+                                            );
+                                            sm.should.not.be.null();
 
-                                    helper.getLatestSession().currentState.should.equal(constants.gameStates.READY);
-                                    should.not.exist(helper.getLatestSession().roundWinner);
+                                            helper.getLatestSession().currentState
+                                                .should.equal(constants.gameStates
+                                                    .READY);
+                                            should.not.exist(helper.getLatestSession()
+                                                .roundWinner);
 
-                                    done();
+                                            done();
+                                        });
                                 });
-                            });
                         });
                     });
                 });
-                it('should not allow response when host id is invalid', function(done){
-                    done();
-                    // Todo
+                it('should not allow response when host id is invalid', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var sessionId = rm.sessionId;
+                        var hostId = rm.hostId;
+                        var cc = helper.createClient();
+
+                        helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                            var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                            bpm.sessionId = sessionId;
+                            bpm.contestantId = rm.contestantId;
+
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = sessionId;
+                                    hrm.hostId = idUtility.generateParticipantId();
+                                    hrm.action = constants.buzzerActionCommands
+                                        .ACCEPT;
+
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var em = messageFactory.restore(
+                                                rm, messageConstants.ERROR
+                                            );
+                                            em.error.should.equal(constants
+                                                .messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST
+                                            );
+                                            done();
+                                        });
+                                });
+                        });
+                    });
                 });
-                it('should not allow response when session id is invalid', function(done){
-                    done();
-                    // Todo
+                it('should not allow response when session id is invalid', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var sessionId = rm.sessionId;
+                        var hostId = rm.hostId;
+                        var cc = helper.createClient();
+
+                        helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                            var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                            bpm.sessionId = sessionId;
+                            bpm.contestantId = rm.contestantId;
+
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = idUtility.generateSessionId();
+                                    hrm.hostId = hostId;
+                                    hrm.action = constants.buzzerActionCommands
+                                        .ACCEPT;
+
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var em = messageFactory.restore(
+                                                rm, messageConstants.ERROR
+                                            );
+                                            em.error.should.equal(constants
+                                                .messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED
+                                            );
+                                            done();
+                                        });
+                                });
+                        });
+                    });
                 });
-                it('should not allow response when session is complete', function(done){
-                    done();
-                    // Todo
+                it('should not allow response when session is complete', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var sessionId = rm.sessionId;
+                        var hostId = rm.hostId;
+                        var cc = helper.createClient();
+
+                        helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                            var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                            bpm.sessionId = sessionId;
+                            bpm.contestantId = rm.contestantId;
+
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm,
+                                function(m) {
+                                    var hrm = messageFactory.create(
+                                        messageConstants.BUZZER_ACTION_COMMAND
+                                    );
+                                    hrm.sessionId = sessionId;
+                                    hrm.hostId = hostId;
+                                    hrm.action = constants.buzzerActionCommands
+                                        .ACCEPT;
+
+                                    helper.getLatestSession().complete();
+
+                                    hc.emit(messageConstants.BUZZER_ACTION_COMMAND,
+                                        hrm,
+                                        function(rm) {
+                                            var em = messageFactory.restore(
+                                                rm, messageConstants.ERROR
+                                            );
+                                            em.error.should.equal(constants
+                                                .messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED
+                                            );
+                                            done();
+                                        });
+                                });
+                        });
+                    });
                 });
-                describe('when accepted', function(){
-                    it('should update session with last round won by', function(done){
+                describe('when accepted', function() {
+                    it('should update observers', function(done) {
                         done();
                         // Todo
                     });
-                    it('should update session and move previous round won by to previous winners list', function(done){
+                });
+                describe('when rejected', function() {
+                    it('should update observers', function(done) {
                         done();
                         // Todo
                     });
-                    it('should increment contestants score', function(done){
-                        done();
-                        // Todo
-                    });
-                    it('should increment teams score', function(done){
-                        done();
-                        // Todo
-                    });
-                    it('should update observers', function(done){
+                });
+                describe('when reset', function() {
+                    it('should update observers', function(done) {
                         done();
                         // Todo
                     });
