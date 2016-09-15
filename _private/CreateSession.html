@@ -127,12 +127,16 @@
             $('#options-manual-name-selection').hide('slow');
         }
 
+        var handleExistingSession = function(){
+            $('#modal-rejoin').modal();
+        }
+
         $(function() {
             //Check if cookie exists and notify host
             var sessionCookie = buzzapi.Cookie.get('sessionId');
             var hostCookie = buzzapi.Cookie.get('hostId');
             if(sessionCookie != undefined && hostCookie != undefined){
-                checkExistingSession(sessionCookie,hostCookie);
+                checkExistingSession(sessionCookie,hostCookie,buzzapi.constants.rejoinAs.HOST);
             }
 
             var teamNames = [];

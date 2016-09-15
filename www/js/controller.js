@@ -78,19 +78,25 @@ function createSession(values) {
 }
 
 /* eslint-disable no-unused-vars */
-function checkExistingSession(sessionId, hostId) {
+/**
+ * check if a session already exists and rejoin
+ * Type: buzzapi.constants.rejoinAs.HOST,
+ *      buzzapi.constants.rejoinAs.CONTESTANT,
+ *      buzzapi.constants.rejoinAs.OBSERVER
+ */
+function checkExistingSession(sessionId, participantId, type) {
     /* eslint-enable no-unused-vars */
     var client = buzzapi.io(API_URL);
 
     var rjm = buzzapi.messageFactory.create(messageConstants.REJOIN_SESSION);
     rjm.sessionId = sessionId;
-    rjm.participantId = hostId;
+    rjm.participantId = participantId;
     rjm.rejoinAs = buzzapi.constants.rejoinAs.HOST;
 
     client.emit(messageConstants.REJOIN_SESSION, rjm, function (m) {
 
         if (m.type === messageConstants.SUCCESS) {
-            $('#modal-rejoin').modal();
+            handleExistingSession();
         } else { //Remove cookies if session doesn't exist
             buzzapi.Cookie.remove('sessionId');
             buzzapi.Cookie.remove('hostId');
@@ -194,6 +200,23 @@ function joinObserver(sessionId, participantId) {
         if (m.type === messageConstants.ERROR) {
             var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
             alertBootstrap(err.error, 'danger');
+        }
+    });
+}
+
+function pressBuzzer(sessionId,contestantId) {
+    var client = buzzapi.io(API_URL);
+
+    var bpm = buzzapi.messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+    bpm.sessionId = sessionId;
+    bpm.contestantId = contestantId;
+
+    client.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+        if (m.type === messageConstants.SUCCESS) {
+            handleBuzzSuccess();
+        } else {
+            var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+            alertBootstrap(err.error);
         }
     });
 }

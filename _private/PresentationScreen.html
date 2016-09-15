@@ -91,7 +91,7 @@
 	<script src="js/jquery-qrcode-0.14.0.min.js"></script>
 	<script>
 		//Updates view based on observer updates - called from controller.js
-		function updateShareView(values)
+		var updateShareView = function(values)
 		{
 			$('#session-id').text(values.gameState.settings.sessionName);
 			if(values.gameState.settings.hasTeams){
@@ -124,6 +124,11 @@
 				});
                 joinObserver(sessionCookie,participantCookie);
             }
+			else{
+				alertBootstrap('No session data found, please join or create a session and try again','warning');
+				$('.container > .row  div').hide();
+				$('#error-alert').show();
+			}
 
 			
 		});
