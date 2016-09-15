@@ -48,6 +48,37 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
+                it('should update observers', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        
+                        // listen for observer update
+                        hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                            om.should.not.be.null();
+                            om.gameState.contestants.length.should.equal(1);
+                            om.gameState.contestants[0].username.should.equal('Test Person');
+                            done();
+                        });
+
+                        var cc = helper.createClient();
+
+                        // Join
+                        var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                        rqm.sessionId = rm.sessionId;
+                        rqm.username = 'Test Person';
+
+                        cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                            var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+                            rm.should.not.be.null();
+                            rm.wasSuccessful.should.be.true();
+                            rm.contestantId.should.not.be.null();
+                        });
+                    });
+                });
                 it('should not allow when session is full', function(done) {
                     var s = new Settings();
                     s.maxContestants = 1;
