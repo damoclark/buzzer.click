@@ -113,6 +113,10 @@ ServerTestHelper.prototype.sendMessageToContestants = function(sessionId, messag
     BuzzerServer.sendMessageToContestants(session, messageName, message);
 };
 
+ServerTestHelper.prototype.getLatestSession = function() {
+    return this.sessions.all.pop();
+};
+
 var helper = new ServerTestHelper();
 
 //Export the class

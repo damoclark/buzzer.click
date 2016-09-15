@@ -48,6 +48,38 @@ describe('Session', function() {
                 s.roundsPlayed.should.equal(1);
             });
     });
+    describe('#previousWinners', function() {
+        it('should throw on set value',
+            function() {
+                var s = new Session(id, settings, host);
+                (function() {
+                    s.previousWinners = ['SomeWinner'];
+                }).should.throw();
+            });
+        it('should get value',
+            function() {
+                var s = new Session(id, settings, host);
+                s._previousWinners = ['Winner1', 'Winner2'];
+                s.previousWinners.should.be.Array();
+                s.previousWinners.length.should.equal(2);
+                s.previousWinners[0].should.equal('Winner1');
+            });
+    });
+    describe('#roundWinner', function() {
+        it('should throw on set value',
+            function() {
+                var s = new Session(id, settings, host);
+                (function() {
+                    s.roundWinner = 'SomeWinner';
+                }).should.throw();
+            });
+        it('should get value',
+            function() {
+                var s = new Session(id, settings, host);
+                s._roundWinner = 'Winner1';
+                s.roundWinner.should.equal('Winner1');
+            });
+    });
     describe('#isSessionCompleted', function() {
         var s = new Session(id, settings, host);
         s.isSessionCompleted.should.be.false();
@@ -241,6 +273,299 @@ describe('Session', function() {
             s.currentState.should.equal('ready');
             s.tryBuzzerPressRegister(idUtility.generateParticipantId()).should.be.false();
             s.currentState.should.equal('ready');
+        });
+        it('should not replace previous round winner with pending contestant', function() {
+            var c1 = new Contestant();
+            c1.username = 'testUser1';
+
+            var c2 = new Contestant();
+            c2.username = 'testUser2';
+
+            settings.maxContestants = 2;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c1).wasSuccessful.should.be.true();
+            s.addContestant(c2).wasSuccessful.should.be.true();
+
+            s.tryBuzzerPressRegister(c1.id).should.be.true();
+            s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+            s.roundWinner.should.equal('testUser1');
+
+            s.tryBuzzerPressRegister(c2.id).should.be.true();
+            s.roundWinner.should.equal('testUser1');
+        });
+        it('should not add previous round winner to winners list', function() {
+            var c1 = new Contestant();
+            c1.username = 'testUser1';
+
+            var c2 = new Contestant();
+            c2.username = 'testUser2';
+
+            settings.maxContestants = 2;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c1).wasSuccessful.should.be.true();
+            s.addContestant(c2).wasSuccessful.should.be.true();
+
+            s.tryBuzzerPressRegister(c1.id).should.be.true();
+            s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+            s.roundWinner.should.equal('testUser1');
+
+            s.tryBuzzerPressRegister(c2.id).should.be.true();
+            s.previousWinners.length.should.equal(0);
+        });
+    });
+    describe('tryBuzzerAction(action)', function() {
+        describe('action->ACCEPT', function() {
+            it('should allow when game state is pending', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+            });
+            it('should not allow when game state is not pending', function() {
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.false();
+            });
+            it('should update contestant\'s score', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+                s.roundWinner.should.equal('testUser1');
+                c1.score.should.equal(1);
+
+            });
+            it('should update contestant\'s team score', function() {
+                // TODO
+            });
+            it('should add previous round winner to winners list', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.previousWinners.length.should.equal(1);
+                s.previousWinners[0].should.equal('testUser1');
+            });
+            it('should change game state back to ready', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.currentState.should.equal(constants.gameStates.READY);
+            });
+        });
+        describe('action->REJECT', function() {
+            it('should allow when game state is pending', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
+            });
+            it('should not allow when game state is not pending', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.false();
+            });
+            it('should not replace round winner with pending contestant', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
+
+                s.roundWinner.should.equal('testUser1');
+            });
+            it('should not update pending contestant\'s score', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
+
+                c1.score.should.equal(1);
+                c2.score.should.equal(0);
+            });
+            it('should not add round winner to previous winners list', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
+
+                s.previousWinners.length.should.equal(0);
+            });
+            it('should change game state back to ready', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
+
+                s.currentState.should.equal(constants.gameStates.READY);
+            });
+        });
+        describe('action->RESET', function() {
+            it('should allow when game state is ready', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+                s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
+            });
+            it('should allow when game state is pending', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
+            });
+            it('should not replace previous round winner with pending contestant', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
+
+                s.roundWinner.should.equal('testUser1');
+            });
+            it('should not add previous round winner to winners list', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
+
+                s.previousWinners.length.should.equal(0);
+            });
+            it('should change game state back to ready', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
+
+                s.currentState.should.equal(constants.gameStates.READY);
+            });
         });
     });
 });
