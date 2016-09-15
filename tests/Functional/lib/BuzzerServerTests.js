@@ -173,8 +173,7 @@ describe('Buzzer server', function() {
                     helper.createSession(s, hc, function(rm) {
                         var cc = helper.createClient();
 
-                        var session = helper.sessions.all.pop();
-                        session.complete();
+                        helper.getLatestSession().complete();
 
                         // Join
                         var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
@@ -299,8 +298,7 @@ describe('Buzzer server', function() {
                         bpm.sessionId = sessionId;
                         bpm.contestantId = rm.contestantId;
 
-                        var session = helper.sessions.all.pop();
-                        session.complete();
+                        helper.getLatestSession().complete();
 
                         cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
                             var sm = messageFactory.restore(m, messageConstants.ERROR);
@@ -370,7 +368,6 @@ describe('Buzzer server', function() {
                     // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = rm.sessionId;
-                    rjm.participantId = rm.hostId;
                     rjm.rejoinAs = constants.rejoinAs.OBSERVER;
 
                     // listen for observer update
@@ -398,7 +395,6 @@ describe('Buzzer server', function() {
                     // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = idUtility.generateSessionId();
-                    rjm.participantId = rm.hostId;
                     rjm.rejoinAs = constants.rejoinAs.OBSERVER;
 
                     ob.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
@@ -417,13 +413,11 @@ describe('Buzzer server', function() {
                 helper.createSession(s, c, function(rm) {
                     var ob = helper.createClient();
 
-                    var session = helper.sessions.all.pop();
-                    session.complete();
+                    helper.getLatestSession().complete();
 
                     // rejoin
                     var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
                     rjm.sessionId = idUtility.generateSessionId();
-                    rjm.participantId = rm.hostId;
                     rjm.rejoinAs = constants.rejoinAs.OBSERVER;
 
                     ob.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
@@ -452,7 +446,10 @@ describe('Buzzer server', function() {
                         m.should.be.Object();
                         m.type.should.equal(messageConstants.CREATE_SESSION_RESPONSE);
                         helper.sessions.all.length.should.equal(1);
-                        var session = helper.sessions.all.pop();
+                        
+                        var session = helper.getLatestSession();
+                        session.complete();
+
                         var rsm = messageFactory.restore(m, messageConstants.CREATE_SESSION_RESPONSE);
                         rsm.sessionId.should.equal(session.id);
                         rsm.hostId.should.equal(session.host.id);
@@ -585,8 +582,7 @@ describe('Buzzer server', function() {
                         c.disconnect();
                         c = helper.createClient();
 
-                        var session = helper.sessions.all.pop();
-                        session.complete();
+                        helper.getLatestSession().complete();
 
                         // rejoin
                         var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
@@ -666,8 +662,7 @@ describe('Buzzer server', function() {
                     var hc = helper.createClient();
                     helper.createSession(s, hc, function(rm) {
 
-                        var session = helper.sessions.all.pop();
-                        session.complete();
+                        helper.getLatestSession().complete();
 
                         var scm = messageFactory.create(messageConstants.SESSION_COMPLETE);
                         scm.sessionId = rm.sessionId;
@@ -709,8 +704,41 @@ describe('Buzzer server', function() {
         describe('respond', function() {
             describe('buzzer press', function() {
                 it('should allow accept when valid', function(done){
-                    done();
-                    // Todo
+                    var s = new Settings();
+                    s.maxContestants = 1;
+
+                    var hc = helper.createClient();
+                    helper.createSession(s, hc, function(rm) {
+                        var sessionId = rm.sessionId;
+                        var hostId = rm.hostId;
+                        var cc = helper.createClient();
+
+                        helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                            var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                            bpm.sessionId = sessionId;
+                            bpm.contestantId = rm.contestantId;
+
+                            cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                                messageFactory.restore(m, messageConstants.SUCCESS);
+
+                                helper.getLatestSession().currentState.should.equal(constants.gameStates.PENDING);
+
+                                var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+                                hrm.sessionId = sessionId;
+                                hrm.hostId = hostId;
+                                hrm.action = constants.buzzerActionCommands.ACCEPT;
+
+                                hc.emit(messageConstants.BUZZER_ACTION_COMMAND, hrm, function(rm) {
+                                    var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                                    sm.should.not.be.null();
+
+                                    helper.getLatestSession().currentState.should.equal(constants.gameStates.READY);
+
+                                    done();
+                                });
+                            });
+                        });
+                    });
                 });
                 it('should allow reject when valid', function(done){
                     done();
