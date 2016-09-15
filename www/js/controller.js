@@ -1,4 +1,5 @@
-var API_URL = window.location.protocol + '//' + window.location.hostname + ':3000';
+var API_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port; //This is seperate incase it changes in the future
+var WEB_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
 var messageConstants = buzzapi.constants.socketMessageNames;
 
 /* eslint-disable no-unused-vars */
@@ -134,7 +135,7 @@ function redirectContestant() {
 
 /* eslint-disable no-unused-vars */
 function joinSession(values) {
-/* eslint-enable no-unused-vars */
+    /* eslint-enable no-unused-vars */
     var client = buzzapi.io(API_URL);
     var cjr = buzzapi.messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
     if (values['session-id']) {
@@ -171,8 +172,35 @@ function joinSession(values) {
 }
 
 /* eslint-disable no-unused-vars */
+function joinObserver(sessionId, participantId) {
+    /* eslint-enable no-unused-vars */
+    var client = buzzapi.io(API_URL);
+
+    var rjm = buzzapi.messageFactory.create(messageConstants.REJOIN_SESSION);
+    rjm.sessionId = sessionId;
+    if (participantId) {
+        rjm.participantId = participantId;
+    }
+    rjm.rejoinAs = buzzapi.constants.rejoinAs.OBSERVER;
+
+    // listen for observer update
+    client.on(messageConstants.OBSERVER_UPDATE, function(message) {
+        var ob = buzzapi.messageFactory.restore(message, messageConstants.OBSERVER_UPDATE);
+        console.log(ob);
+        updateShareView(ob);
+    });
+
+    client.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
+        if (m.type === messageConstants.ERROR) {
+            var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+            alertBootstrap(err.error, 'danger');
+        }
+    });
+}
+
+/* eslint-disable no-unused-vars */
 function validateNumber(val) {
-/* eslint-enable no-unused-vars */
+    /* eslint-enable no-unused-vars */
     if (isNaN(parseInt(val))) {
         return false;
     } else {
@@ -187,9 +215,9 @@ function validateNumber(val) {
  */
 /* eslint-disable no-unused-vars */
 function alertBootstrap(message, type) {
-/* eslint-enable no-unused-vars */
+    /* eslint-enable no-unused-vars */
     $('#error-alert').remove();
-    $('body .container .row').prepend(`<div class="alert alert-${type}" id="error-alert">
+    $('body .container .row').first().prepend(`<div class="alert alert-${type}" id="error-alert">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <strong>${message}</strong>
         </div>`);

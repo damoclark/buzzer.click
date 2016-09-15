@@ -82,3 +82,8 @@
 .full-width{
     width:100%;
 }
+
+.center-block{
+    display: block;
+    margin:auto;
+}
