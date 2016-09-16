@@ -75,29 +75,26 @@ ServerTestHelper.prototype.stopServer = function() {
     this.sessions = null;
 };
 
-ServerTestHelper.prototype.createSession = function(settings, client, afterCreateCallback) {
-    var createSessionMessage = messageFactory.create(messageConstants.CREATE_SESSION);
-    createSessionMessage.settings = settings;
+ServerTestHelper.prototype.createSession = function(hc, settings, callback) {
+    var csm = messageFactory.create(messageConstants.CREATE_SESSION);
+    csm.settings = settings;
 
-    client.emit(messageConstants.CREATE_SESSION, createSessionMessage,
-        function(data) {
+    hc.emit(messageConstants.CREATE_SESSION, csm, function(data) {
             var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
-            afterCreateCallback(response);
+            callback(response);
         });
 };
 
-ServerTestHelper.prototype.contestantJoin = function(client, username, sessionId, afterJoinCallback){
-    var requestMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
-    requestMessage.sessionId = sessionId;
-    requestMessage.username = username;
+ServerTestHelper.prototype.contestantJoin = function(cc, username, sessionId, callback){
+    var rm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+    rm.sessionId = sessionId;
+    rm.username = username;
 
-    client.emit(messageConstants.CONTESTANT_JOIN_REQUEST,
-        requestMessage,
-        function(message) {
-            var responseMessage = messageFactory.restore(message, messageConstants.CONTESTANT_JOIN_RESPONSE);
-            responseMessage.should.not.be.null();
-            responseMessage.wasSuccessful.should.be.true();
-            afterJoinCallback(responseMessage);
+    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rm, function(m) {
+            var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+            rm.should.not.be.null();
+            rm.wasSuccessful.should.be.true();
+            callback(rm);
         });
 };
 
@@ -115,6 +112,35 @@ ServerTestHelper.prototype.sendMessageToContestants = function(sessionId, messag
 
 ServerTestHelper.prototype.getLatestSession = function() {
     return this.sessions.all.pop();
+};
+
+ServerTestHelper.prototype.contestantBuzzerPress = function(cc, sessionId, contestantId, callback) {
+    callback = (typeof callback !== 'undefined') ? callback : function() {};
+    var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+    bpm.sessionId = sessionId;
+    bpm.contestantId = contestantId;
+    cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(rm) {
+        if (rm.type === messageConstants.SUCCESS) {
+            callback(messageFactory.restore(rm, messageConstants.SUCCESS));
+        } else {
+            callback(messageFactory.restore(rm, messageConstants.ERROR));
+        }
+    });
+};
+
+ServerTestHelper.prototype.hostBuzzerAction = function(hc, sessionId, hostId, action, callback) {
+    callback = (typeof callback !== 'undefined') ? callback : function() {};
+    var m = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+    m.hostId = hostId;
+    m.sessionId = sessionId;
+    m.action = action;
+    hc.emit(messageConstants.BUZZER_ACTION_COMMAND, m, function(rm) {
+        if (rm.type === messageConstants.SUCCESS) {
+            callback(messageFactory.restore(rm, messageConstants.SUCCESS));
+        } else {
+            callback(messageFactory.restore(rm, messageConstants.ERROR));
+        }
+    });
 };
 
 var helper = new ServerTestHelper();
