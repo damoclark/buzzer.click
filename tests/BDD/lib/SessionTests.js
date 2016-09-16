@@ -580,5 +580,103 @@ describe('Session', function() {
                 s.currentState.should.equal(constants.gameStates.READY);
             });
         });
+        describe('action->DISABLE', function() {
+            it('should allow when game state is ready', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+            });
+            it('should allow when game state is pending', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+            });
+            it('should not replace previous round winner with pending contestant', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+
+                s.roundWinner.should.equal('testUser1');
+            });
+            it('should not add previous round winner to winners list', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+
+                s.tryBuzzerPressRegister(c2.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+
+                s.previousWinners.length.should.equal(0);
+            });
+            it('should change game state to buzzerLock', function() {
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+
+                s.currentState.should.equal(constants.gameStates.BUZZER_LOCK);
+            });
+        });
+        describe('action->ENABLE', function() {
+            it('should allow when game state is buzzerLock', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ENABLE).should.be.true();
+            });
+            it('should not allow when game state is not buzzerLock', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.tryBuzzerAction(constants.buzzerActionCommands.ENABLE).should.be.false();
+            });
+            it('should change game state to ready', function() {
+                settings.maxContestants = 1;
+                var s = new Session(id, settings, host);
+
+                s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ENABLE).should.be.true();
+                s.currentState.should.equal(constants.gameStates.READY);
+            });
+        });
     });
 });
