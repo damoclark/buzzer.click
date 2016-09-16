@@ -1097,20 +1097,130 @@ describe('Buzzer server', function() {
                 });
                 describe('when accepted', function() {
                     it('should update observers', function(done) {
-                        done();
-                        // Todo
+                        var s = new Settings();
+                        s.maxContestants = 1;
+
+                        var hc = helper.createClient();
+                        helper.createSession(s, hc, function(rm) {
+                            var sessionId = rm.sessionId;
+                            var hostId = rm.hostId;
+                            var cc = helper.createClient();
+
+                            // listen for observer update
+                            hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                                var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                                if (om.gameState.contestants.length && om.gameState.contestants[0].score === 1) {
+                                    done();
+                                }
+                            });
+                            
+                            helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                                var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                                bpm.sessionId = sessionId;
+                                bpm.contestantId = rm.contestantId;
+
+                                cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                                        messageFactory.restore(m, messageConstants.SUCCESS);
+
+                                        var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+                                        hrm.sessionId = sessionId;
+                                        hrm.hostId = hostId;
+                                        hrm.action = constants.buzzerActionCommands.ACCEPT;
+
+                                        hc.emit(messageConstants.BUZZER_ACTION_COMMAND,hrm);
+                                    });
+                            });
+                        });
                     });
                 });
                 describe('when rejected', function() {
                     it('should update observers', function(done) {
-                        done();
-                        // Todo
+                        var s = new Settings();
+                        s.maxContestants = 1;
+
+                        var hc = helper.createClient();
+                        helper.createSession(s, hc, function(rm) {
+                            var sessionId = rm.sessionId;
+                            var hostId = rm.hostId;
+                            var cc = helper.createClient();
+
+                            var observedPending = false;
+                            // listen for observer update
+                            hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                                var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                                if (om.gameState.currentState === constants.gameStates.PENDING) {
+                                    observedPending = true;
+                                    return;
+                                }
+                                if (observedPending && om.gameState.currentState === constants.gameStates.READY) {
+                                    om.gameState.contestants.length.should.equal(1);
+                                    om.gameState.contestants[0].score.should.equal(0);
+                                    done();
+                                }
+                            });
+
+                            helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                                var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                                bpm.sessionId = sessionId;
+                                bpm.contestantId = rm.contestantId;
+
+                                cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                                        messageFactory.restore(m, messageConstants.SUCCESS);
+
+                                        var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+                                        hrm.sessionId = sessionId;
+                                        hrm.hostId = hostId;
+                                        hrm.action = constants.buzzerActionCommands.REJECT;
+
+                                        hc.emit(messageConstants.BUZZER_ACTION_COMMAND,hrm);
+                                    });
+                            });
+                        });
                     });
                 });
                 describe('when reset', function() {
                     it('should update observers', function(done) {
-                        done();
-                        // Todo
+                        var s = new Settings();
+                        s.maxContestants = 1;
+
+                        var hc = helper.createClient();
+                        helper.createSession(s, hc, function(rm) {
+                            var sessionId = rm.sessionId;
+                            var hostId = rm.hostId;
+                            var cc = helper.createClient();
+
+                            var observedPending = false;
+                            // listen for observer update
+                            hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                                var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                                if (om.gameState.currentState === constants.gameStates.PENDING) {
+                                    observedPending = true;
+                                    return;
+                                }
+                                if (observedPending && om.gameState.currentState === constants.gameStates.READY) {
+                                    om.gameState.contestants.length.should.equal(1);
+                                    om.gameState.contestants[0].score.should.equal(0);
+                                    done();
+                                }
+                            });
+
+                            helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                                var bpm = messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
+                                bpm.sessionId = sessionId;
+                                bpm.contestantId = rm.contestantId;
+
+                                cc.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+                                        messageFactory.restore(m, messageConstants.SUCCESS);
+
+                                        var hrm = messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+                                        hrm.sessionId = sessionId;
+                                        hrm.hostId = hostId;
+                                        hrm.action = constants.buzzerActionCommands.REJECT;
+
+                                        hc.emit(messageConstants.BUZZER_ACTION_COMMAND,hrm);
+                                    });
+                            });
+                        });
                     });
                 });
             });
