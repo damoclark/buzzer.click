@@ -202,6 +202,19 @@ describe('Session', function() {
                 response.wasSuccessful.should.be.false();
                 response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
             });
+            it('BUG# username case should not matter', function() {
+                settings.maxContestants = 2;
+                var c1 = new Contestant();
+                c1.username = 'abc1';
+                var c2 = new Contestant();
+                c2.username = 'ABC1';
+                var s = new Session(id, settings, host);
+                s.addContestant(c1);
+                var response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+                response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
+            });            
         });
         describe('when in team mode', function() {
             //TODO: add tests. Requires method to be completed.
