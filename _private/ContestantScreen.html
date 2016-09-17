@@ -22,8 +22,8 @@
 				<!-- This creates a small space and pads the content nicely using bootstrap grids -->
 				<div class="col-sm-12">
 					<div class="row">
-						<div>Session</div>
-						<h4 class="text-center" id="session-name">PLACEHOLDER</h4>
+							<h4>Session</h4>
+							<h4 class="text-center" id="session-name"></h4>
 					</div>
 					<div class="row">
 						<div class="row">
@@ -31,14 +31,14 @@
 							<div class="col-xs-6">Team</div>
 						</div>
 						<div class="row">
-							<div class="col-xs-6"><h4 id="session-username">PLACEHOLDER</h4></div>
-							<div class="col-xs-6"><h4 id="session-team">PLACEHOLDER</h4></div>
+							<div class="col-xs-6"><h4 id="session-username"></h4></div>
+							<div class="col-xs-6"><h4 id="session-team"></h4></div>
 						</div>
 					</div>
 					<div class="row">
 						<div class="jumbotron">
 							<h2 class="hidden-xs" >Buzzer</h2>
-							<div class="circle">
+							<div id="buzzer" class="circle">
 							</div>
 						</div>
 					</div>
@@ -50,19 +50,19 @@
 				<div class="col-sm-12">
 					<div class="row">
 						<div><h4>Round winner</h4></div>
-						<div id="session-round-winner" class="well"></div>
+						<div id="round-winner" class="well"></div>
 					</div>
 					<div class="row">
 						<div><h4>Previous Winners</h4></div>
-						<div id="session-previous-winners" class="well"></div>
+						<div id="previous-winners" class="well no-bullets-all"><ul></ul></div>
 					</div>
-					<div class="row">
+					<div class="row hide-if-not-teams">
 						<div><h4>Team members</h4></div>
 						<div id="session-team-members" class="well"></div>
 					</div>
 					<div class="row">
-						<div><h4>Teams</h4></div>
-						<div id="session-teams" class="well"></div>
+						<div><h4 id="session-participant-header">Participants</h4></div>
+						<div id="participant-info" class="well no-bullets-all"><ul></ul></div>
 					</div>
 				</div>
 			</div>
@@ -71,6 +71,68 @@
 
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
+	<script src="js/bundle.js"></script>
+	<script src="js/controller.js"></script>
+	<script>
+		var handleExistingSession = function(){
+
+		}
+		var handleBuzzSuccess = function(){
+			//$('#buzzer').addClass('circle-disabled');
+		}
+		var updateShareView = function(values)
+		{
+			//clear alerts
+            $('#error-alert').remove();
+			
+			if(values.gameState.currentState === 'pending'){
+				$('#buzzer').addClass("circle-disabled");
+			}else if(values.gameState.currentState === 'ready'){
+				$('#buzzer').removeClass("circle-disabled");
+			}else if(values.gameState.currentState === 'buzzerLock'){
+				$('#buzzer').addClass("circle-disabled");
+			}
+
+			$('#session-name').text(values.gameState.settings.sessionName);
+
+			if(values.gameState.settings.hasTeams){
+				
+			}else{ //non-teams game so list all players
+				$('.hide-if-not-teams').hide();
+
+				$('#participant-info > ul').empty();
+				$.each(values.gameState.contestants, function(key,item){
+					$('#participant-info > ul').append(`<li>${item.username}</li>`);
+				});
+			}
+
+			if(values.gameState.roundWinner){
+				$('#round-winner').text(values.gameState.roundWinner);
+			}
+			$('#previous-winners > ul').empty();
+			$.each(values.gameState.previousWinners,function(key,item){
+				$('#previous-winners > ul').prepend(`<li>${item}</li>`);
+			});
+
+		}
+		$(function(){
+			handleDisconnect();
+			var sessionCookie = buzzapi.Cookie.get('sessionId');
+            var participantCookie = buzzapi.Cookie.get('contestantId');
+	
+            if(sessionCookie != undefined && participantCookie != undefined){
+                rejoinSession(sessionCookie,participantCookie,buzzapi.constants.rejoinAs.CONTESTANT);
+            }
+			else{
+				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
+				$('.container > .row  div:not(:first)').hide();
+			}
+			$('#buzzer').click(function(){
+				
+				pressBuzzer(sessionCookie,participantCookie);
+			});
+		});
+	</script>
 
 </body>
 

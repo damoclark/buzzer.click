@@ -21,7 +21,7 @@
                 <form class="form" id="join-session-form">
                     <div class="form-group">
                         <label for="session-id">Session</label>
-                        <input class="form-control"  type="text" id="session-id" name="session-id" required />
+                        <input class="form-control" style="text-transform:uppercase" type="text" id="session-id" name="session-id" required />
                     </div>
                     <div class="form-group">
                         <label for="session-username">Enter a username</label>
@@ -76,12 +76,25 @@
         </div>
     </div>
     
+    
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/bundle.js"></script>
     <script src="js/controller.js"></script>
     <script type="text/javascript">
+        var handleExistingSession = function(){
+            //redirectContestant();
+        }
         $(function(){
+            handleDisconnect();
+            //first check for existing session
+            var sessionCookie = buzzapi.Cookie.get('sessionId');
+            var participantCookie = buzzapi.Cookie.get('contestantId');
+	
+            if(sessionCookie != undefined && participantCookie != undefined){
+				checkExistingSession(sessionCookie,participantCookie);
+            }
+            
             //Check parameter for ?sessionid=
             var session = getParameterByName('sessionid');
             if(session){

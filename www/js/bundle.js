@@ -120,27 +120,57 @@ module.exports = AddContestantResponse;
  */
 function Constants() {
     /**
-     * Is an object which holds team selection method constants.
+     * Is an object which holds the game states.
      * @public
      */
-    this.teamSelectionMethod = {
+    this.gameStates = {
         /**
-         * Manual team selection.
+         * Game state pending buzzer was pressed and is now waiting for host determination.
          * @public
          * @constant
          */
-        MANUAL: 0,
+        PENDING: 'pending',
+        /**
+         * Game state buzzer lock - no contestant can press buzzer.
+         * @public
+         * @constant
+         */
+        BUZZER_LOCK: 'buzzerLock',
+        /**
+         * Game state ready, wait for buzzer press, disable buzzers or complete session.
+         * @public
+         * @constant
+         */
+        READY: 'ready',
+        /**
+         * Game state completed, the session is now over.
+         * @public
+         * @constant
+         */
+        COMPLETED: 'completed'
+    };
+    /**
+     * Is an object which holds team leader selection method constants.
+     * @public
+     */
+    this.teamLeaderSelectionMethod = {
+        /**
+         * Manual team leader selection.
+         * @public
+         * @constant
+         */
+        RANDOM: 0,
         /**
          * Auto team selection.
          * @public
          * @constant
          */
-        AUTO: 1,
+        PLAYER_CHOICE: 1,
         /**
          * A special constants which holds all constant values.
          * @constant
          */
-        all: [1, 0]
+        all: [0, 1]
     };
     /**
      * Is an object which holds team name edit constants.
@@ -148,34 +178,40 @@ function Constants() {
      */
     this.teamNameEdit = {
         /**
-         * Allow team name editing.
+         * Team names are automatically assigned.
          * @public
          * @constant
          */
-        ALLOW: 0,
+        AUTO: 0,
         /**
-         * Lock team name editing.
+         * Teams name are automatically assigned, but editable by team leader.
          * @public
          * @constant
          */
-        LOCKED: 1,
+        ALLOW: 1,
+        /**
+         * Teams name manually set by the host.
+         * @public
+         * @constant
+         */
+        MANUAL: 2,
         /**
          * A special constants which holds all constant values.
          * @constant
          */
-        all: [1, 0]
+        all: [0, 1, 2]
     };
     /**
-     * Is an object which holds host buzzer state constants.
+     * Is an object which holds host buzzer action commands.
      * @public
      */
-    this.hostBuzzerState = {
+    this.buzzerActionCommands = {
         /**
          * Buzzer input is accepted.
          * @public
          * @constant
          */
-        ACCEPTED: 0,
+        ACCEPT: 0,
         /**
          * Buzzer input is rejected.
          * @public
@@ -189,10 +225,22 @@ function Constants() {
          */
         RESET: 2,
         /**
+         * Buzzer inputs are to be disabled.
+         * @public
+         * @constant
+         */
+        DISABLE: 3,
+        /**
+         * Buzzer inputs are to be enabled.
+         * @public
+         * @constant
+         */
+        ENABLE: 4,
+        /**
          * A special constants which holds all constant values.
          * @constant
          */
-        all: [0, 1, 2]
+        all: [0, 1, 2, 3, 4]
     };
     /**
      * Is an object which holds sock message type name constants.
@@ -200,17 +248,17 @@ function Constants() {
      */
     this.socketMessageNames = {
         /**
-         * Contestant buzzer state message.
+         * Buzzer action command message.
          * @public
          * @constant
          */
-        BUZZER_STATE_MESSAGE: 'BuzzerStateMessage',
+        BUZZER_ACTION_COMMAND: 'BuzzerActionCommandMessage',
         /**
-         * Contestant contestant buzzer press.
+         * Contestant contestant buzzer press message.
          * @public
          * @constant
          */
-        CONTESTANT_BUZZER_PRESS: 'ContestantBuzzerPress',
+        CONTESTANT_BUZZER_PRESS: 'ContestantBuzzerPressMessage',
         /**
          * Contestant join response message.
          * @public
@@ -224,19 +272,19 @@ function Constants() {
          */
         CONTESTANT_JOIN_RESPONSE: 'ContestantJoinResponseMessage',
         /**
-         * Create session message constant.
+         * Create session message.
          * @public
          * @constant
          */
         CREATE_SESSION: 'CreateSessionMessage',
         /**
-         * Create session response message constant.
+         * Create session response message.
          * @public
          * @constant
          */
         CREATE_SESSION_RESPONSE: 'CreateSessionResponseMessage',
         /**
-         * Error message constant.
+         * Error message.
          * @public
          * @constant
          */
@@ -248,31 +296,31 @@ function Constants() {
          */
         OBSERVER_UPDATE: 'ObserverUpdateMessage',
         /**
-         * Rejoin session message constant.
+         * Rejoin session message.
          * @public
          * @constant
          */
         REJOIN_SESSION: 'RejoinSessionMessage',
         /**
-         * Contestant round won message.
+         * Round won message.
          * @public
          * @constant
          */
         ROUND_WON_MESSAGE: 'RoundWonMessage',
         /**
-         * Contestant session complete message.
+         * Session complete message.
          * @public
          * @constant
          */
         SESSION_COMPLETE: 'SessionComplete',
         /**
-         * Contestant session completed message.
+         * Session completed message.
          * @public
          * @constant
          */
         SESSION_COMPLETED: 'SessionCompleted',
         /**
-         * Success message constant.
+         * Success message.
          * @public
          * @constant
          */
@@ -324,7 +372,31 @@ function Constants() {
          * @public
          * @constant
          */
-        COULD_NOT_COMPLETE_SESSION_NOT_HOST: 'Could not complete session, as  you are not the host.',
+        COULD_NOT_COMPLETE_SESSION_NOT_HOST: 'Could not complete session, as you are not the host.',
+        /**
+         * Message: Could not accept buzzer press, as you are not a contestant.
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_BUZZER_PRESS_NOT_CONTESTANT: 'Could not accept buzzer press, as you are not a contestant.',
+        /**
+         * Message: Could not accept request, as you are not the host.
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_REQUEST_NOT_HOST: 'Could not accept request, as you are not the host.',
+        /**
+         * Message: Could process the request, as it is not valid for the current game state.
+         * @public
+         * @constant
+         */
+        COULD_NOT_PROCESS_REQUEST_GAME_STATE_WILL_NOT_ALLOW: 'Could process the request, as it is not valid for the current game state.',
+        /**
+         * Message: Buzzer press was not accepted by session.
+         * @public
+         * @constant
+         */
+        BUZZER_PRESS_NOT_ACCEPTED: 'Buzzer press was not accepted by session.',
         /**
          * Message: Session could not be found or is completed.
          * @public
@@ -349,6 +421,8 @@ function Constants() {
          * @constant
          */
         COULD_NOT_REJOIN_UNKNOWN: 'Could not rejoin, as `join as` constant is unknown.',
+
+        TEAMS_ARE_FULL: 'Teams are full'
     };
 }
 
@@ -617,8 +691,8 @@ var AbstractMessage = require('./message/AbstractMessage');
 var semver = require('semver');
 
 var classes = {
-    BuzzerStateMessage: require('./message/BuzzerStateMessage'),
-    ContestantBuzzerPress : require('./message/ContestantBuzzerPress'),
+    BuzzerActionCommandMessage: require('./message/BuzzerActionCommandMessage'),
+    ContestantBuzzerPressMessage : require('./message/ContestantBuzzerPressMessage'),
     ContestantJoinRequestMessage : require('./message/ContestantJoinRequestMessage'),
     ContestantJoinResponseMessage : require('./message/ContestantJoinResponseMessage'),
     CreateSessionMessage: require('./message/CreateSessionMessage'),
@@ -711,7 +785,7 @@ MessageFactory.prototype.restore = function(message, expectedType) {
 //Export the class
 module.exports = new MessageFactory();
 
-},{"./message/AbstractMessage":14,"./message/BuzzerStateMessage":15,"./message/ContestantBuzzerPress":16,"./message/ContestantJoinRequestMessage":17,"./message/ContestantJoinResponseMessage":18,"./message/CreateSessionMessage":19,"./message/CreateSessionResponseMessage":20,"./message/ErrorMessage":21,"./message/ObserverUpdateMessage":22,"./message/RejoinSessionMessage":23,"./message/RoundWonMessage":24,"./message/SessionComplete":25,"./message/SessionCompleted":26,"./message/SuccessMessage":27,"semver":173}],8:[function(require,module,exports){
+},{"./message/AbstractMessage":14,"./message/BuzzerActionCommandMessage":15,"./message/ContestantBuzzerPressMessage":16,"./message/ContestantJoinRequestMessage":17,"./message/ContestantJoinResponseMessage":18,"./message/CreateSessionMessage":19,"./message/CreateSessionResponseMessage":20,"./message/ErrorMessage":21,"./message/ObserverUpdateMessage":22,"./message/RejoinSessionMessage":23,"./message/RoundWonMessage":24,"./message/SessionComplete":25,"./message/SessionCompleted":26,"./message/SuccessMessage":27,"semver":173}],8:[function(require,module,exports){
 var Participant = require('./Participant');
 
 /**
@@ -947,6 +1021,23 @@ Object.defineProperty(Participants.prototype, 'all', {
 });
 
 /**
+ * Defines a property to length.
+ * @public
+ * @throws on set value.
+ * @return {Number} the amount of participants.
+ */
+Object.defineProperty(Participants.prototype, 'length', {
+    get: function() {
+        return this._participants.length;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a method which adds (registers) a participant with the participants collection.
  * @public
  * @param  {Participant} participant
@@ -1050,6 +1141,9 @@ function Session(id, settings, host) {
     this._settings = settings;
     this._host = host;
     this._participants = new Participants();
+    this._previousWinners = [];
+    this._roundWinner = null;
+    this._pendingWinContestant = null;
     /* beautify ignore:start */
     /* eslint-disable */
     this._state = StateMachine.create({
@@ -1057,10 +1151,10 @@ function Session(id, settings, host) {
         events: [
             { name: 'buzzerPressed', from: 'ready', to: 'pending' }, 
             { name: 'disableBuzzers', from: ['ready', 'pending'], to: 'buzzerLock' }, 
-            { name: 'enabledBuzzers', from: 'buzzerLock', to: 'pending' },
+            { name: 'enableBuzzers', from: 'buzzerLock', to: 'ready' },
             { name: 'acceptBuzz', from: 'pending', to: 'ready' },
             { name: 'rejectBuzz', from: 'pending', to: 'ready' },
-            { name: 'resetBuzz', from: 'pending', to: 'ready' },
+            { name: 'resetBuzz', from: ['pending', 'ready'], to: 'ready' },
             { name: 'complete', from: ['ready', 'pending', 'buzzerLock'], to: 'completed' },
         ]
     });
@@ -1103,6 +1197,21 @@ Session.prototype._host = null;
 Session.prototype._state = null;
 
 /**
+ * @private
+ */
+Session.prototype._pendingWinContestant = null;
+
+/**
+ * @private
+ */
+Session.prototype._roundWinner = null;
+
+/**
+ * @private
+ */
+Session.prototype._previousWinners = [];
+
+/**
  * Defines a property to get the @see {@link _id} field.
  * @public
  * @throws on set value.
@@ -1128,6 +1237,40 @@ Object.defineProperty(Session.prototype, 'id', {
 Object.defineProperty(Session.prototype, 'roundsPlayed', {
     get: function() {
         return this._roundsPlayed;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _winners} field.
+ * @public
+ * @throws on set value.
+ * @return {Array{String}} the round winner collection.
+ */
+Object.defineProperty(Session.prototype, 'previousWinners', {
+    get: function() {
+        return this._previousWinners;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _roundWinner} field.
+ * @public
+ * @throws on set value.
+ * @return {String} the round winner.
+ */
+Object.defineProperty(Session.prototype, 'roundWinner', {
+    get: function() {
+        return this._roundWinner;
     },
     /* eslint-disable no-unused-vars */
     set: function(val) {
@@ -1226,6 +1369,23 @@ Object.defineProperty(Session.prototype, 'host', {
 });
 
 /**
+ * Defines a property to current session state.
+ * @public
+ * @throws on set value.
+ * @return {String} the current session state.
+ */
+Object.defineProperty(Session.prototype, 'currentState', {
+    get: function() {
+        return this._state.current;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a method to increment the rounds played.
  * @public
  * @see {@link roundsPlayed}
@@ -1241,7 +1401,7 @@ Session.prototype.incrementRoundsPlayed = function() {
  * @throw when param contestant equates to false or is an incorrect type.
  * @return {AddContestantResponse} a complex response of success or not.
  */
-Session.prototype.addContestant = function(contestant) {
+Session.prototype.addContestant = function(contestant, inquireTeamLeaderCallback, inquireTeamNameCallback) {
     if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
         throw new Error(
             'Argument `contestant` is invalid. It is required and must be of the correct type.'
@@ -1251,13 +1411,20 @@ Session.prototype.addContestant = function(contestant) {
     var response = new AddContestantResponse();
 
     if (this.contestants.find(function(c) {
-            return c.username === contestant.username;
+            return c.username.toUpperCase() === contestant.username.toUpperCase();
         }) != null) {
         response.setNotSuccessful(constants.messages.USERNAME_TAKEN);
         return response;
     }
 
     if (this.settings.hasTeams) {
+        if (!new ParamCheck().isInstanceAndTypeOf(inquireTeamLeaderCallback, 'Function')) {
+            throw new Error('Argument `inquireTeamLeaderCallback` is invalid. It is required and must be of the correct type.');
+        }
+        if (!new ParamCheck().isInstanceAndTypeOf(inquireTeamNameCallback, 'Function')) {
+            throw new Error('Argument `inquireTeamNameCallback` is invalid. It is required and must be of the correct type.');
+        }
+
         // todo
         throw new Error('Not implemented');
     } else {
@@ -1297,6 +1464,80 @@ Session.prototype.subscribeForStateChange = function(event, callback) {
     };
 };
 
+/**
+ * Defines a method which tries to register a buzzer press for the given
+ * contestant id.
+ * @public
+ * @return {Boolean} true when the buzzer press was accepted; else false.
+ */
+Session.prototype.tryBuzzerPressRegister = function(contestantId) {
+    var contestant = this.contestants.find(function(c) {
+        return c.id === contestantId;
+    });
+
+    if (contestant == null) {
+        return false;
+    }
+
+    if (this._state.can('buzzerPressed')) {
+        this._pendingWinContestant = contestant;
+        this._state.buzzerPressed();
+        return true;
+    }
+
+    return false;
+};
+
+Session.prototype.tryBuzzerAction = function(action) {
+    if (constants.buzzerActionCommands.all.indexOf(action) < 0) {
+        return false;
+    }
+
+    switch (action) {
+        case constants.buzzerActionCommands.ACCEPT:
+            if (this._state.can('acceptBuzz')) {
+                this._pendingWinContestant.incrementScore();
+                if (this.roundWinner){
+                    this.previousWinners.push(this.roundWinner);
+                }
+                this._roundWinner = this._pendingWinContestant.username;
+                this._state.acceptBuzz();
+                return true;
+            }
+        break;
+        case constants.buzzerActionCommands.REJECT:
+            if (this._state.can('rejectBuzz')) {
+                this._pendingWinContestant = null;
+                this._state.rejectBuzz();
+                return true;
+            }
+        break;
+        case constants.buzzerActionCommands.RESET:
+            if (this._state.can('resetBuzz')) {
+                this._pendingWinContestant = null;
+                this._state.resetBuzz();
+                return true;
+            }
+        break;
+        case constants.buzzerActionCommands.DISABLE:
+            if (this._state.can('disableBuzzers')) {
+                this._pendingWinContestant = null;
+                this._state.disableBuzzers();
+                return true;
+            }
+        break;
+        case constants.buzzerActionCommands.ENABLE:
+            if (this._state.can('enableBuzzers')) {
+                this._pendingWinContestant = null;
+                this._state.enableBuzzers();
+                return true;
+            }
+        break;
+    }
+
+    return false;
+};
+
 //Export the class
 module.exports = Session;
 
@@ -1325,7 +1566,7 @@ Settings.prototype.type = 'Settings';
 Settings.prototype._hasTeams = false;
 Settings.prototype._teamSize = 0;
 Settings.prototype._maxTeams = 0;
-Settings.prototype._teamSelectionMethod = constants.teamSelectionMethod.AUTO;
+Settings.prototype._teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 Settings.prototype._teamNameEdit = constants.teamNameEdit.ALLOW;
 Settings.prototype._maxContestants = 0;
 Settings.prototype._sessionName = null;
@@ -1385,9 +1626,9 @@ Object.defineProperty(Settings.prototype, 'maxTeams', {
 /**
  * Defines a property to get and set the @see {@link _teamSelectionMethod} field.
  */
-Object.defineProperty(Settings.prototype, 'teamSelectionMethod', {
+Object.defineProperty(Settings.prototype, 'teamLeaderSelectionMethod', {
     get: function() {
-        return this._teamSelectionMethod;
+        return this._teamLeaderSelectionMethod;
     },
     set: function(val) {
         if (!new ParamCheck().isInstanceAndTypeOf(val, 'Number')) {
@@ -1395,12 +1636,12 @@ Object.defineProperty(Settings.prototype, 'teamSelectionMethod', {
                 'Argument `val` is invalid. It is required and must be of the correct type.'
             );
         }
-        if (constants.teamSelectionMethod.all.indexOf(val) < 0) {
+        if (constants.teamLeaderSelectionMethod.all.indexOf(val) < 0) {
             throw new Error(
                 'Argument `val` is an invalid constant value.'
             );
         }
-        this._teamSelectionMethod = val;
+        this._teamLeaderSelectionMethod = val;
     }
 });
 
@@ -1568,7 +1809,7 @@ AbstractMessage.prototype.validate = function() {
  */
 AbstractMessage.prototype.isValid = function() {
     return this.validate().errors.length === 0;
-}
+};
 
 AbstractMessage.prototype.protocol = '0.0.1';
 
@@ -1580,35 +1821,35 @@ var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
 /**
- * Represents message which is used to convey the buzzer state.
+ * Represents message which is used to convey a buzzer related action command.
  * @extends AbstractMessage
  * @returns {ErrorMessage}
  */
-var BuzzerStateMessage = function(args) {
+var BuzzerActionCommandMessage = function(args) {
     AbstractMessage.call(this, args);
 };
 
 /**
- * BuzzerStateMessage is a subclass of AbstractMessage.
+ * BuzzerActionCommandMessage is a subclass of AbstractMessage.
  */
-BuzzerStateMessage.prototype = Object.create(AbstractMessage.prototype);
+BuzzerActionCommandMessage.prototype = Object.create(AbstractMessage.prototype);
 
 /**
  * The type of this class.
  * @public
  */
-BuzzerStateMessage.prototype.type = 'BuzzerStateMessage';
+BuzzerActionCommandMessage.prototype.type = 'BuzzerActionCommandMessage';
 
 /**
- * Sets or gets the error.
+ * Sets or gets the action.
  * @public
  * @throw on set val when param equates to false or is an incorrect type.
  * @param {String} the error.
  * @return {String} the error.
  */
-Object.defineProperty(BuzzerStateMessage.prototype, 'state', {
+Object.defineProperty(BuzzerActionCommandMessage.prototype, 'action', {
     get: function() {
-        return this.data._state;
+        return this.data._action;
     },
     set: function(val) {
         if (!new ParamCheck().isInstanceAndTypeOf(val, 'Number')) {
@@ -1616,7 +1857,49 @@ Object.defineProperty(BuzzerStateMessage.prototype, 'state', {
                 'Argument `val` is invalid. It is required and must be of the correct type.'
             );
         }
-        this.data._state = val;
+        this.data._action = val;
+    }
+});
+
+/**
+ * Sets or gets the host id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the error.
+ * @return {String} the error.
+ */
+Object.defineProperty(BuzzerActionCommandMessage.prototype, 'hostId', {
+    get: function() {
+        return this.data._hostId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._hostId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the error.
+ * @return {String} the error.
+ */
+Object.defineProperty(BuzzerActionCommandMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
     }
 });
 
@@ -1624,22 +1907,28 @@ Object.defineProperty(BuzzerStateMessage.prototype, 'state', {
  * Data structure for json validation of message data property
  * @private
  */
-BuzzerStateMessage.prototype.messagePayloadSchema = {
+BuzzerActionCommandMessage.prototype.messagePayloadSchema = {
     'id': '/MessagePayload',
     'type': 'object',
     'properties': {
-        '_state': {
+        '_hostId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        },
+        '_action': {
             'type': 'number',
             'minimum': 0,
-            'maximum': 2,
+            'maximum': 4,
         },
     },
     'required': [
-        '_state',
+        '_action', '_hostId', '_sessionId',
     ]
 };
 
-module.exports = BuzzerStateMessage;
+module.exports = BuzzerActionCommandMessage;
 
 },{"../ParamCheck":9,"./AbstractMessage":14}],16:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
@@ -1650,20 +1939,20 @@ var ParamCheck = require('../ParamCheck');
  * @extends AbstractMessage
  * @returns {SuccessMessage}
  */
-var ContestantBuzzerPress = function(args) {
+var ContestantBuzzerPressMessage = function(args) {
     AbstractMessage.call(this, args);
 };
 
 /**
- * ContestantBuzzerPress is a subclass of AbstractMessage.
+ * ContestantBuzzerPressMessage is a subclass of AbstractMessage.
  */
-ContestantBuzzerPress.prototype = Object.create(AbstractMessage.prototype);
+ContestantBuzzerPressMessage.prototype = Object.create(AbstractMessage.prototype);
 
 /**
  * The type of this class.
  * @public
  */
-ContestantBuzzerPress.prototype.type = 'ContestantBuzzerPress';
+ContestantBuzzerPressMessage.prototype.type = 'ContestantBuzzerPressMessage';
 
 /**
  * Sets or gets the contestant id.
@@ -1672,7 +1961,7 @@ ContestantBuzzerPress.prototype.type = 'ContestantBuzzerPress';
  * @param {String} the contestant id.
  * @return {String} the contestant id.
  */
-Object.defineProperty(ContestantBuzzerPress.prototype, 'contestantId', {
+Object.defineProperty(ContestantBuzzerPressMessage.prototype, 'contestantId', {
     get: function() {
         return this.data._contestantId;
     },
@@ -1693,7 +1982,7 @@ Object.defineProperty(ContestantBuzzerPress.prototype, 'contestantId', {
  * @param {String} the session id.
  * @return {String} the session id.
  */
-Object.defineProperty(ContestantBuzzerPress.prototype, 'sessionId', {
+Object.defineProperty(ContestantBuzzerPressMessage.prototype, 'sessionId', {
     get: function() {
         return this.data._sessionId;
     },
@@ -1711,7 +2000,7 @@ Object.defineProperty(ContestantBuzzerPress.prototype, 'sessionId', {
  * Data structure for json validation of message data property
  * @private
  */
-ContestantBuzzerPress.prototype.messagePayloadSchema = {
+ContestantBuzzerPressMessage.prototype.messagePayloadSchema = {
     'id': '/MessagePayload',
     'type': 'object',
     'properties': {
@@ -1727,7 +2016,7 @@ ContestantBuzzerPress.prototype.messagePayloadSchema = {
     ]
 };
 
-module.exports = ContestantBuzzerPress;
+module.exports = ContestantBuzzerPressMessage;
 
 },{"../ParamCheck":9,"./AbstractMessage":14}],17:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
@@ -2252,9 +2541,19 @@ ObserverUpdateMessage.prototype.populate = function(session) {
         return innerObj;
     };
 
-    popObj(session, this.data._gameState);
+    //popObj(session, this.data._gameState);
 
+    this.data._gameState.contestants = [];
+    for (var i = 0; i < session.contestants.length; i++) {
+        this.data._gameState.contestants.push(popObj(session.contestants[i]));
+    }
+
+    this.data._gameState.host = popObj(session.host);
+    this.data._gameState.settings = popObj(session.settings);
     this.data._gameState.isCompleted = session.isSessionCompleted;
+    this.data._gameState.currentState = session.currentState;
+    this.data._gameState.roundWinner = session.roundWinner;
+    this.data._gameState.previousWinners = session.previousWinners;
 };
 
 /**
@@ -2384,7 +2683,7 @@ RejoinSessionMessage.prototype.messagePayloadSchema = {
         },
     },
     'required': [
-        '_rejoinAs', '_participantId', '_sessionId'
+        '_rejoinAs', '_sessionId'
     ]
 };
 

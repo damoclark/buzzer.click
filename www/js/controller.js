@@ -1,12 +1,13 @@
 var API_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port; //This is seperate incase it changes in the future
 var WEB_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
 var messageConstants = buzzapi.constants.socketMessageNames;
+var client = buzzapi.io(API_URL);
 
 /* eslint-disable no-unused-vars */
 function createSession(values) {
     /* eslint-enable no-unused-vars */
     if (values) {
-        var client = buzzapi.io(API_URL);
+        //var client = buzzapi.io(API_URL);
 
         var settings = new buzzapi.Settings();
         if (values['session-name']) {
@@ -21,21 +22,21 @@ function createSession(values) {
                 settings.maxTeams = parseInt(values['num-teams']);
             }
             //Set teamleader selection setting
-            if (values['team-leader-selection'] === 'Manual') {
-                settings.teamSelectionMethod = buzzapi.constants.teamSelectionMethod.MANUAL;
+            if (values['team-leader-selection'] === 'Random') {
+                settings.teamSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.RANDOM;
             }
             if (values['team-leader-selection'] === 'PlayerChoice') {
-                settings.teamSelectionMethod = buzzapi.constants.teamSelectionMethod.AUTO;
+                settings.teamSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
             }
             //Set team name selection settings
             if (values['team-name-selection'] === 'Auto') {
-                settings.teamNameEdit = buzzapi.constants.teamNameEdit.LOCKED;
+                settings.teamNameEdit = buzzapi.constants.teamNameEdit.AUTO;
             }
             if (values['team-name-selection'] === 'AutoEdit') {
                 settings.teamNameEdit = buzzapi.constants.teamNameEdit.ALLOW;
             }
             if (values['team-name-selection'] === 'Manual') {
-                settings.teamNameEdit = buzzapi.constants.teamNameEdit.LOCKED;
+                settings.teamNameEdit = buzzapi.constants.teamNameEdit.MANUAL;
                 if (values['team-names'].length > 0) {
                     settings.teamNames = values['team-names'];
                 }
@@ -43,6 +44,8 @@ function createSession(values) {
         } else { //set max-players if teams option is false
             if (!isNaN(parseInt(values['max-players']))) {
                 settings.maxContestants = parseInt(values['max-players']);
+            } else { //set to max
+                settings.maxContestants = 9999;
             }
         }
 
@@ -79,19 +82,17 @@ function createSession(values) {
 
 /* eslint-disable no-unused-vars */
 /**
- * check if a session already exists and rejoin
- * Type: buzzapi.constants.rejoinAs.HOST,
- *      buzzapi.constants.rejoinAs.CONTESTANT,
- *      buzzapi.constants.rejoinAs.OBSERVER
+ * check if a session already exists
+ * Callback: handleExistingSession();
  */
-function checkExistingSession(sessionId, participantId, type) {
+function checkExistingSession(sessionId, participantId) {
     /* eslint-enable no-unused-vars */
-    var client = buzzapi.io(API_URL);
+    //var client = buzzapi.io(API_URL);
 
     var rjm = buzzapi.messageFactory.create(messageConstants.REJOIN_SESSION);
     rjm.sessionId = sessionId;
     rjm.participantId = participantId;
-    rjm.rejoinAs = buzzapi.constants.rejoinAs.HOST;
+    rjm.rejoinAs = buzzapi.constants.rejoinAs.OBSERVER;
 
     client.emit(messageConstants.REJOIN_SESSION, rjm, function (m) {
 
@@ -100,6 +101,7 @@ function checkExistingSession(sessionId, participantId, type) {
         } else { //Remove cookies if session doesn't exist
             buzzapi.Cookie.remove('sessionId');
             buzzapi.Cookie.remove('hostId');
+            buzzapi.Cookie.remove('contestantId');
         }
     });
 }
@@ -107,7 +109,7 @@ function checkExistingSession(sessionId, participantId, type) {
 /* eslint-disable no-unused-vars */
 function closeSession(sessionId, hostId) {
     /* eslint-enable no-unused-vars */
-    var client = buzzapi.io(API_URL);
+    //var client = buzzapi.io(API_URL);
 
     var scm = buzzapi.messageFactory.create(messageConstants.SESSION_COMPLETE);
     scm.sessionId = sessionId;
@@ -120,6 +122,7 @@ function closeSession(sessionId, hostId) {
             }
             buzzapi.Cookie.remove('sessionId');
             buzzapi.Cookie.remove('hostId');
+            buzzapi.Cookie.remove('contestantId');
         } else {
             if (console) {
                 console.log('Error: ' + m);
@@ -142,10 +145,10 @@ function redirectContestant() {
 /* eslint-disable no-unused-vars */
 function joinSession(values) {
     /* eslint-enable no-unused-vars */
-    var client = buzzapi.io(API_URL);
+    //var client = buzzapi.io(API_URL);
     var cjr = buzzapi.messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
     if (values['session-id']) {
-        cjr.sessionId = values['session-id'];
+        cjr.sessionId = values['session-id'].toUpperCase();
     }
     if (values['session-username']) {
         cjr.username = values['session-username'];
@@ -177,23 +180,41 @@ function joinSession(values) {
     });
 }
 
+/**
+ * rejoin Session as type,
+ * if participantId is ommited then observer is default
+ * Type: buzzapi.constants.rejoinAs.HOST,
+ *      buzzapi.constants.rejoinAs.CONTESTANT,
+ *      buzzapi.constants.rejoinAs.OBSERVER
+*/
 /* eslint-disable no-unused-vars */
-function joinObserver(sessionId, participantId) {
+function rejoinSession(sessionId, participantId, type) {
     /* eslint-enable no-unused-vars */
-    var client = buzzapi.io(API_URL);
+    //var client = buzzapi.io(API_URL);
 
     var rjm = buzzapi.messageFactory.create(messageConstants.REJOIN_SESSION);
     rjm.sessionId = sessionId;
+    if (!type) {
+        type = buzzapi.constants.rejoinAs.OBSERVER;
+    }
     if (participantId) {
         rjm.participantId = participantId;
+        rjm.rejoinAs = type;
+    } else {
+        rjm.rejoinAs = buzzapi.constants.rejoinAs.OBSERVER;
     }
-    rjm.rejoinAs = buzzapi.constants.rejoinAs.OBSERVER;
 
     // listen for observer update
     client.on(messageConstants.OBSERVER_UPDATE, function(message) {
         var ob = buzzapi.messageFactory.restore(message, messageConstants.OBSERVER_UPDATE);
+        console.clear();
         console.log(ob);
-        updateShareView(ob);
+        if (ob.gameState.isCompleted) { //Let client know that the session has been completed
+            alertBootstrap('Session has been completed', 'info',true);
+            $('.container > .row  div:not(:first)').hide();
+        } else {
+            updateShareView(ob);
+        }
     });
 
     client.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
@@ -204,8 +225,10 @@ function joinObserver(sessionId, participantId) {
     });
 }
 
-function pressBuzzer(sessionId,contestantId) {
-    var client = buzzapi.io(API_URL);
+/* eslint-disable no-unused-vars */
+function pressBuzzer(sessionId, contestantId) {
+    /* eslint-enable no-unused-vars */
+    //var client = buzzapi.io(API_URL);
 
     var bpm = buzzapi.messageFactory.create(messageConstants.CONTESTANT_BUZZER_PRESS);
     bpm.sessionId = sessionId;
@@ -216,8 +239,47 @@ function pressBuzzer(sessionId,contestantId) {
             handleBuzzSuccess();
         } else {
             var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
-            alertBootstrap(err.error);
+            alertBootstrap(err.error,'warning');
         }
+    });
+}
+
+/**
+ * sends the specified action to the server
+ * sessionId
+ * hostId
+ * action:  buzzapi.constants.buzzerActionCommands.ACCEPT,
+ *          buzzapi.constants.buzzerActionCommands.REJECT,
+ *          buzzapi.constants.buzzerActionCommands.RESET,
+ *          buzzapi.constants.buzzerActionCommands.DISABLE,
+ *          buzzapi.constants.buzzerActionCommands.ENABLE
+ *
+ */
+/* eslint-disable no-unused-vars */
+function buzzerManageCommand(sessionId, hostId, action) {
+    /* eslint-enable no-unused-vars */
+    var bac = buzzapi.messageFactory.create(messageConstants.BUZZER_ACTION_COMMAND);
+    bac.sessionId = sessionId;
+    bac.hostId = hostId;
+    bac.action = action;
+
+    client.emit(messageConstants.BUZZER_ACTION_COMMAND,bac,function(rm) {
+            if (rm.type === messageConstants.ERROR) {
+                var err = buzzapi.messageFactory.restore(rm, messageConstants.ERROR);
+                alertBootstrap(err.error, 'danger');
+            }
+        });
+}
+
+/* eslint-disable no-unused-vars */
+function handleDisconnect() {
+    /* eslint-enable no-unused-vars */
+    //client = buzzapi.io(API_URL);
+    client.on('connect',function(){
+        client.on('disconnect',function(){
+            alertBootstrap('Server disconnected, please refresh to try again.','danger',true);
+            $('.container > .row  div:not(:first)').hide();
+        });
     });
 }
 
@@ -234,16 +296,21 @@ function validateNumber(val) {
 /**
  * Create a bootstrap alert to notify user of events.
  * Type = danger, success, warning, info
+ * nodismiss = true : false
  * More information: http://getbootstrap.com/components/#alerts
  */
 /* eslint-disable no-unused-vars */
-function alertBootstrap(message, type) {
+function alertBootstrap(message, type,nodismiss) {
     /* eslint-enable no-unused-vars */
     $('#error-alert').remove();
-    $('body .container .row').first().prepend(`<div class="alert alert-${type}" id="error-alert">
-        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>${message}</strong>
-        </div>`);
+    if (nodismiss) {
+        $('body .container .row').first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
+            '<strong>' + message + '</strong></div>');
+    } else {
+        $('body .container .row').first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
+            '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' +
+            '<strong>' + message + '</strong></div>');
+    }
 }
 /*
 

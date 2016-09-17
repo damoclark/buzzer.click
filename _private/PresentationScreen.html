@@ -34,7 +34,7 @@
 						<div class="row">
 							<div class="col-xs-12">
 								<h4>Previous winners</h4>
-								<div id="previous-winners" class="well">
+								<div id="previous-winners" class="well no-bullets-all">
 									<ul>
 									</ul>
 								</div>
@@ -93,9 +93,16 @@
 		//Updates view based on observer updates - called from controller.js
 		var updateShareView = function(values)
 		{
+			//clear alerts
+            $('#error-alert').remove();
+			
 			$('#session-id').text(values.gameState.settings.sessionName);
 			if(values.gameState.settings.hasTeams){
-				$('#session-participant-header').text('Teams')
+				$('#session-participant-header').text('Teams');
+				$('#participant-info > ul').empty();
+				$.each(values.gameState.contestants, function(key,item){
+					$('#participant-info > ul').append(`<li>${item.username}</li>`);
+				});
 			}else{ //non-teams game so list all players
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
@@ -108,29 +115,32 @@
 			}
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
-				$('#previous-winners').append(`<li>${item}</li>`);
+				$('#previous-winners > ul').prepend(`<li>${item}</li>`);
 			});
 			
 
 		}
 		$(function(){
+			handleDisconnect();
+			
 			var sessionCookie = buzzapi.Cookie.get('sessionId');
             var participantCookie = buzzapi.Cookie.get('hostId') ? buzzapi.Cookie.get('hostId') : buzzapi.Cookie.get('contestantId')  ;
 	
             if(sessionCookie != undefined && participantCookie != undefined){
-				$('#session-url').text(WEB_URL + '/Join?sessionid='+sessionCookie);
+				$('#session-url').html(WEB_URL + '/Join?sessionid='+sessionCookie);
 				$('#session-qrcode').qrcode({
 					text: WEB_URL + '/Join?sessionid='+sessionCookie
 				});
-                joinObserver(sessionCookie,participantCookie);
+                rejoinSession(sessionCookie,participantCookie);
             }
 			else{
-				alertBootstrap('No session data found, please join or create a session and try again','warning');
-				$('.container > .row  div').hide();
-				$('#error-alert').show();
+				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
+				$('.container > .row div:not(:first)').hide();
 			}
 
-			
+			$('#session-url').click(function(){
+				window.open($(this).text());
+			});
 		});
 	</script>
 </body>
