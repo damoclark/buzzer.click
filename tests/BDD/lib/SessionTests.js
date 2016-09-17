@@ -214,10 +214,31 @@ describe('Session', function() {
                 response.should.not.be.null();
                 response.wasSuccessful.should.be.false();
                 response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
-            });            
+            });
         });
         describe('when in team mode', function() {
-            //TODO: add tests. Requires method to be completed.
+            it('should throw error when inquireTeamLeaderCallback is undefined', function(){
+                settings.teamSize = 2;
+                settings.maxTeams = 2;
+                settings.hasTeams = true;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var s = new Session(id, settings, host);
+                (function () {
+                    s.addContestant(c1, null, function() {});
+                }).should.throw();
+            });
+            it('should throw error when inquireTeamNameCallback is undefined', function(){
+                settings.teamSize = 2;
+                settings.maxTeams = 2;
+                settings.hasTeams = true;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var s = new Session(id, settings, host);
+                (function () {
+                    s.addContestant(c1, function() {});
+                }).should.throw();
+            });
         });
     });
     describe('#subscribeForStateChange(event, callback)', function() {

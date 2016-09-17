@@ -4,7 +4,6 @@ var should = require('should');
 var Settings = require('../../../lib/Settings');
 var messageFactory = require('../../../lib/MessageFactory');
 var successMessage = require('../../../lib/message/SuccessMessage');
-var errorMessage = require('../../../lib/message/ErrorMessage');
 var constants = require('../../../lib/constants');
 var messageConstants = constants.socketMessageNames;
 var helper = require('./ServerTestHelper');
@@ -1276,7 +1275,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                describe('when disable', function() {
+                describe('when disabled', function() {
                     it('should update observers', function(done) {
                         var s = new Settings();
                         s.maxContestants = 1;
@@ -1296,7 +1295,7 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
-                describe('when enable', function() {
+                describe('when enabled', function() {
                     it('should update observers', function(done) {
                         var s = new Settings();
                         s.maxContestants = 1;
