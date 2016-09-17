@@ -17,7 +17,7 @@ describe('Participants', function() {
             p = new Participant();
             p.id = 'p1';
             var collection = new Participants();
-            collection._participants.push(p);
+            collection.add(p);
             collection.all[0].should.equal(p);
         });
         it('should get copy of val and not reference',
@@ -25,24 +25,40 @@ describe('Participants', function() {
                 p = new Participant();
                 p.id = 'p1';
                 var collection = new Participants();
-                collection._participants.push(p);
+                collection.add(p);
                 collection.all.pop();
                 collection.all[0].should.equal(p);
             });
+    });
+    describe('#length', function() {
+        it('should throw on set value', function() {
+            var collection = new Participants();
+            (function() {
+                collection.length = [];
+            }).should.throw();
+        });
+        it('should get value', function() {
+            p = new Participant();
+            p.id = 'p1';
+            var collection = new Participants();
+            collection.length.should.equal(0);
+            collection.add(p);
+            collection.length.should.equal(1);
+        });
     });
     describe('#contains(id)', function() {
         it('should return true when id does exist', function() {
             p = new Participant();
             p.id = 'p1';
             collection = new Participants();
-            collection._participants.push(p);
+            collection.add(p);
             collection.contains(p.id).should.be.true();
         });
         it('should return false when id does not exist', function() {
             p = new Participant();
             p.id = 'p1';
             collection = new Participants();
-            collection._participants.push(p);
+            collection.add(p);
             collection.contains('p2').should.be.false();
         });
     });
@@ -71,9 +87,9 @@ describe('Participants', function() {
             p.id = 'p1';
             collection = new Participants();
             collection.add(p);
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
             collection.remove(p).should.be.true();
-            collection._participants.length.should.equal(0);
+            collection.length.should.equal(0);
         });
         it('should not remove the non-existing participant', function() {
             p1 = new Participant();
@@ -82,9 +98,9 @@ describe('Participants', function() {
             p2.id = 'p2';
             collection = new Participants();
             collection.add(p2);
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
             collection.remove(p1).should.be.false();
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
         });
     });
     describe('#removeById(id)', function() {
@@ -93,9 +109,9 @@ describe('Participants', function() {
             p.id = 'p1';
             collection = new Participants();
             collection.add(p);
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
             collection.removeById(p.id).should.be.true();
-            collection._participants.length.should.equal(0);
+            collection.length.should.equal(0);
         });
         it('should not remove the non-existing participant', function() {
             p1 = new Participant();
@@ -104,9 +120,9 @@ describe('Participants', function() {
             p2.id = 'p2';
             collection = new Participants();
             collection.add(p2);
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
             collection.removeById(p1.id).should.be.false();
-            collection._participants.length.should.equal(1);
+            collection.length.should.equal(1);
         });
     });
 });

@@ -48,56 +48,56 @@ describe('Settings', function() {
                 s.maxTeams.should.be.equal(1);
             });
     });
-    describe('#teamSelectionMethod', function() {
+    describe('#teamLeaderSelectionMethod', function() {
         it('should set value',
             function() {
                 var s = new Settings();
-                s.teamSelectionMethod = constants.teamSelectionMethod.MANUAL;
-                s._teamSelectionMethod.should.be.equal(constants.teamSelectionMethod
-                    .MANUAL);
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+                s._teamLeaderSelectionMethod.should.be.equal(constants.teamLeaderSelectionMethod
+                    .PLAYER_CHOICE);
             });
         it('should throw on set when constant value is invalid',
             function() {
                 var s = new Settings();
                 (function() {
-                    var high = constants.teamSelectionMethod.all.sort(
+                    var high = constants.teamLeaderSelectionMethod.all.slice().sort(
                         function(a, b) {
                             return a - b;
                         }).pop();
-                    s.teamSelectionMethod = high++;
+                    s.teamLeaderSelectionMethod = ++high;
                 }).should.throw();
             });
         it('should get value',
             function() {
                 var s = new Settings();
-                s._teamSelectionMethod = constants.teamSelectionMethod.MANUAL;
-                s.teamSelectionMethod.should.be.equal(constants.teamSelectionMethod
-                    .MANUAL);
+                s._teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+                s.teamLeaderSelectionMethod.should.be.equal(constants.teamLeaderSelectionMethod
+                    .PLAYER_CHOICE);
             });
     });
     describe('#teamNameEdit', function() {
         it('should set value',
             function() {
                 var s = new Settings();
-                s.teamNameEdit = constants.teamNameEdit.LOCKED;
-                s._teamNameEdit.should.be.equal(constants.teamNameEdit.LOCKED);
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s._teamNameEdit.should.be.equal(constants.teamNameEdit.ALLOW);
             });
         it('should throw on set when constant value is invalid',
             function() {
                 var s = new Settings();
                 (function() {
-                    var high = constants.teamNameEdit.all.sort(function(a,
+                    var high = constants.teamNameEdit.all.slice().sort(function(a,
                         b) {
                         return a - b;
                     }).pop();
-                    s.teamNameEdit = high++;
+                    s.teamNameEdit = ++high;
                 }).should.throw();
             });
         it('should get value',
             function() {
                 var s = new Settings();
-                s._teamNameEdit = constants.teamNameEdit.LOCKED;
-                s.teamNameEdit.should.be.equal(constants.teamNameEdit.LOCKED);
+                s._teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamNameEdit.should.be.equal(constants.teamNameEdit.ALLOW);
             });
     });
     describe('#maxContestants', function() {

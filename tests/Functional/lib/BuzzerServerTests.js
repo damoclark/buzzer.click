@@ -4,7 +4,6 @@ var should = require('should');
 var Settings = require('../../../lib/Settings');
 var messageFactory = require('../../../lib/MessageFactory');
 var successMessage = require('../../../lib/message/SuccessMessage');
-var errorMessage = require('../../../lib/message/ErrorMessage');
 var constants = require('../../../lib/constants');
 var messageConstants = constants.socketMessageNames;
 var helper = require('./ServerTestHelper');
@@ -1273,6 +1272,60 @@ describe('Buzzer server', function() {
                                                 .RESET);
                                         });
                                 });
+                        });
+                    });
+                });
+                describe('when disabled', function() {
+                    it('should update observers', function(done) {
+                        var s = new Settings();
+                        s.maxContestants = 1;
+
+                        var hc = helper.createClient();
+
+                        // listen for observer update
+                        hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                            if (om.gameState.currentState === constants.gameStates.BUZZER_LOCK) {
+                                done();
+                            }
+                        });
+
+                        helper.createSession(hc, s, function(rm) {
+                            helper.hostBuzzerAction(hc, rm.sessionId, rm.hostId, constants.buzzerActionCommands.DISABLE);
+                        });
+                    });
+                });
+                describe('when enabled', function() {
+                    it('should update observers', function(done) {
+                        var s = new Settings();
+                        s.maxContestants = 1;
+
+                        var hc = helper.createClient();
+
+                        var observedLocked = false;
+                        // listen for observer update
+                        hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                            if (om.gameState.currentState === constants.gameStates.BUZZER_LOCK) {
+                                observedLocked = true;
+                                return;
+                            }
+                            if (observedLocked && om.gameState.currentState === constants.gameStates.READY) {
+                                done();
+                            }
+                        });
+
+                        helper.createSession(hc, s, function(rm) {
+
+                            helper.hostBuzzerAction(hc, rm.sessionId, rm.hostId, constants.buzzerActionCommands.DISABLE, function(sm) {
+                                sm.should.be.instanceOf(successMessage);
+                                helper.getLatestSession().currentState.should.equal(constants.gameStates.BUZZER_LOCK);
+
+                                helper.hostBuzzerAction(hc, rm.sessionId, rm.hostId, constants.buzzerActionCommands.ENABLE, function(sm) {
+                                    sm.should.be.instanceOf(successMessage);
+                                    helper.getLatestSession().currentState.should.equal(constants.gameStates.READY);
+                                });
+                            });
                         });
                     });
                 });

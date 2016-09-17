@@ -37,7 +37,7 @@ describe('ObserverUpdateMessage', function() {
                 should.not.exist(m.gameState._settings);
                 should.exist(m.gameState.host);
                 should.exist(m.gameState.settings);
-                should.exist(m.gameState.settings.teamSelectionMethod);
+                should.exist(m.gameState.settings.teamLeaderSelectionMethod);
             });
     });
     describe('#isValid()', function() {
