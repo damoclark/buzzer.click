@@ -322,7 +322,7 @@
 
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append(`<li>${item.username}</li>`);
+					$('#participant-info > ul').append('<li>'+item.username+'</li>');
 				});
 			}else{ //non-teams game so list all players
                 $('#session-teams').text('No');
@@ -333,7 +333,7 @@
 
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append(`<li>${item.username}</li>`);
+					$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 				});
 			}
 
@@ -342,7 +342,7 @@
 			}
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
-				$('#previous-winners > ul').prepend(`<li>${item}</li>`);
+				$('#previous-winners > ul').prepend('<li>'+item+'</li>');
 			});
 			
         }
@@ -358,12 +358,10 @@
 					for(i=teamNames.length; i < loops;i++)
 					{
 						var label = i+1;
-						var x = teamNames.push(`<div id="team-name-div-${label}" class="form-group row">
-								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
-								<div class="col-sm-9">
-									<input class="form-control" type="text" id="team-name-${label}" name="team-name-${label}" />
-								</div>
-							</div>`);
+						var x = teamNames.push('<div id="team-name-div-'+label+'" class="form-group row">'+
+								'<label class="col-sm-3 col-form-label" for="team-name-'+label+'">Team '+label+'</label>'+
+								'<div class="col-sm-9">'+
+								'<input class="form-control" type="text" id="team-name-'+label+'" name="team-name-'+label+'" /></div></div>');
 						$('#options-manual-name-selection').append(teamNames[x-1]);
 					}
 				}

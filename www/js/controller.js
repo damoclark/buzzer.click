@@ -1,7 +1,13 @@
 var API_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port; //This is seperate incase it changes in the future
-var WEB_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+var WEB_URL = generateWebUrl();
 var messageConstants = buzzapi.constants.socketMessageNames;
 var client = buzzapi.io(API_URL);
+
+function generateWebUrl() {
+    var port = (window.location.port) ? ':' + window.location.port : '';
+    var url = window.location.protocol + '//' + window.location.hostname + port;
+    return url;
+}
 
 /* eslint-disable no-unused-vars */
 function createSession(values) {

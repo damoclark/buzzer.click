@@ -102,7 +102,7 @@
 
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append(`<li>${item.username}</li>`);
+					$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 				});
 			}
 
@@ -111,7 +111,7 @@
 			}
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
-				$('#previous-winners > ul').prepend(`<li>${item}</li>`);
+				$('#previous-winners > ul').prepend('<li>'+item+'</li>');
 			});
 
 		}

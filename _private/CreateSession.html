@@ -176,12 +176,10 @@
                     for (i = teamNames.length; i < loops; i++) {
                         var label = i + 1;
                         var x = teamNames.push(
-                            `<div id="team-name-div-${label}" class="form-group row">
-								<label class="col-sm-3 col-form-label" for="team-name-${label}">Team ${label}</label>
-								<div class="col-sm-9">
-									<input class="form-control team-name-input" type="text" id="team-name-${label}" name="team-name-${label}" />
-								</div>
-							</div>`
+                            '<div id="team-name-div-'+label+'" class="form-group row">'+
+							'<label class="col-sm-3 col-form-label" for="team-name-'+label+'">Team '+label+'</label>'+
+							'<div class="col-sm-9">'+
+							'<input class="form-control team-name-input" type="text" id="team-name-'+label+'" name="team-name-'+label+'" /></div></div>'
                         );
                         $('#options-manual-name-selection').append(teamNames[x - 1]);
                     }
