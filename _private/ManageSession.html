@@ -11,9 +11,6 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-inverse">
-        <div class="navbar-brand">Buzzer</div>
-    </nav>
     <div class="container">
         <!-- Main Row encapsulates whole interface -->
         <div class="row">
@@ -24,7 +21,7 @@
             <div class="col-sm-4">
                 <div class="row row-buffer">
                     <div class="col-xs-12">
-                        <button id="btn-session-enable" type="button" class="btn btn-lg btn-primary disabled">Enable</button>
+                        <button id="btn-session-enable" type="button" class="btn btn-lg btn-primary" disabled>Enable</button>
                         <button id="btn-session-disable" type="button" class="btn btn-lg btn-default">Disable</button>
                     </div>
                 </div>
@@ -32,8 +29,8 @@
             <div class="col-sm-4">
                 <div class="row row-buffer">
                     <div class="col-xs-12">
-                        <button id="btn-session-accept" type="button" class="btn btn-lg btn-success disabled"><span class="glyphicon glyphicon-thumbs-up"></span> Accept</button>
-                        <button id="btn-session-reject" type="button" class="btn btn-lg btn-warning disabled"><span class="glyphicon glyphicon-thumbs-down"></span> Reject</button>
+                        <button id="btn-session-accept" type="button" class="btn btn-lg btn-success" disabled><span class="glyphicon glyphicon-thumbs-up"></span> Accept</button>
+                        <button id="btn-session-reject" type="button" class="btn btn-lg btn-warning" disabled><span class="glyphicon glyphicon-thumbs-down"></span> Reject</button>
                     </div>
                 </div>
             </div>
@@ -125,7 +122,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <div class="row">
-                    <h4>Round winner</h4>
+                    <h4 id="round-winner-header">Round winner</h4>
                     <div id="round-winner" class="well"></div>
                 </div>
                 <div class="row">
@@ -135,8 +132,8 @@
             </div>
             <div class="col-sm-6">
                 <h4 id="session-participant-header">Participants</h4>
-                <div id="participant-info" class="well well-lg">
-                    <ul class="no-bullets-all top-header">
+                <div id="participant-info" class="well well-lg no-bullets-all">
+                    <ul class="top-header">
                         <li>test <span class="badge badge-primary">3</span></li>
 
                         <li>
@@ -293,17 +290,22 @@
             $('#error-alert').remove();
 
             if(values.gameState.currentState === 'pending'){
-                $('#btn-session-disable').addClass('disabled');
-                $('#btn-session-accept').removeClass('disabled');
-                $('#btn-session-reject').removeClass('disabled');
+                $('#btn-session-disable').prop('disabled',true);
+                $('#btn-session-accept').prop('disabled',false);
+                $('#btn-session-reject').prop('disabled',false);
+                if(values.gameState.pendingWinner){
+					$('#round-winner-header').text("Buzzed in");
+					$('#round-winner').addClass("bg-success");
+					$('#round-winner').text(values.gameState.pendingWinner);
+				}
 			}else if(values.gameState.currentState === 'ready'){
-				$('#btn-session-enable').addClass('disabled');
-                $('#btn-session-disable').removeClass('disabled');
-                $('#btn-session-accept').addClass('disabled');
-                $('#btn-session-reject').addClass('disabled');
+				$('#btn-session-enable').prop('disabled',true);
+                $('#btn-session-disable').prop('disabled',false);
+                $('#btn-session-accept').prop('disabled',true);
+                $('#btn-session-reject').prop('disabled',true);
 			}else if(values.gameState.currentState === 'buzzerLock'){
-				$('#btn-session-enable').removeClass('disabled');
-                $('#btn-session-disable').addClass('disabled');
+				$('#btn-session-enable').prop('disabled',false);
+                $('#btn-session-disable').prop('disabled',true);
 			}
 
 
@@ -337,7 +339,9 @@
 				});
 			}
 
-			if(values.gameState.roundWinner){
+			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
+				$('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
 			}
 			$('#previous-winners > ul').empty();

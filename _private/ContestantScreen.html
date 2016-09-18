@@ -11,9 +11,6 @@
 </head>
 
 <body>
-	<nav class="navbar navbar-inverse">
-		<div class="navbar-brand">Buzzer</div>
-	</nav>
 	<div class="container">
 		<!-- Main Row encapsulates whole interface -->
 		<div class="row">
@@ -21,8 +18,8 @@
 			<div class="col-sm-6"> 
 				<!-- This creates a small space and pads the content nicely using bootstrap grids -->
 				<div class="col-sm-12">
-					<div class="row">
-							<h4>Session</h4>
+					<div class="row inline-headers">
+							<h4>Session:</h4>
 							<h4 class="text-center" id="session-name"></h4>
 					</div>
 					<div class="row">
@@ -49,7 +46,7 @@
 				<!-- This creates a small space and pads the content nicely using bootstrap grids -->
 				<div class="col-sm-12">
 					<div class="row">
-						<div><h4>Round winner</h4></div>
+						<div><h4 id="round-winner-header">Round winner</h4></div>
 						<div id="round-winner" class="well"></div>
 					</div>
 					<div class="row">
@@ -87,6 +84,12 @@
 			
 			if(values.gameState.currentState === 'pending'){
 				$('#buzzer').addClass("circle-disabled");
+
+				if(values.gameState.pendingWinner){
+					$('#round-winner-header').text("Buzzed in");
+					$('#round-winner').addClass("bg-success");
+					$('#round-winner').text(values.gameState.pendingWinner);
+				}
 			}else if(values.gameState.currentState === 'ready'){
 				$('#buzzer').removeClass("circle-disabled");
 			}else if(values.gameState.currentState === 'buzzerLock'){
@@ -95,6 +98,7 @@
 
 			$('#session-name').text(values.gameState.settings.sessionName);
 
+			
 			if(values.gameState.settings.hasTeams){
 				
 			}else{ //non-teams game so list all players
@@ -106,7 +110,9 @@
 				});
 			}
 
-			if(values.gameState.roundWinner){
+			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
+				$('#round-winner-header').text("Round winner");
+					$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
 			}
 			$('#previous-winners > ul').empty();

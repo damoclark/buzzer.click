@@ -26,7 +26,7 @@
 					<div class="col-sm-6">
 						<div class="row">
 							<div class="col-xs-12">
-								<h4>Round winner</h4>
+								<h4 id="round-winner-header">Round winner</h4>
 								<div id="round-winner" class="well">
 								</div>
 							</div>
@@ -43,8 +43,8 @@
 					</div>
 					<div class="col-sm-6">
 						<h4 id="session-participant-header">Participants</h4>
-						<div id="participant-info" class="well well-lg">
-							<ul class="no-bullets-all top-header">
+						<div id="participant-info" class="well well-lg no-bullets-all">
+							<ul class="top-header">
 								<li>test <span class="badge badge-primary">3</span></li>
 								
 								<li>
@@ -96,6 +96,14 @@
 			//clear alerts
             $('#error-alert').remove();
 			
+			if(values.gameState.currentState === 'pending'){
+				if(values.gameState.pendingWinner){
+					$('#round-winner-header').text("Buzzed in");
+					$('#round-winner').addClass("bg-success");
+					$('#round-winner').text(values.gameState.pendingWinner);
+				}
+			}
+
 			$('#session-id').text(values.gameState.settings.sessionName);
 			if(values.gameState.settings.hasTeams){
 				$('#session-participant-header').text('Teams');
@@ -110,7 +118,9 @@
 				});
 			}
 
-			if(values.gameState.roundWinner){
+			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
+				$('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
 			}
 			$('#previous-winners > ul').empty();
@@ -134,8 +144,19 @@
                 rejoinSession(sessionCookie,participantCookie);
             }
 			else{
+				//see if a session is provided in the get request and try and join
+				//Check parameter for ?sessionid=
+				var session = getParameterByName('sessionid');
+				if(session){
+					$('#session-url').html(WEB_URL + '/Join?sessionid='+session);
+					$('#session-qrcode').qrcode({
+						text: WEB_URL + '/Join?sessionid='+session
+					});
+					rejoinSession(session);
+				}else{
 				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
 				$('.container > .row div:not(:first)').hide();
+				}
 			}
 
 			$('#session-url').click(function(){

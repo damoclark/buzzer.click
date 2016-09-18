@@ -47,9 +47,10 @@
     background: #555555;
 }
 
-.no-bullets-all *,
+.no-bullets-all *:not(.badge),
 .no-bullets{
     list-style: none;
+    padding-left:0px;
 }
 
 .no-bullets-all > li,
@@ -85,4 +86,12 @@
 .center-block{
     display: block;
     margin:auto;
+}
+
+.bg-success{
+    background-color: #dff0d8 !important;
+}
+.inline-headers h4 {
+  display: inline-block;
+  vertical-align: baseline;
 }

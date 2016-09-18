@@ -27,7 +27,6 @@
                         <label for="session-username">Enter a username</label>
                         <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" required />
                     </div>
-                    <button class="btn btn-lg pull-right btn-info" type="button" id="qrcode-scan">Scan QR</button>
                     <button class="btn btn-lg pull-right btn-primary" type="submit" id="session-submit">Join</button>
                 </form>
             </div>
@@ -84,7 +83,7 @@
     <script src="js/controller.js"></script>
     <script type="text/javascript">
         var handleExistingSession = function(){
-            //redirectContestant();
+            redirectContestant();
         }
         $(function(){
             handleDisconnect();
@@ -95,19 +94,11 @@
             if(sessionCookie != undefined && participantCookie != undefined){
 				checkExistingSession(sessionCookie,participantCookie);
             }
-
-            //Check useragent and display qrcode scan button on Android: http://stackoverflow.com/a/6031480
-            var ua = navigator.userAgent.toLowerCase();
-            var isAndroid = ua.indexOf("android") > -1;
-            if(!isAndroid) {
-                $('#qrcode-scan').hide();
-            }
             
             //Check parameter for ?sessionid=
             var session = getParameterByName('sessionid');
             if(session){
                 $('#session-id').prop('readonly',true);
-                $('#qrcode-scan').hide();
                 $('#session-id').val(session);
             }
             $('#join-session-form').submit(function(event){
@@ -124,10 +115,6 @@
             $('#session-teamleader').click(function(){
                 $("#modal-teamleader").modal("hide");
                 $("#modal-team-name").modal("show");
-            });
-            $('#qrcode-scan').click(function(){
-                window.location.href='intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end';
-                
             });
         });
     </script>
