@@ -19,6 +19,19 @@ describe('Session', function() {
         settings = new Settings();
         host = new Host();
     });
+    describe('#constructor', function() {
+        it('should create teams', function(){
+            settings.hasTeams = true;
+            settings.maxTeams = 5;
+            var s = new Session(id, settings, host);
+            s.teams.length.should.equal(5);
+        });
+        it('should not create teams', function(){
+            settings.hasTeams = false;
+            var s = new Session(id, settings, host);
+            should(s.teams).be.null();
+        });
+    });
     describe('#id', function() {
         it('should throw on set value',
             function() {
@@ -698,6 +711,33 @@ describe('Session', function() {
                 s.tryBuzzerAction(constants.buzzerActionCommands.ENABLE).should.be.true();
                 s.currentState.should.equal(constants.gameStates.READY);
             });
+        });
+    });
+    describe('#pendingWinner', function() {
+        it('should return the pending winner', function(){
+            var c = new Contestant();
+            c.username = 'testUser';
+
+            settings.maxContestants = 1;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c).wasSuccessful.should.be.true();
+            s.currentState.should.equal('ready');
+            s.tryBuzzerPressRegister(c.id).should.be.true();
+            s.currentState.should.equal('pending');
+
+            s.pendingWinner.should.equal('testUser');
+        });
+        it('should not return the pending winner', function(){
+            var c = new Contestant();
+            c.username = 'testUser';
+
+            settings.maxContestants = 1;
+            var s = new Session(id, settings, host);
+
+            s.addContestant(c).wasSuccessful.should.be.true();
+            s.currentState.should.equal('ready');
+            should(s.pendingWinner).be.null();
         });
     });
 });
