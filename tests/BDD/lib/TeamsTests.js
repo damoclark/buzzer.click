@@ -4,9 +4,23 @@ var should = require('should');
 
 var Teams = require('../../../lib/Teams');
 var Team = require('../../../lib/Team');
+var teamFactory = require('../../../lib/teamFactory');
 var Settings = require('../../../lib/Settings');
 var Contestant = require('../../../lib/Contestant');
 var constants = require('../../../lib/Constants');
+var idUtil = require('../../../lib/IdentifierUtility');
+
+function generateContestants(numberToGenerate) {
+    var contestants = [];
+    for (var i = 0; i < numberToGenerate; i++) {
+        var c = new Contestant();
+        c.id = idUtil.generateParticipantId();
+        c.username = 'c' + i;
+        contestants.push(c);
+    }
+    contestants.length.should.equal(numberToGenerate);
+    return contestants;
+}
 
 describe('Teams', function() {
     describe('#contains(teamName)', function() {
@@ -159,76 +173,179 @@ describe('Teams', function() {
                 r.should.be.false();
                 em.should.equal(constants.messages.TEAMS_ARE_FULL);
             });
-            describe('when teamLeader selection is PLAYER_CHOICE', function() {
-                it('should inquire for teamLeader', function() {
-                    var s = new Settings();
-                    s.hasTeams = true;
-                    s.maxTeams = 1;
-                    s.teamSize = 1;
-                    s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+        });
+        describe('when teamLeader selection is PLAYER_CHOICE', function() {
+            it('should inquire for team leader', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
-                    var t = new Team();
-                    t.teamName = 't1';
+                var t = new Team();
+                t.teamName = 't1';
 
-                    var tc = new Teams();
-                    tc.add(t);
+                var tc = new Teams();
+                tc.add(t);
 
-                    var c1 = new Contestant();
-                    c1.username = 'c1';
+                var c1 = new Contestant();
+                c1.username = 'c1';
 
-                    var inquired = false;
+                var inquired = false;
 
-                    var [r] = tc.addContestant(c1, s, function() {
-                        inquired = true;
-                        return false;
-                    }, function() {});
-                    r.should.be.true();
-                    inquired.should.be.true();
+                var [r] = tc.addContestant(c1, s, function() {
+                    inquired = true;
+                    return false;
+                }, function() {});
+                r.should.be.true();
+                inquired.should.be.true();
+            });
+            it('should not inquire for team leader', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.id = idUtil.generateParticipantId();
+                c1.username = 'c1';
+
+                var c2 = new Contestant();
+                c2.id = idUtil.generateParticipantId();
+                c2.username = 'c2';
+
+                var [r] = tc.addContestant(c1, s, function() {
+                    return true;
+                }, function() {});
+                r.should.be.true();
+
+                var didNotInquire = true;
+                tc.addContestant(c2, s, function() {
+                    didNotInquire = false;
+                }, function() {});
+                didNotInquire.should.be.true();
+
+                t.teamLeader.should.equal(c1);
+            });
+            it('should add contestant as teamLeader', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+
+                var [r] = tc.addContestant(c1, s, function() {
+                    return true;
+                }, function() {});
+                r.should.be.true();
+
+                t.teamLeader.should.equal(c1);
+            });
+            it('should not add contestant as teamLeader', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+
+                var [r] = tc.addContestant(c1, s, function() {
+                    return false;
+                }, function() {});
+                r.should.be.true();
+
+                should(t.teamLeader).be.null();
+            });
+        });
+        describe('when teamLeader selection is RANDOM', function() {
+            it('should not inquire for team leader', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+
+                var notInquired = true;
+
+                var [r] = tc.addContestant(c1, s, function() {
+                    notInquired = false;
+                    return false;
+                }, function() {});
+                r.should.be.true();
+                notInquired.should.be.true();
+            });
+            it('should automatically add team leader when team is filled', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 2;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var tc = new Teams();
+                teamFactory.create(tc, s);
+
+                var cc = generateContestants(4);
+
+                cc.forEach(function(c) {
+                    tc.addContestant(c, s, function() {});
                 });
-                it('should add contestant as teamLeader', function() {
-                    var s = new Settings();
-                    s.hasTeams = true;
-                    s.maxTeams = 1;
-                    s.teamSize = 1;
-                    s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
-                    var t = new Team();
-                    t.teamName = 't1';
-
-                    var tc = new Teams();
-                    tc.add(t);
-
-                    var c1 = new Contestant();
-                    c1.username = 'c1';
-
-                    var [r] = tc.addContestant(c1, s, function() {
-                        return true;
-                    }, function() {});
-                    r.should.be.true();
-
-                    t.teamLeader.should.equal(c1);
+                tc.length.should.equal(2);
+                tc.all.forEach(function(t) {
+                    should(t.teamLeader).not.be.null();
                 });
-                it('should not add contestant as teamLeader', function() {
-                    var s = new Settings();
-                    s.hasTeams = true;
-                    s.maxTeams = 1;
-                    s.teamSize = 1;
-                    s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+            });
+            it('should not automatically add team leader when team is not filled', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 2;
+                s.teamSize = 3;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 
-                    var t = new Team();
-                    t.teamName = 't1';
+                var tc = new Teams();
+                teamFactory.create(tc, s);
 
-                    var tc = new Teams();
-                    tc.add(t);
+                var cc = generateContestants(4);
 
-                    var c1 = new Contestant();
-                    c1.username = 'c1';
+                cc.forEach(function(c) {
+                    tc.addContestant(c, s, function() {});
+                });
 
-                    var [r] = tc.addContestant(c1, s, function() {
-                        return false;
-                    }, function() {});
-                    r.should.be.true();
-
+                tc.length.should.equal(2);
+                tc.all.forEach(function(t) {
                     should(t.teamLeader).be.null();
                 });
             });
