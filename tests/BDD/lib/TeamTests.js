@@ -67,4 +67,28 @@ describe('Team', function() {
                 c.should.be.instanceOf(Participants);
             });
     });
+    describe('when a contestant scores', function() {
+        it('should update the teams score', function() {
+            var t = new Team();
+
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            c1.username = 'c1';
+
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            c2.username = 'c2';
+
+            t.contestants.add(c1);
+            t.contestants.add(c2);
+
+            c1.incrementScore();
+            c1.score.should.equal(1);
+            t.score.should.equal(1);
+
+            c2.incrementScore();
+            c2.score.should.equal(1);
+            t.score.should.equal(2);
+        });
+    });
 });

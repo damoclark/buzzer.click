@@ -80,6 +80,16 @@ describe('Participants', function() {
                 pc.add(p);
             }).should.throw();
         });
+        it('should emit add event', function(done) {
+            p = new Participant();
+            p.id = 'p1';
+            pc = new Participants();
+            pc.on('add', function(participant) {
+                participant.should.equal(p);
+                done();
+            });
+            pc.add(p);
+        });
     });
     describe('#remove(participant)', function() {
         it('should remove the existing participant', function() {

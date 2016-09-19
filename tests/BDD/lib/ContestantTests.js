@@ -41,5 +41,12 @@ describe('Contestant', function() {
                 c.incrementScore();
                 c.score.should.equal(1);
             });
+        it('should emit scoreUpdate event', function(done) {
+            var c = new Contestant();
+            c.on('scoreUpdate', function() {
+                done();
+            });
+            c.incrementScore();
+        });            
     });
 });

@@ -8,13 +8,11 @@ var teamFactory = require('../../../lib/teamFactory');
 var Settings = require('../../../lib/Settings');
 var Contestant = require('../../../lib/Contestant');
 var constants = require('../../../lib/Constants');
-var idUtil = require('../../../lib/IdentifierUtility');
 
 function generateContestants(numberToGenerate) {
     var contestants = [];
     for (var i = 0; i < numberToGenerate; i++) {
         var c = new Contestant();
-        c.id = idUtil.generateParticipantId();
         c.username = 'c' + i;
         contestants.push(c);
     }
@@ -147,6 +145,25 @@ describe('Teams', function() {
         });
     });
     describe('addContestant(contestant, settings, inquireTeamLeaderCallback, inquireTeamNameCallback)', function() {
+        it('should give contestant an id', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 1;
+            s.teamSize = 1;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var c = new Contestant();
+            c.username = 'Username';
+            should(c.id).be.null();
+
+            tc.addContestant(c, s, function() {
+                return false;
+            });
+
+            should(c.id).not.be.null();
+        });
         describe('when teams are full', function() {
             it('should return a valid response', function() {
                 var s = new Settings();
@@ -165,11 +182,11 @@ describe('Teams', function() {
                 var c2 = new Contestant();
                 c2.username = 'c1';
 
-                var [r, em] = tc.addContestant(c1, s, function() {}, function() {});
+                var [r, em] = tc.addContestant(c1, s, function() {});
                 r.should.be.true();
                 should.not.exist(em);
 
-                [r, em] = tc.addContestant(c1, s, function() {}, function() {});
+                [r, em] = tc.addContestant(c1, s, function() {});
                 r.should.be.false();
                 em.should.equal(constants.messages.TEAMS_ARE_FULL);
             });
@@ -182,11 +199,8 @@ describe('Teams', function() {
                 s.teamSize = 1;
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
-                var t = new Team();
-                t.teamName = 't1';
-
                 var tc = new Teams();
-                tc.add(t);
+                teamFactory.create(tc, s);
 
                 var c1 = new Contestant();
                 c1.username = 'c1';
@@ -195,8 +209,7 @@ describe('Teams', function() {
 
                 var [r] = tc.addContestant(c1, s, function() {
                     inquired = true;
-                    return false;
-                }, function() {});
+                });
                 r.should.be.true();
                 inquired.should.be.true();
             });
@@ -214,46 +227,20 @@ describe('Teams', function() {
                 tc.add(t);
 
                 var c1 = new Contestant();
-                c1.id = idUtil.generateParticipantId();
                 c1.username = 'c1';
 
                 var c2 = new Contestant();
-                c2.id = idUtil.generateParticipantId();
                 c2.username = 'c2';
 
-                var [r] = tc.addContestant(c1, s, function() {
-                    return true;
-                }, function() {});
+                var [r] = tc.addContestant(c1, s, function() { });
                 r.should.be.true();
+                tc.all[0].teamLeader = c1;
 
                 var didNotInquire = true;
                 tc.addContestant(c2, s, function() {
                     didNotInquire = false;
-                }, function() {});
+                });
                 didNotInquire.should.be.true();
-
-                t.teamLeader.should.equal(c1);
-            });
-            it('should add contestant as teamLeader', function() {
-                var s = new Settings();
-                s.hasTeams = true;
-                s.maxTeams = 1;
-                s.teamSize = 1;
-                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
-
-                var t = new Team();
-                t.teamName = 't1';
-
-                var tc = new Teams();
-                tc.add(t);
-
-                var c1 = new Contestant();
-                c1.username = 'c1';
-
-                var [r] = tc.addContestant(c1, s, function() {
-                    return true;
-                }, function() {});
-                r.should.be.true();
 
                 t.teamLeader.should.equal(c1);
             });
@@ -273,9 +260,7 @@ describe('Teams', function() {
                 var c1 = new Contestant();
                 c1.username = 'c1';
 
-                var [r] = tc.addContestant(c1, s, function() {
-                    return false;
-                }, function() {});
+                var [r] = tc.addContestant(c1, s, function() {});
                 r.should.be.true();
 
                 should(t.teamLeader).be.null();
@@ -303,7 +288,7 @@ describe('Teams', function() {
                 var [r] = tc.addContestant(c1, s, function() {
                     notInquired = false;
                     return false;
-                }, function() {});
+                });
                 r.should.be.true();
                 notInquired.should.be.true();
             });
