@@ -80,23 +80,23 @@ ServerTestHelper.prototype.createSession = function(hc, settings, callback) {
     csm.settings = settings;
 
     hc.emit(messageConstants.CREATE_SESSION, csm, function(data) {
-            var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
-            callback(response);
-        });
+        var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
+        callback(response);
+    });
 };
 
-ServerTestHelper.prototype.contestantJoin = function(cc, username, sessionId, callback){
+ServerTestHelper.prototype.contestantJoin = function(cc, username, sessionId, callback) {
     callback = (typeof callback !== 'undefined') ? callback : function() {};
     var rm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
     rm.sessionId = sessionId;
     rm.username = username;
 
     cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rm, function(m) {
-            var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
-            rm.should.not.be.null();
-            rm.wasSuccessful.should.be.true();
-            callback(rm);
-        });
+        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+        rm.should.not.be.null();
+        rm.wasSuccessful.should.be.true();
+        callback(rm);
+    });
 };
 
 ServerTestHelper.prototype.forceObserveUpdate = function(sessionId) {
