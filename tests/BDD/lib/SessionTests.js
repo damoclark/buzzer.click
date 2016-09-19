@@ -230,27 +230,58 @@ describe('Session', function() {
             });
         });
         describe('when in team mode', function() {
-            it('should throw error when inquireTeamLeaderCallback is undefined', function(){
-                settings.teamSize = 2;
-                settings.maxTeams = 2;
+            it('should add contestant when teams is not full', function() {
                 settings.hasTeams = true;
+                settings.maxTeams = 2;
+                settings.teamSize = 1;
                 var c1 = new Contestant();
                 c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c2';
                 var s = new Session(id, settings, host);
-                (function () {
-                    s.addContestant(c1, null, function() {});
-                }).should.throw();
+                var response = s.addContestant(c1);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
+                response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
             });
-            it('should throw error when inquireTeamNameCallback is undefined', function(){
-                settings.teamSize = 2;
-                settings.maxTeams = 2;
+            it('should not add contestant when teams are full', function() {
                 settings.hasTeams = true;
+                settings.maxTeams = 2;
+                settings.teamSize = 1;
                 var c1 = new Contestant();
                 c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c2';
+                var c3 = new Contestant();
+                c3.username = 'c3';
                 var s = new Session(id, settings, host);
-                (function () {
-                    s.addContestant(c1, function() {});
-                }).should.throw();
+                var response = s.addContestant(c1);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
+                response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.true();
+                response = s.addContestant(c3);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+                response.errorMessage.should.be.equal(constants.messages.TEAMS_ARE_FULL);
+            });
+            it('should not add contestant when username is already taken', function() {
+                settings.hasTeams = true;
+                settings.maxTeams = 2;
+                settings.teamSize = 1;
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c1';
+                var s = new Session(id, settings, host);
+                s.addContestant(c1);
+                var response = s.addContestant(c2);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+                response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
             });
         });
     });

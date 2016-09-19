@@ -209,7 +209,6 @@ describe('Teams', function() {
 
                 var [r] = tc.addContestant(c1, s, function() {
                     inquired = true;
-                    return false;
                 });
                 r.should.be.true();
                 inquired.should.be.true();
@@ -233,39 +232,15 @@ describe('Teams', function() {
                 var c2 = new Contestant();
                 c2.username = 'c2';
 
-                var [r] = tc.addContestant(c1, s, function() {
-                    return true;
-                });
+                var [r] = tc.addContestant(c1, s, function() { });
                 r.should.be.true();
+                tc.all[0].teamLeader = c1;
 
                 var didNotInquire = true;
                 tc.addContestant(c2, s, function() {
                     didNotInquire = false;
                 });
                 didNotInquire.should.be.true();
-
-                t.teamLeader.should.equal(c1);
-            });
-            it('should add contestant as teamLeader', function() {
-                var s = new Settings();
-                s.hasTeams = true;
-                s.maxTeams = 1;
-                s.teamSize = 1;
-                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
-
-                var t = new Team();
-                t.teamName = 't1';
-
-                var tc = new Teams();
-                tc.add(t);
-
-                var c1 = new Contestant();
-                c1.username = 'c1';
-
-                var [r] = tc.addContestant(c1, s, function() {
-                    return true;
-                });
-                r.should.be.true();
 
                 t.teamLeader.should.equal(c1);
             });
@@ -285,35 +260,10 @@ describe('Teams', function() {
                 var c1 = new Contestant();
                 c1.username = 'c1';
 
-                var [r] = tc.addContestant(c1, s, function() {
-                    return false;
-                });
+                var [r] = tc.addContestant(c1, s, function() {});
                 r.should.be.true();
 
                 should(t.teamLeader).be.null();
-            });
-            it('should not overwrite on race condition', function() {
-                var s = new Settings();
-                s.hasTeams = true;
-                s.maxTeams = 1;
-                s.teamSize = 2;
-                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
-
-                var tc = new Teams();
-                teamFactory.create(tc, s);
-
-                var cc = generateContestants(2);
-
-                tc.addContestant(cc[0], s, function() {
-                    return false;
-                });
-
-                tc.addContestant(cc[1], s, function() {
-                    tc.all[0].teamLeader = cc[0];
-                    return true;
-                });
-
-                tc.all[0].teamLeader.should.equal(cc[0]);
             });
         });
         describe('when teamLeader selection is RANDOM', function() {
