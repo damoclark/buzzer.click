@@ -430,7 +430,6 @@ describe('Session', function() {
                 s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
                 s.roundWinner.should.equal('testUser1');
                 c1.score.should.equal(1);
-
             });
             it('should update contestant\'s team score', function() {
                 // TODO
@@ -471,6 +470,23 @@ describe('Session', function() {
 
                 s.currentState.should.equal(constants.gameStates.READY);
             });
+            it('should clear pending winner', function(){
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                var c2 = new Contestant();
+                c2.username = 'testUser2';
+
+                settings.maxContestants = 2;
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+                s.addContestant(c2).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+                should(s.pendingWinner).be.null();
+            });
         });
         describe('action->REJECT', function() {
             it('should allow when game state is pending', function() {
@@ -510,7 +526,8 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
 
-                s.roundWinner.should.equal('testUser1');
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
             it('should not update pending contestant\'s score', function() {
                 var c1 = new Contestant();
@@ -534,7 +551,7 @@ describe('Session', function() {
                 c1.score.should.equal(1);
                 c2.score.should.equal(0);
             });
-            it('should not add round winner to previous winners list', function() {
+            it('should add round winner to previous winners list', function() {
                 var c1 = new Contestant();
                 c1.username = 'testUser1';
 
@@ -553,7 +570,8 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.REJECT).should.be.true();
 
-                s.previousWinners.length.should.equal(0);
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
             it('should change game state back to ready', function() {
                 var c1 = new Contestant();
@@ -607,9 +625,10 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
 
-                s.roundWinner.should.equal('testUser1');
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
-            it('should not add previous round winner to winners list', function() {
+            it('should add previous round winner to winners list', function() {
                 var c1 = new Contestant();
                 c1.username = 'testUser1';
 
@@ -628,7 +647,8 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.RESET).should.be.true();
 
-                s.previousWinners.length.should.equal(0);
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
             it('should change game state back to ready', function() {
                 var c1 = new Contestant();
@@ -682,9 +702,10 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
 
-                s.roundWinner.should.equal('testUser1');
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
-            it('should not add previous round winner to winners list', function() {
+            it('should add previous round winner to winners list', function() {
                 var c1 = new Contestant();
                 c1.username = 'testUser1';
 
@@ -703,7 +724,8 @@ describe('Session', function() {
                 s.tryBuzzerPressRegister(c2.id).should.be.true();
                 s.tryBuzzerAction(constants.buzzerActionCommands.DISABLE).should.be.true();
 
-                s.previousWinners.length.should.equal(0);
+                should(s.roundWinner).be.null();
+                s.previousWinners.pop().should.equal('testUser1');
             });
             it('should change game state to buzzerLock', function() {
                 var c1 = new Contestant();
