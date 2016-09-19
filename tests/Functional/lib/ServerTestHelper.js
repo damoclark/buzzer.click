@@ -86,6 +86,7 @@ ServerTestHelper.prototype.createSession = function(hc, settings, callback) {
 };
 
 ServerTestHelper.prototype.contestantJoin = function(cc, username, sessionId, callback){
+    callback = (typeof callback !== 'undefined') ? callback : function() {};
     var rm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
     rm.sessionId = sessionId;
     rm.username = username;
