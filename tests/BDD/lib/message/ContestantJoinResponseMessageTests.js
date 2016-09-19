@@ -18,6 +18,20 @@ describe('ContestantJoinResponseMessage', function() {
                 m.wasSuccessful.should.be.true();
             });
     });
+    describe('#enquireForTeamLeaderPosition', function() {
+        it('should set value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.enquireForTeamLeaderPosition = true;
+                m.data._enquireForTeamLeaderPosition.should.be.true();
+            });
+        it('should get value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.data._enquireForTeamLeaderPosition = true;
+                m.enquireForTeamLeaderPosition.should.be.true();
+            });
+    });    
     describe('#failedRequestReason', function() {
         it('should set value',
             function() {

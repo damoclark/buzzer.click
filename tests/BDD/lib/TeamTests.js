@@ -5,6 +5,7 @@ var should = require('should');
 var Team = require('../../../lib/Team');
 var Contestant = require('../../../lib/Contestant');
 var Participants = require('../../../lib/Participants');
+var constants = require('../../../lib/Constants');
 
 describe('Team', function() {
     describe('#teamName', function() {
@@ -89,6 +90,57 @@ describe('Team', function() {
             c2.incrementScore();
             c2.score.should.equal(1);
             t.score.should.equal(2);
+        });
+    });
+    describe('tryAssignTeamLeader(contestant, hostOverride)', function() {
+        it('should allow it when no team leader is set', function() {
+            var t = new Team();
+            var c = new Contestant();
+            c.id = 'c1';
+            t.contestants.add(c);
+            var [r, m] = t.tryAssignTeamLeader(c, false);
+            r.should.be.true();
+            should.not.exist(m);
+        });
+        it('should not allow it when a team leader is set', function() {
+            var t = new Team();
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            t.contestants.add(c1);
+            t.contestants.add(c2);
+            var [r, m] = t.tryAssignTeamLeader(c1, false);
+            r.should.be.true();
+            [r, m] = t.tryAssignTeamLeader(c2, false);
+            r.should.be.false();
+            m.should.equal(constants.messages.COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_FULFILLED);
+        });
+        it('should not allow it when a contestant is not in team', function() {
+            var t = new Team();
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            t.contestants.add(c1);
+            var [r, m] = t.tryAssignTeamLeader(c2, false);
+            r.should.be.false();
+            m.should.equal(constants.messages.COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_NOT_CONTESTANT);
+        });        
+        it('should allow it when a team leader is set and host override is flagged', function() {
+            var t = new Team();
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            t.contestants.add(c1);
+            t.contestants.add(c2);
+            var [r, m] = t.tryAssignTeamLeader(c1, false);
+            r.should.be.true();
+            should.not.exist(m);
+            [r, m] = t.tryAssignTeamLeader(c2, true);
+            r.should.be.true();
+            should.not.exist(m);
         });
     });
 });
