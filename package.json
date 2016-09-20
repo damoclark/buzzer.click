@@ -15,6 +15,7 @@
   "license": "GPL-3.0",
   "private": true,
   "dependencies": {
+    "bad-words": "^1.4.2",
     "chance": "^0.7.*",
     "compression": "^1.4.*",
     "express": "4.13.*",

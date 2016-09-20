@@ -45,7 +45,7 @@ describe('InquireTeamLeaderResponseMessage', function() {
                 m.data._contestantId = 'xyz123';
                 m.contestantId.should.equal('xyz123');
             });
-    });    
+    });
     describe('#isValid()', function() {
         it('should return true when valid', function() {
             var m = new InquireTeamLeaderResponseMessage();

@@ -5,6 +5,7 @@ var should = require('should');
 var Team = require('../../../lib/Team');
 var Contestant = require('../../../lib/Contestant');
 var Participants = require('../../../lib/Participants');
+var Settings = require('../../../lib/Settings');
 var constants = require('../../../lib/Constants');
 
 describe('Team', function() {
@@ -141,6 +142,38 @@ describe('Team', function() {
             [r, m] = t.tryAssignTeamLeader(c2, true);
             r.should.be.true();
             should.not.exist(m);
+        });
+    });
+    describe('tryChangeTeamName(teamName, settings)', function() {
+        it('should change name when request is valid', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.teamNameEdit = constants.teamNameEdit.ALLOW;
+
+            var t = new Team();
+            var [r, em] = t.tryChangeName('test', s);
+            should.not.exist(em);
+            r.should.be.true();
+        });
+        it('should not change name when setting do not allow it', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.teamNameEdit = constants.teamNameEdit.MANUAL;
+
+            var t = new Team();
+            var [r, em] = t.tryChangeName('test', s);
+            em.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_SETTINGS_NOT_ALLOW);
+            r.should.be.false();
+        });
+        it('should not change name when name contains profanity', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.teamNameEdit = constants.teamNameEdit.ALLOW;
+
+            var t = new Team();
+            var [r, em] = t.tryChangeName('You are all an ash0le', s);
+            em.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_CONTAINS_PROFANITY);
+            r.should.be.false();
         });
     });
 });
