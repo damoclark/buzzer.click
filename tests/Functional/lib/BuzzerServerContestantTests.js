@@ -1237,6 +1237,49 @@ describe('Buzzer server', function() {
                     });
                 });
             });
+            it('should update observers when accepted', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                        var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                        if (om.gameState.teams && om.gameState.teams.length) {
+                            if (om.gameState.teams[0].teamName === 'New team name') {
+                                done();
+                            }
+                        }
+                    });
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                                sm.should.not.be.null();
+                            });
+                    });
+                });
+            });
         });
     });
 });
