@@ -46,12 +46,14 @@ describe('Teams', function() {
         });
         it('should get value', function() {
             t = new Team();
+            t.teamName = 't1';
             tc = new Teams();
             tc.add(t);
             tc.all[0].should.equal(t);
         });
         it('should get copy of val and not reference', function() {
             t = new Team();
+            t.teamName = 't1';
             tc = new Teams();
             tc.add(t);
             tc.all.pop();
@@ -67,6 +69,7 @@ describe('Teams', function() {
         });
         it('should get value', function() {
             t = new Team();
+            t.teamName = 't1';
             var tc = new Teams();
             tc.length.should.equal(0);
             tc.add(t);
@@ -76,6 +79,7 @@ describe('Teams', function() {
     describe('#add(team)', function() {
         it('should add the given team', function() {
             t = new Team();
+            t.teamName = 't1';
             tc = new Teams();
             tc.add(t);
             tc.length.should.equal(1);
@@ -338,39 +342,66 @@ describe('Teams', function() {
     });
     describe('getByContestant(contestant)', function() {
         it('should get team of contestant', function() {
-                var s = new Settings();
-                s.hasTeams = true;
-                s.maxTeams = 5;
-                s.teamSize = 1;
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 5;
+            s.teamSize = 1;
 
-                var tc = new Teams();
-                teamFactory.create(tc, s);
+            var tc = new Teams();
+            teamFactory.create(tc, s);
 
-                var cc = generateContestants(5);
+            var cc = generateContestants(5);
 
-                cc.forEach(function(c) {
-                    var [r] = tc.addContestant(c, s, function() {});
-                    r.should.be.true();
-                });
+            cc.forEach(function(c) {
+                var [r] = tc.addContestant(c, s, function() {});
+                r.should.be.true();
+            });
 
-                var t = tc.getByContestant(cc[4]);
-                t.should.not.be.null();
-                t.contestants.getById(cc[4].id).should.equal(cc[4]);
+            var t = tc.getByContestant(cc[4]);
+            t.should.not.be.null();
+            t.contestants.getById(cc[4].id).should.equal(cc[4]);
         });
         it('should not get team of contestant', function() {
-                var s = new Settings();
-                s.hasTeams = true;
-                s.maxTeams = 5;
-                s.teamSize = 1;
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 5;
+            s.teamSize = 1;
 
-                var tc = new Teams();
-                teamFactory.create(tc, s);
+            var tc = new Teams();
+            teamFactory.create(tc, s);
 
-                var cc = generateContestants(1);
-                cc[0].id = 'c1';
+            var cc = generateContestants(1);
+            cc[0].id = 'c1';
 
-                var t = tc.getByContestant(cc[0]);
-                should(t).be.null();
+            var t = tc.getByContestant(cc[0]);
+            should(t).be.null();
+        });
+    });
+    describe('getByTeamName(temName)', function() {
+        it('should get team when team with name exists', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 5;
+            s.teamSize = 1;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var t1 = tc.all[0];
+            var t = tc.getByTeamName(t1.teamName);
+            t.should.equal(t1);
+        });
+        it('should not get team when team with name does not exist', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 5;
+            s.teamSize = 1;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var t = tc.getByTeamName('Not a team name that exists');
+            should(t).be.null();
         });
     });
 });

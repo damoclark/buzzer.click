@@ -340,7 +340,7 @@ describe('Session', function() {
 
             s.tryBuzzerPressRegister(c2.id).should.be.false();
         });
-        it('should not register when contestant does not exists', function() {
+        it('should not register when contestant does not exist', function() {
             var c = new Contestant();
             c.username = 'testUser';
 

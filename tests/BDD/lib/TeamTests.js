@@ -127,7 +127,7 @@ describe('Team', function() {
             var [r, m] = t.tryAssignTeamLeader(c2, false);
             r.should.be.false();
             m.should.equal(constants.messages.COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_NOT_CONTESTANT);
-        });        
+        });
         it('should allow it when a team leader is set and host override is flagged', function() {
             var t = new Team();
             var c1 = new Contestant();
@@ -144,14 +144,14 @@ describe('Team', function() {
             should.not.exist(m);
         });
     });
-    describe('tryChangeTeamName(teamName, settings)', function() {
+    describe('tryChangeTeamName(teamName, settings, hostOverride)', function() {
         it('should change name when request is valid', function() {
             var s = new Settings();
             s.hasTeams = true;
             s.teamNameEdit = constants.teamNameEdit.ALLOW;
 
             var t = new Team();
-            var [r, em] = t.tryChangeName('test', s);
+            var [r, em] = t.tryChangeName('test', s, false);
             should.not.exist(em);
             r.should.be.true();
         });
@@ -161,7 +161,7 @@ describe('Team', function() {
             s.teamNameEdit = constants.teamNameEdit.MANUAL;
 
             var t = new Team();
-            var [r, em] = t.tryChangeName('test', s);
+            var [r, em] = t.tryChangeName('test', s, false);
             em.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_SETTINGS_NOT_ALLOW);
             r.should.be.false();
         });
@@ -171,9 +171,80 @@ describe('Team', function() {
             s.teamNameEdit = constants.teamNameEdit.ALLOW;
 
             var t = new Team();
-            var [r, em] = t.tryChangeName('You are all an ash0le', s);
+            var [r, em] = t.tryChangeName('You are all an ash0le', s, false);
             em.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_CONTAINS_PROFANITY);
             r.should.be.false();
+        });
+        describe('when host override', function() {
+            it('should change name when request is valid', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+
+                var t = new Team();
+                var [r, em] = t.tryChangeName('test', s, true);
+                should.not.exist(em);
+                r.should.be.true();
+            });
+            it('should change name when setting do not allow it', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamNameEdit = constants.teamNameEdit.MANUAL;
+
+                var t = new Team();
+                var [r, em] = t.tryChangeName('test', s, true);
+                should.not.exist(em);
+                r.should.be.true();
+            });
+            it('should change name when name contains profanity', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+
+                var t = new Team();
+                var [r, em] = t.tryChangeName('You are all an ash0le', s, true);
+                should.not.exist(em);
+                r.should.be.true();
+            });
+        });
+    });
+    describe('getContestantByUsername(username)', function() {
+        it('should get contestant when contest with username exists', function() {
+            var t = new Team();
+
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            c1.username = 'c1ABC';
+
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            c2.username = 'c2';
+
+            t.contestants.add(c1);
+            t.contestants.add(c2);
+
+            var c = t.getContestantByUsername(c1.username);
+            c.should.equal(c1);
+
+            c = t.getContestantByUsername('c1abc');
+            c.should.equal(c1);
+        });
+        it('should not get contestant when contest with username does not exist', function() {
+            var t = new Team();
+
+            var c1 = new Contestant();
+            c1.id = 'c1';
+            c1.username = 'c1ABC';
+
+            var c2 = new Contestant();
+            c2.id = 'c2';
+            c2.username = 'c2';
+
+            t.contestants.add(c1);
+            t.contestants.add(c2);
+
+            var c = t.getContestantByUsername('John Doe');
+            should(c).be.null();
         });
     });
 });

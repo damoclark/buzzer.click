@@ -1351,5 +1351,503 @@ describe('Buzzer server', function() {
                 });
             });
         });
+        describe('team name change', function() {
+            it('should allow it when request is valid', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'The new team name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+                        team.teamName.should.equal(req.teamNameTo);
+                        done();
+                    });
+                });
+            });
+            it('should allow it when name contains profanity', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'ash0le penis';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+                        team.teamName.should.equal(req.teamNameTo);
+                        done();
+                    });
+                });
+            });
+            it('should allow it when team name editing is manual', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.MANUAL;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'The new team name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+                        team.teamName.should.equal(req.teamNameTo);
+                        done();
+                    });
+                });
+            });            
+            it('should not allow it when session is completed', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+                    session.complete();
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'A new team name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it when not the host', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = idUtility.generateParticipantId();
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'A new team name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it team does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = 'does not exist';
+                    req.teamNameTo = 'some other team name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it when team name already in use', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 2;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team1 = session.teams.all[0];
+                    var team2 = session.teams.all[1];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamNameFrom = team1.teamName;
+                    req.teamNameTo = team2.teamName;
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_IN_USE);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it when session does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 2;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var hostId = rm.hostId;
+
+                    var session = helper.getLatestSession();
+                    var team = session.teams.all[0];
+
+                    var req = messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+                    req.sessionId = idUtility.generateSessionId();
+                    req.hostId = hostId;
+                    req.teamNameFrom = team.teamName;
+                    req.teamNameTo = 'some new name';
+
+                    hc.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, req, function(m) {
+                        var em = messageFactory.restore(m, messageConstants.ERROR);
+                        em.should.not.be.null();
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                        done();
+                    });
+                });
+            });
+        });
+        describe('team leader change', function() {
+            it('should allow it when request is valid', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            var teamLeaderUsername = team.teamLeader.username;
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = hostId;
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+                            
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                                sm.should.not.be.null();
+                                team.teamLeader.username.should.not.equal(teamLeaderUsername);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            it('should allow it team leader is the same', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            var teamLeaderUsername = team.teamLeader.username;
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = hostId;
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = team.teamLeader.username;
+                            
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                                sm.should.not.be.null();
+                                team.teamLeader.username.should.equal(teamLeaderUsername);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });            
+            it('should not allow it when session is completed', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = hostId;
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+
+                            session.complete();
+                            
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            it('should not allow it when not the host', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = idUtility.generateParticipantId();
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            it('should not allow it team does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = hostId;
+                            req.teamName = 'does not exist team name';
+                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            it('should not allow it when session does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = idUtility.generateSessionId();
+                            req.hostId = hostId;
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+
+                            session.complete();
+                            
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+            it('should not allow it when contestant does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var c1 = helper.createClient();
+                    var c2 = helper.createClient();
+
+                    helper.contestantJoin(c1, 'c1', sessionId, function() {
+                        helper.contestantJoin(c2, 'c2', sessionId, function() {
+                            var session = helper.getLatestSession();
+                            var team = session.teams.all[0];
+                            
+                            var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+                            req.sessionId = sessionId;
+                            req.hostId = hostId;
+                            req.teamName = team.teamName;
+                            req.teamLeaderUsername = 'does not exist';
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_NOT_FOUND);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 });
