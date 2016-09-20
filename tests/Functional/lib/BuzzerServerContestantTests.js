@@ -974,6 +974,269 @@ describe('Buzzer server', function() {
                 });
             });
         });
-    });
+        describe('team name change request', function() {
+            it('should allow it when request is valid', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
+                                sm.should.not.be.null();
+
+                                var session = helper.getLatestSession();
+                                session.teams.all[0].teamName.should.equal(
+                                    'New team name');
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when not team leader', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 2;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER);
+
+                                var session = helper.getLatestSession();
+                                session.teams.all[0].teamName.should.not.equal(
+                                    'New team name');
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when session does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = idUtility.generateSessionId();
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when contestant does not exist', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = idUtility.generateParticipantId();
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER);
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when session is complete', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var session = helper.getLatestSession();
+                        session.complete();
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when setting do not allow it', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.MANUAL;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'New team name';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_SETTINGS_NOT_ALLOW);
+                                done();
+                            });
+                    });
+                });
+            });
+            it('should not allow it when team name contains profanity', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = 'The word penis is funny #YOLO';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+                            function(m) {
+                                var em = messageFactory.restore(m, messageConstants.ERROR);
+                                em.should.not.be.null();
+                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_CONTAINS_PROFANITY);
+                                done();
+                            });
+                    });
+                });
+            });
+        });
+    });
 });
