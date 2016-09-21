@@ -323,8 +323,16 @@
                 $('#session-name-edit').text(Object.keys(buzzapi.constants.teamNameEdit)[values.gameState.settings.teamNameEdit]);
 
 				$('#participant-info > ul').empty();
-				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append('<li>'+item.username+'</li>');
+				$.each(values.gameState.teams, function(key,item){
+					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					var listKey = key;
+					var totalScore = 0;
+					$.each(item.contestants, function(key,contestant){
+						$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>')
+						totalScore += contestant.score
+					});
+					
+					$('#team-li-'+listKey + ' > .total-team-score').text(totalScore);
 				});
 			}else{ //non-teams game so list all players
                 $('#session-teams').text('No');

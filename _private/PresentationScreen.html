@@ -108,13 +108,31 @@
 			if(values.gameState.settings.hasTeams){
 				$('#session-participant-header').text('Teams');
 				$('#participant-info > ul').empty();
-				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append('<li>'+item.username+'</li>');
+				$.each(values.gameState.teams, function(key,item){
+					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					var listKey = key;
+					var totalScore = 0;
+					$.each(item.contestants, function(key,contestant){
+						if(contestant.disconnected){
+							$('#team-li-'+listKey + ' > ul').append('<li><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+						
+						}else{
+							$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+						}
+						totalScore += contestant.score
+					});
+					
+					$('#team-li-'+listKey + ' > .total-team-score').text(totalScore);
 				});
 			}else{ //non-teams game so list all players
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+					if(item.disconnected){
+						$('#participant-info > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+				
+					}else{
+						$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+					}
 				});
 			}
 
@@ -129,7 +147,7 @@
 			$.each(values.gameState.previousWinners,function(key,item){
 				$('#previous-winners > ul').prepend('<li>'+item+'</li>');
 			});
-			
+			$('<style></style>').appendTo($(document.body)).remove();  //this forces the styles to take affect. see: http://stackoverflow.com/a/5258893
 
 		}
 		$(function(){

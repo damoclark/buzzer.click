@@ -47,8 +47,8 @@
                     Would you like to be teamleader?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-                    <button type="button" class="btn btn-primary" id="session-teamleader">Yes</button>
+                    <button type="button" class="btn btn-default" id="session-teamleader-no">No</button>
+                    <button type="button" class="btn btn-primary" id="session-teamleader-yes">Yes</button>
                 </div>
             </div>
         </div>
@@ -88,8 +88,19 @@
         var handleTeamLeaderPositionRequest = function(){
             $("#modal-teamleader").modal("show");
         }
+        
+        var handleSessionInformatonRequest = function(values) {
+            if(values.data._info.session.settings.teamNameEdit === buzzapi.constants.teamNameEdit.ALLOW)
+            {
+                $('#modal-team-name').modal();
+            }else{
+                redirectContestant();
+            }
+        }
+
         $(function(){
             handleDisconnect();
+            var values = [];
             //first check for existing session
             var sessionCookie = buzzapi.Cookie.get('sessionId');
             var participantCookie = buzzapi.Cookie.get('contestantId');
@@ -106,7 +117,7 @@
             }
             $('#join-session-form').submit(function(event){
                 event.preventDefault();
-                var values = []
+                
                 $('input',this).each(function(){
                     values[this.id] = $(this).val();
                 });
@@ -114,10 +125,40 @@
                 
             });
             //For the moment bind the yes click on teamleader modal to show team name update modal (mainly for testing)
-            $('#session-teamleader').click(function(){
-                sendTeamLeaderResponse();
+            $('#session-teamleader-yes').click(function(){
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    sendTeamLeaderResponse(sessionCookie,participantCookie,true);
+                    sessionInformationRequest(sessionCookie,participantCookie);
+                }
                 $("#modal-teamleader").modal("hide");
-                $("#modal-team-name").modal("show");
+            });
+
+            $('#session-teamleader-no').click(function(){
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    sendTeamLeaderResponse(sessionCookie,participantCookie,false);
+                }
+                
+                $("#modal-teamleader").modal("hide");
+            });
+
+            $('#team-name-form').submit(function(event){
+                event.preventDefault();
+                var teamName = $('#session-team-name').val();
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    setTeamName(sessionCookie,participantCookie,teamName);
+                }
             });
         });
     </script>
