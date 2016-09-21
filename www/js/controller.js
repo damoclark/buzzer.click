@@ -1,7 +1,9 @@
+/* eslint-disable no-unused-vars */
 var API_URL = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port; //This is seperate incase it changes in the future
 var WEB_URL = generateWebUrl();
 var messageConstants = buzzapi.constants.socketMessageNames;
 var client = buzzapi.io(API_URL);
+/* eslint-enabled no-unused-vars */
 
 function generateWebUrl() {
     var port = (window.location.port) ? ':' + window.location.port : '';
