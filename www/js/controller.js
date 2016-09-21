@@ -178,7 +178,11 @@ function joinSession(values) {
                         live: 1 //Live for 1 day
                     }
                 );
-                redirectContestant();
+                if (rm.enquireForTeamLeaderPosition) {
+                    handleTeamLeaderPostionRequest();
+                } else {
+                    redirectContestant();
+                }
             } else {
                 alertBootstrap(rm.failedRequestReason, 'danger');
             }
@@ -186,6 +190,20 @@ function joinSession(values) {
     });
 }
 
+function sendTeamLeaderResponse(sessionId,contestantId,response) {
+    rqm = buzzapi.messageFactory.create(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE);
+    rqm.sessionId = sessionId;
+    rqm.contestantId = contestantId;
+    rqm.decision = response;
+
+    cc.emit(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE, rqm,
+        function(m) {
+            var sm = messageFactory.restore(m, messageConstants.ERROR);
+            if (sm) {
+                alertBootstrap(sm.error, 'warning');
+            }
+        });
+}
 /**
  * rejoin Session as type,
  * if participantId is ommited then observer is default

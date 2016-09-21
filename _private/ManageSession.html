@@ -338,12 +338,14 @@
 					$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 				});
 			}
-
 			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}
+			}else if(values.gameState.roundWinner === null){
+                $('#round-winner').text();
+            }
+
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
 				$('#previous-winners > ul').prepend('<li>'+item+'</li>');

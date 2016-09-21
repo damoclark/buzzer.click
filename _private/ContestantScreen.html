@@ -114,7 +114,9 @@
 				$('#round-winner-header').text("Round winner");
 					$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}
+			}else if(values.gameState.roundWinner === null){
+                $('#round-winner').text();
+            }
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
 				$('#previous-winners > ul').prepend('<li>'+item+'</li>');

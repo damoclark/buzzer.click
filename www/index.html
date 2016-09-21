@@ -21,7 +21,7 @@
 				<button class="btn btn-primary btn-lg" id="btn-new">New</button>
 				<button class="btn btn-primary btn-lg" id="btn-join">Join</button>
 				<button class="btn btn-primary btn-lg" id="btn-share">Results</button>
-				<button class="btn btn-primary btn-lg" id="btn-qrcode-scan">Scan QR Code</button>
+				<button class="btn btn-primary btn-lg" id="btn-qrcode-scan" style="display:none">Scan QR Code</button>
 				
 			</div>
 		</div>
@@ -57,8 +57,8 @@
             //Check useragent and display qrcode scan button on Android: http://stackoverflow.com/a/6031480
             var ua = navigator.userAgent.toLowerCase();
             var isAndroid = ua.indexOf("android") > -1;
-            if(!isAndroid) {
-                $('#btn-qrcode-scan').hide();
+            if(isAndroid) {
+                $('#btn-qrcode-scan').show();
             }
 
 			$('#btn-new').click(function(){
@@ -71,7 +71,7 @@
 
             $('#btn-qrcode-scan').click(function(){
                 window.location.href='intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end';
-                self.close();
+               
             });
 
 			$('#btn-share').click(function(){

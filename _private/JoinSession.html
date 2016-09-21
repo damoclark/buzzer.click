@@ -85,6 +85,9 @@
         var handleExistingSession = function(){
             redirectContestant();
         }
+        var handleTeamLeaderPositionRequest = function(){
+            $("#modal-teamleader").modal("show");
+        }
         $(function(){
             handleDisconnect();
             //first check for existing session
@@ -108,11 +111,11 @@
                     values[this.id] = $(this).val();
                 });
                 joinSession(values);
-                //$("#modal-teamleader").modal("show");
                 
             });
             //For the moment bind the yes click on teamleader modal to show team name update modal (mainly for testing)
             $('#session-teamleader').click(function(){
+                sendTeamLeaderResponse();
                 $("#modal-teamleader").modal("hide");
                 $("#modal-team-name").modal("show");
             });

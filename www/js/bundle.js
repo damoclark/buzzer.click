@@ -7,7 +7,7 @@ module.exports = {
     io: require('socket.io-client')
 };
 
-},{"./lib/Constants":3,"./lib/MessageFactory":7,"./lib/Settings":13,"js.cookie":132,"socket.io-client":182}],2:[function(require,module,exports){
+},{"./lib/Constants":3,"./lib/MessageFactory":7,"./lib/Settings":13,"js.cookie":145,"socket.io-client":196}],2:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
 
 /**
@@ -38,9 +38,13 @@ AddContestantResponse.prototype._wasSuccessful = false;
  * @private
  */
 AddContestantResponse.prototype._errorMessage = null;
+/**
+ * @private
+ */
+AddContestantResponse.prototype._enquireForTeamLeaderPosition = false;
 
 /**
- * Defines a property to get and set the @see {@link _wasSuccessful} field.
+ * Defines a property to get the @see {@link _wasSuccessful} field.
  * @readonly
  * @public
  * @throws on set value.
@@ -58,7 +62,27 @@ Object.defineProperty(AddContestantResponse.prototype, 'wasSuccessful', {
 });
 
 /**
- * Defines a property to get and set the @see {@Link _errorMessage} field.
+ * Defines a property to get and set the @see {@link _enquireForTeamLeaderPosition} field.
+ * @readonly
+ * @public
+ * @return {Boolean} true if the contestant should be asked to be the team leader; else false.
+ */
+Object.defineProperty(AddContestantResponse.prototype, 'enquireForTeamLeaderPosition', {
+    get: function() {
+        return this._enquireForTeamLeaderPosition;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean') || !val) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this._enquireForTeamLeaderPosition = val;
+    }
+});
+
+/**
+ * Defines a property to get the @see {@Link _errorMessage} field.
  * @readonly
  * @public
  * @throws on set value.
@@ -290,6 +314,24 @@ function Constants() {
          */
         ERROR: 'ErrorMessage',
         /**
+         * Host team leader set request message.
+         * @public
+         * @constant
+         */
+        HOST_TEAM_LEADER_SET_REQUEST_MESSAGE: 'HostTeamLeaderSetRequestMessage',
+        /**
+         * Host team name update request message.
+         * @public
+         * @constant
+         */
+        HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE: 'HostTeamNameUpdateRequestMessage',
+        /**
+         * Inquire team leader response message.
+         * @public
+         * @constant
+         */
+        INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE: 'InquireTeamLeaderResponseMessage',
+        /**
          * Observer update message.
          * @public
          * @constant
@@ -319,6 +361,12 @@ function Constants() {
          * @constant
          */
         SESSION_COMPLETED: 'SessionCompleted',
+        /**
+         * Set team name request message.
+         * @public
+         * @constant
+         */
+        SET_TEAM_NAME_REQUEST_MESSAGE: 'SetTeamNameRequestMessage',
         /**
          * Success message.
          * @public
@@ -421,8 +469,67 @@ function Constants() {
          * @constant
          */
         COULD_NOT_REJOIN_UNKNOWN: 'Could not rejoin, as `join as` constant is unknown.',
-
-        TEAMS_ARE_FULL: 'Teams are full'
+        /**
+         * Message: Teams are full message.
+         * @public
+         * @constant
+         */
+        TEAMS_ARE_FULL: 'Teams are full',
+        /**
+         * Message: Could not accept team leader response, as you are not a contestant!
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_LEADER_RESPONSE_NOT_CONTESTANT: 'Could not accept team leader response, as you are not a contestant!',
+        /**
+         * Message: Could not promote to team leader, as position has already been fulfilled.
+         * @public
+         * @constant
+         */
+        COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_FULFILLED: 'Could not promote to team leader, as position has already been fulfilled.',
+        /**
+         * Message: Could not promote to team leader, as contestant does not belong to team.
+         * @public
+         * @constant
+         */
+        COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_NOT_CONTESTANT: 'Could not promote to team leader, as contestant does not belong to team.',
+        /**
+         * Message: Could not accept team name request, as you are not a contestant or either do not belong to a team or
+         * are not the team leader!
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER: 'Could not accept team name request, as you are not a contestant or either do not belong to a team or are not the team leader!',
+        /**
+         * Message: Could not accept team name change as it contains profanity!
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_NAME_CONTAINS_PROFANITY: 'Could not accept team name change as it contains profanity!',
+        /**
+         * Message: Could not accept team name change as it is already being used.
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_NAME_IN_USE: 'Could not accept team name change as it is already being used.',
+        /**
+         * Message: Could not accept team name change as the session settings do not allow it.
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_NAME_SETTINGS_NOT_ALLOW: 'Could not accept team name change as the session settings do not allow it.',
+        /**
+         * Message: Could not process request, as the team could not be found.
+         * @public
+         * @constant
+         */
+        COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND: 'Could not process request, as the team could not be found.',
+        /**
+         * Message: Could not process request, as the contestant could not be found.
+         * @public
+         * @constant
+         */
+        COULD_NOT_PROCESS_REQUEST_CONTESTANT_NOT_FOUND: 'Could not process request, as the contestant could not be found.'
     };
 }
 
@@ -453,6 +560,9 @@ function Contestant() {
  */
 Contestant.prototype.type = 'Contestant';
 
+/**
+ * Contestant is a subclass of Participant.
+ */
 Contestant.prototype = Object.create(Participant.prototype);
 Contestant.prototype.constructor = Contestant;
 
@@ -510,6 +620,7 @@ Object.defineProperty(Contestant.prototype, 'score', {
  */
 Contestant.prototype.incrementScore = function() {
     this._score++;
+    this.emit('scoreUpdate');
 };
 
 //Export the class
@@ -538,6 +649,9 @@ function Host() {
  */
 Host.prototype.type = 'Host';
 
+/**
+ * Contestant is a subclass of Participant.
+ */
 Host.prototype = Object.create(Participant.prototype);
 Host.prototype.constructor = Host;
 
@@ -547,6 +661,7 @@ module.exports = Host;
 },{"./Participant":10}],6:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
 var uuid = require('node-uuid');
+var random = require('random-js')();
 
 /**
  * Identifier utility module.
@@ -647,9 +762,6 @@ IdentifierUtility.prototype.generateSessionId = function() {
         'S', 'T', 'W', 'X', 'Y', 'Z', '2', '4', '5', '7', '8'
     ];
     var endlessLoopTrap = 0;
-    var random = function randomInt(low, high) {
-        return Math.floor(Math.random() * (high - low) + low);
-    };
     var keysInUse = this._sessionKeysInUse;
     var keyInUse = function(k) {
         return keysInUse.find(function(sk) {
@@ -660,7 +772,7 @@ IdentifierUtility.prototype.generateSessionId = function() {
         // build the key
         var key = '';
         for (var i = 0; i < this._keyLength; i++) {
-            key += chars[random(0, chars.length)];
+            key += chars[random.integer(0, chars.length - 1)];
         }
         // if it's not in use, return;
         if (!keyInUse(key)) {
@@ -686,7 +798,7 @@ IdentifierUtility.prototype.generateParticipantId = function() {
 //Export the class
 module.exports = new IdentifierUtility();
 
-},{"./ParamCheck":9,"node-uuid":140}],7:[function(require,module,exports){
+},{"./ParamCheck":9,"node-uuid":153,"random-js":173}],7:[function(require,module,exports){
 var AbstractMessage = require('./message/AbstractMessage');
 var semver = require('semver');
 
@@ -698,11 +810,15 @@ var classes = {
     CreateSessionMessage: require('./message/CreateSessionMessage'),
     CreateSessionResponseMessage: require('./message/CreateSessionResponseMessage'),
     ErrorMessage: require('./message/ErrorMessage'),
+    HostTeamLeaderSetRequestMessage: require('./message/HostTeamLeaderSetRequestMessage'),
+    HostTeamNameUpdateRequestMessage: require('./message/HostTeamNameUpdateRequestMessage'),
+    InquireTeamLeaderResponseMessage: require('./message/InquireTeamLeaderResponseMessage'),
     ObserverUpdateMessage : require('./message/ObserverUpdateMessage'),
     RejoinSessionMessage: require('./message/RejoinSessionMessage'),
     RoundWonMessage : require('./message/RoundWonMessage'),
     SessionComplete : require('./message/SessionComplete'),
     SessionCompleted : require('./message/SessionCompleted'),
+    SetTeamNameRequestMessage: require('./message/SetTeamNameRequestMessage'),
     SuccessMessage: require('./message/SuccessMessage')
 };
 
@@ -785,7 +901,7 @@ MessageFactory.prototype.restore = function(message, expectedType) {
 //Export the class
 module.exports = new MessageFactory();
 
-},{"./message/AbstractMessage":14,"./message/BuzzerActionCommandMessage":15,"./message/ContestantBuzzerPressMessage":16,"./message/ContestantJoinRequestMessage":17,"./message/ContestantJoinResponseMessage":18,"./message/CreateSessionMessage":19,"./message/CreateSessionResponseMessage":20,"./message/ErrorMessage":21,"./message/ObserverUpdateMessage":22,"./message/RejoinSessionMessage":23,"./message/RoundWonMessage":24,"./message/SessionComplete":25,"./message/SessionCompleted":26,"./message/SuccessMessage":27,"semver":173}],8:[function(require,module,exports){
+},{"./message/AbstractMessage":17,"./message/BuzzerActionCommandMessage":18,"./message/ContestantBuzzerPressMessage":19,"./message/ContestantJoinRequestMessage":20,"./message/ContestantJoinResponseMessage":21,"./message/CreateSessionMessage":22,"./message/CreateSessionResponseMessage":23,"./message/ErrorMessage":24,"./message/HostTeamLeaderSetRequestMessage":25,"./message/HostTeamNameUpdateRequestMessage":26,"./message/InquireTeamLeaderResponseMessage":27,"./message/ObserverUpdateMessage":28,"./message/RejoinSessionMessage":29,"./message/RoundWonMessage":30,"./message/SessionComplete":31,"./message/SessionCompleted":32,"./message/SetTeamNameRequestMessage":33,"./message/SuccessMessage":34,"semver":187}],8:[function(require,module,exports){
 var Participant = require('./Participant');
 
 /**
@@ -808,6 +924,9 @@ function Observer() {
  */
 Observer.prototype.type = 'Observer';
 
+/**
+ * Contestant is a subclass of Participant.
+ */
 Observer.prototype = Object.create(Participant.prototype);
 Observer.prototype.constructor = Observer;
 
@@ -862,6 +981,8 @@ module.exports = ParamCheck;
 
 },{}],10:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 
 /**
  * Participant module.
@@ -872,6 +993,7 @@ var ParamCheck = require('./ParamCheck');
  * Represents a participant.
  * @public
  * @constructor
+ * @extends EventEmitter
  */
 function Participant() {
 
@@ -881,6 +1003,11 @@ function Participant() {
  * Prototype name
  */
 Participant.prototype.type = 'Participant';
+
+/**
+ * ContestantJoinResponseMessage is a subclass of EventEmitter
+ */
+util.inherits(Participant, EventEmitter);
 
 /**
  * @private
@@ -952,9 +1079,11 @@ Participant.prototype.reconnect = function() {
 //Export the class
 module.exports = Participant;
 
-},{"./ParamCheck":9}],11:[function(require,module,exports){
+},{"./ParamCheck":9,"events":131,"util":231}],11:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
 var Participant = require('./Participant');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 
 /**
  * Participants module.
@@ -965,6 +1094,7 @@ var Participant = require('./Participant');
  * Represents a @see {@link Participant} collection.
  * @public
  * @constructor
+ * @extends EventEmitter
  */
 function Participants() {
     this._participants = [];
@@ -974,6 +1104,11 @@ function Participants() {
  * Prototype name
  */
 Participants.prototype.type = 'Participants';
+
+/**
+ * Participants is a subclass of EventEmitter
+ */
+util.inherits(Participants, EventEmitter);
 
 /**
  * @private
@@ -991,13 +1126,20 @@ Participants.prototype.contains = function(id) {
         throw new Error(
             'Argument `id` is invalid. It is required and must be of the correct type.');
     }
-    return this._getById(id) != null;
+    return this.getById(id) != null;
 };
 
 /**
- * @private
+ * Defines a method to get a participant by id.
+ * @param  {String} id
+ * @throw when param id equates to false or is an incorrect type.
+ * @return {Participant} the participant when found; else null.
  */
-Participants.prototype._getById = function(id) {
+Participants.prototype.getById = function(id) {
+    if (!new ParamCheck().isInstanceAndTypeOf(id, 'String') || !id) {
+        throw new Error(
+            'Argument `id` is invalid. It is required and must be of the correct type.');
+    }    
     return this._participants.find(function(p) {
         return p.id === id;
     });
@@ -1050,10 +1192,11 @@ Participants.prototype.add = function(participant) {
             'Argument `participant` is invalid. It is required and must be of the correct type.'
         );
     }
-    if (this._getById(participant.id) != null) {
+    if (this.getById(participant.id) != null) {
         throw new Error('Participant with id of `' + participant.id + '` has already be added.');
     }
     this._participants.push(participant);
+    this.emit('add', participant);
 };
 
 /**
@@ -1090,7 +1233,7 @@ Participants.prototype.removeById = function(id) {
         throw new Error(
             'Argument `id` is invalid. It is required and must be of the correct type.');
     }
-    var participant = this._getById(id);
+    var participant = this.getById(id);
     if (!participant) {
         return false;
     }
@@ -1100,7 +1243,7 @@ Participants.prototype.removeById = function(id) {
 //Export the class
 module.exports = Participants;
 
-},{"./ParamCheck":9,"./Participant":10}],12:[function(require,module,exports){
+},{"./ParamCheck":9,"./Participant":10,"events":131,"util":231}],12:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
 var Participants = require('./Participants');
 var Host = require('./Host');
@@ -1109,8 +1252,10 @@ var Contestant = require('./Contestant');
 var Settings = require('./Settings');
 var AddContestantResponse = require('./AddContestantResponse');
 var StateMachine = require('javascript-state-machine');
+var Teams = require('./Teams');
 var idUtility = require('./IdentifierUtility');
 var constants = require('./Constants');
+var teamFactory = require('./TeamFactory');
 
 /**
  * Session module.
@@ -1144,6 +1289,10 @@ function Session(id, settings, host) {
     this._previousWinners = [];
     this._roundWinner = null;
     this._pendingWinContestant = null;
+    if (this._settings.hasTeams) {
+        this._teams = new Teams();
+        teamFactory.create(this._teams, this._settings);
+    }
     /* beautify ignore:start */
     /* eslint-disable */
     this._state = StateMachine.create({
@@ -1280,6 +1429,23 @@ Object.defineProperty(Session.prototype, 'roundWinner', {
 });
 
 /**
+ * Defines a property to get the @see {@link _pendingWinContestant.username} field.
+ * @public
+ * @throws on set value.
+ * @return {String} the pending winner.
+ */
+Object.defineProperty(Session.prototype, 'pendingWinner', {
+    get: function() {
+        return this._pendingWinContestant ? this._pendingWinContestant.username : null;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a property to get the @see {@link _settings} field.
  * @public
  * @throws on set value.
@@ -1352,6 +1518,23 @@ Object.defineProperty(Session.prototype, 'contestants', {
 });
 
 /**
+ * Defines a property to the @see {@link _teams} field.
+ * @public
+ * @throws on set value.
+ * @return {Teams} instance.
+ */
+Object.defineProperty(Session.prototype, 'teams', {
+    get: function() {
+        return this._teams;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a property to get the host of the session.
  * @public
  * @throws on set value.
@@ -1397,11 +1580,11 @@ Session.prototype.incrementRoundsPlayed = function() {
 /**
  * Defines a method to add a contestant to the session.
  * @public
- * @param  {contestant} Contestant
+ * @param  {Contestant} contestant
  * @throw when param contestant equates to false or is an incorrect type.
  * @return {AddContestantResponse} a complex response of success or not.
  */
-Session.prototype.addContestant = function(contestant, inquireTeamLeaderCallback, inquireTeamNameCallback) {
+Session.prototype.addContestant = function(contestant) {
     if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
         throw new Error(
             'Argument `contestant` is invalid. It is required and must be of the correct type.'
@@ -1418,15 +1601,16 @@ Session.prototype.addContestant = function(contestant, inquireTeamLeaderCallback
     }
 
     if (this.settings.hasTeams) {
-        if (!new ParamCheck().isInstanceAndTypeOf(inquireTeamLeaderCallback, 'Function')) {
-            throw new Error('Argument `inquireTeamLeaderCallback` is invalid. It is required and must be of the correct type.');
-        }
-        if (!new ParamCheck().isInstanceAndTypeOf(inquireTeamNameCallback, 'Function')) {
-            throw new Error('Argument `inquireTeamNameCallback` is invalid. It is required and must be of the correct type.');
-        }
+        var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
+            response.enquireForTeamLeaderPosition = true;
+        });
 
-        // todo
-        throw new Error('Not implemented');
+        if (success) {
+            this._participants.add(contestant);
+            response.setSuccessful();
+        } else {
+            response.setNotSuccessful(message);
+        }
     } else {
         if (this.contestants.length >= this.settings.maxContestants) {
             response.setNotSuccessful(constants.messages.MAXIMUM_SESSION_SIZED_REACHED);
@@ -1493,46 +1677,49 @@ Session.prototype.tryBuzzerAction = function(action) {
         return false;
     }
 
+    if (this.roundWinner) {
+        this.previousWinners.push(this.roundWinner);
+    }
+    this._roundWinner = null;
+
     switch (action) {
         case constants.buzzerActionCommands.ACCEPT:
             if (this._state.can('acceptBuzz')) {
                 this._pendingWinContestant.incrementScore();
-                if (this.roundWinner){
-                    this.previousWinners.push(this.roundWinner);
-                }
                 this._roundWinner = this._pendingWinContestant.username;
+                this._pendingWinContestant = null;
                 this._state.acceptBuzz();
                 return true;
             }
-        break;
+            break;
         case constants.buzzerActionCommands.REJECT:
             if (this._state.can('rejectBuzz')) {
                 this._pendingWinContestant = null;
                 this._state.rejectBuzz();
                 return true;
             }
-        break;
+            break;
         case constants.buzzerActionCommands.RESET:
             if (this._state.can('resetBuzz')) {
                 this._pendingWinContestant = null;
                 this._state.resetBuzz();
                 return true;
             }
-        break;
+            break;
         case constants.buzzerActionCommands.DISABLE:
             if (this._state.can('disableBuzzers')) {
                 this._pendingWinContestant = null;
                 this._state.disableBuzzers();
                 return true;
             }
-        break;
+            break;
         case constants.buzzerActionCommands.ENABLE:
             if (this._state.can('enableBuzzers')) {
                 this._pendingWinContestant = null;
                 this._state.enableBuzzers();
                 return true;
             }
-        break;
+            break;
     }
 
     return false;
@@ -1541,7 +1728,7 @@ Session.prototype.tryBuzzerAction = function(action) {
 //Export the class
 module.exports = Session;
 
-},{"./AddContestantResponse":2,"./Constants":3,"./Contestant":4,"./Host":5,"./IdentifierUtility":6,"./Observer":8,"./ParamCheck":9,"./Participants":11,"./Settings":13,"javascript-state-machine":131}],13:[function(require,module,exports){
+},{"./AddContestantResponse":2,"./Constants":3,"./Contestant":4,"./Host":5,"./IdentifierUtility":6,"./Observer":8,"./ParamCheck":9,"./Participants":11,"./Settings":13,"./TeamFactory":15,"./Teams":16,"javascript-state-machine":144}],13:[function(require,module,exports){
 var ParamCheck = require('./ParamCheck');
 var constants = require('./Constants');
 
@@ -1562,14 +1749,37 @@ function Settings() {
  * Prototype name
  */
 Settings.prototype.type = 'Settings';
-
+/**
+ * @private
+ */
 Settings.prototype._hasTeams = false;
+/**
+ * @private
+ */
 Settings.prototype._teamSize = 0;
+/**
+ * @private
+ */
 Settings.prototype._maxTeams = 0;
+/**
+ * @private
+ */
 Settings.prototype._teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+/**
+ * @private
+ */
 Settings.prototype._teamNameEdit = constants.teamNameEdit.ALLOW;
+/**
+ * @private
+ */
 Settings.prototype._maxContestants = 0;
+/**
+ * @private
+ */
 Settings.prototype._sessionName = null;
+/**
+ * @private
+ */
 Settings.prototype._teamNames = [];
 
 /**
@@ -1722,6 +1932,622 @@ Object.defineProperty(Settings.prototype, 'teamNames', {
 module.exports = Settings;
 
 },{"./Constants":3,"./ParamCheck":9}],14:[function(require,module,exports){
+var ParamCheck = require('./ParamCheck');
+var Participants = require('./Participants');
+var Contestant = require('./Contestant');
+var Settings = require('./Settings');
+var Filter = require('bad-words');
+var constants = require('./Constants');
+
+/**
+ * Team module.
+ * @module team
+ */
+
+/**
+ * Represents a team
+ * @constructor
+ */
+function Team() {
+    this._contestants = new Participants();
+    var self = this;
+    this._contestants.on('add', function(contestant) {
+        contestant.on('scoreUpdate', function() {
+            self._incrementScore();
+        });
+    });
+}
+
+/**
+ * Prototype name
+ */
+Team.prototype.type = 'Team';
+
+/**
+ * @private
+ */
+Team.prototype._teamName = null;
+/**
+ * @private
+ */
+Team.prototype._teamLeader = null;
+/**
+ * @private
+ */
+Team.prototype._contestants = null;
+/**
+ * @private
+ */
+Team.prototype._score = 0;
+
+/**
+ * Defines a property to get and set the @see {@link _teamName} field.
+ * @return {String} the the team name, if set; else, null.
+ */
+Object.defineProperty(Team.prototype, 'teamName', {
+    get: function() {
+        return this._teamName;
+    },
+    /*
+     * @internal
+     */
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `id` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this._teamName = val;
+    }
+});
+
+/**
+ * Defines a property to get and set the @see {@link _teamLeader} field.
+ * @return {String} the the team leader, if set; else, null.
+ */
+Object.defineProperty(Team.prototype, 'teamLeader', {
+    get: function() {
+        return this._teamLeader;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, Contestant)) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this._teamLeader = val;
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _score} field.
+ * @throws on set value.
+ * @return the team score.
+ */
+Object.defineProperty(Team.prototype, 'score', {
+    get: function() {
+        return this._score;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _contestants} field.
+ * @throws on set value.
+ * @return the contestants collection.
+ */
+Object.defineProperty(Team.prototype, 'contestants', {
+    get: function() {
+        return this._contestants;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a method to increment the team's score.
+ * @private
+ * @see {@link score}
+ */
+Team.prototype._incrementScore = function() {
+    this._score++;
+};
+
+/**
+ * Defines a method to try assign a team leader.
+ * @see{@link Contestant}.
+ * @public
+ * @param  {Contestant} contestant
+ * @param  {Boolean} hostOverride when set will ignore the current team leader and overwrite.
+ * @throw when param contestant equates to false or is an incorrect type.
+ * @throw when param hostOverride is an incorrect type.
+ * @return {Boolean,String} whether the operation was successful, and when not, the
+ * error message as to why it failed.
+ */
+Team.prototype.tryAssignTeamLeader = function(contestant, hostOverride) {
+    if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
+        throw new Error(
+            'Argument `contestant` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(hostOverride, 'Boolean')) {
+        throw new Error(
+            'Argument `hostOverride` is invalid. It is required and must be of the correct type.'
+        );
+    }
+
+    if (this.teamLeader && !hostOverride) {
+        return [false, constants.messages.COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_FULFILLED];
+    }
+
+    if (!this.contestants.contains(contestant.id)) {
+        return [false, constants.messages.COULD_NOT_PROMOTE_TO_TEAM_LEADER_POSITION_NOT_CONTESTANT];
+    }
+
+    this.teamLeader = contestant;
+    return [true];
+};
+
+/**
+ * Defines a method to try update the team name.
+ * @see{@link Settings}.
+ * @public
+ * @param  {String} teamName
+ * @param  {Settings} settings
+ * @throw when param teamName equates to false or is an incorrect type.
+ * @throw when param settings equates to false or is an incorrect type.
+ * @return {Boolean,String} whether the operation was successful, and when not, the
+ * error message as to why it failed.
+ */
+Team.prototype.tryChangeName = function(teamName, settings, hostOverride) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamName, 'String') || !teamName) {
+        throw new Error(
+            'Argument `teamName` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(settings, Settings)) {
+        throw new Error(
+            'Argument `settings` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(hostOverride, 'Boolean')) {
+        throw new Error(
+            'Argument `hostOverride` is invalid. It is required and must be of the correct type.'
+        );
+    }    
+
+    if (!hostOverride && settings.teamNameEdit !== constants.teamNameEdit.ALLOW) {
+        return [false, constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_SETTINGS_NOT_ALLOW];
+    }
+
+    if (!hostOverride) {
+        filter = new Filter();
+
+        if (filter.isProfane(teamName)) {
+            return [false, constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_CONTAINS_PROFANITY];
+        }
+    }
+
+    this.teamName = teamName;
+    return [true];
+};
+
+/**
+ * Defines a method to get a contestant, who belong to the team, by their username.
+ * @param  {String} username
+ * @throw when param username equates to false or is an incorrect type.
+ * @return {Contestant} the contestant when found; else null.
+ */
+Team.prototype.getContestantByUsername = function(username) {
+    if (!new ParamCheck().isInstanceAndTypeOf(username, 'String') || !username) {
+        throw new Error(
+            'Argument `username` is invalid. It is required and must be of the correct type.'
+        );
+    }
+
+    var contestant = this.contestants.all.filter(function(c) {
+        return c.username.toUpperCase() === username.toUpperCase();
+    });
+
+    return contestant[0] ? contestant[0] : null;
+};
+
+//Export the class
+module.exports = Team;
+
+},{"./Constants":3,"./Contestant":4,"./ParamCheck":9,"./Participants":11,"./Settings":13,"bad-words":52}],15:[function(require,module,exports){
+var ParamCheck = require('./ParamCheck');
+var Teams = require('./Teams');
+var Team = require('./Team');
+var Settings = require('./Settings');
+
+/**
+ * TeamFactory module.
+ * @module team factory
+ */
+
+/**
+ * Represents a team factory
+ * @public
+ * @constructor
+ */
+function TeamFactory() {
+
+}
+
+/**
+ * Prototype name
+ */
+TeamFactory.prototype.type = 'TeamFactory';
+
+/**
+ * @private
+ */
+TeamFactory.prototype._names = [
+    'Defective Hornets',
+    'Vast Dolphins',
+    'Ahead Sharks',
+    'Resonant Zebras',
+    'Three Owls',
+    'Tan Bison',
+    'Teeny-tiny Kangaroos',
+    'Resolute Nightingales',
+    'Vengeful Elks',
+    'Spotless Frogs',
+    'Good Larks',
+    'Craven Apes',
+    'Equable Seals',
+    'Bright Worms',
+    'Greedy Guineapigs',
+    'Knowledgeable Panthers',
+    'Cooing Hippopotamuss',
+    'Violet Porcupines',
+    'Tough Hedgehogs',
+    'Lucky Crabs',
+    'Deep Bears',
+    'Pale Moles',
+    'Eminent Salamanders',
+    'Evasive Donkeys',
+    'Second-hand Buffalos',
+    'Exciting Squirrels',
+    'Ashamed Shrews',
+    'Dysfunctional Gazelles',
+    'Plastic Antelopes',
+    'Plant Wolves',
+    'Various Turtles',
+    'Sassy Chimpanzees',
+    'Acceptable Koalas',
+    'Cautious Sheep',
+    'Wanting Eagles',
+    'Industrious Dogfishes',
+    'Tacky Hamsters',
+    'Diligent Turkeys',
+    'Spiffy Stinkbugs',
+    'Lackadaisical Louses',
+    'Snotty Monkeys',
+    'Melodic Flys',
+    'Tiny Lobsters',
+    'Messy Mules',
+    'Different Jellyfishes',
+    'Foregoing Walruses',
+    'Spiritual Magpies',
+    'Abject Penguins',
+    'Therapeutic Hornets',
+    'Pointless Dolphins',
+    'Jealous Sharks',
+    'Aromatic Zebras',
+    'Wacky Owls',
+    'Happy Bisons',
+    'Penitent Kangaroos',
+    'Adjoining Nightingales',
+    'Concerned Elks',
+    'Imperfect Frogs',
+    'Cloistered Larks',
+    'Likeable Apes',
+    'Inconclusive Seals'
+];
+
+/**
+ * Defines a factory method which create teams, number determined by the passed
+ * in settings, to populate the given teams collection.
+ * @public
+ * @param  {Teams} teams
+ * @param  {Settings} settings
+ * @throw when param teams equates to false or is an incorrect type.
+ * @throw when param settings equates to false or is an incorrect type.
+ * @throw when @see {@link Settings.maxTeams} is less than or equal to 0.
+ */
+TeamFactory.prototype.create = function(teams, settings) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teams, Teams) || !teams) {
+        throw new Error('Argument `teams` is invalid. It is required and must be of the correct type.');
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(settings, Settings) || !settings) {
+        throw new Error('Argument `settings` is invalid. It is required and must be of the correct type.');
+    }
+    if (settings.maxTeams < 1) {
+        throw new Error('Settings must have a team size of greater than 0.');
+    }
+
+    var names = this._names.slice().sort(function(a, b) {
+        return Math.random() > 0.5 ? 1 : 0;
+    });
+
+    for (var i = 0; i < settings.maxTeams; i++) {
+        var t = new Team();
+        t.teamName = i < names.length - 1 ? names[i] : 'Team ' + i;
+        teams.add(t);
+    }
+};
+
+//Export the class
+module.exports = new TeamFactory();
+
+},{"./ParamCheck":9,"./Settings":13,"./Team":14,"./Teams":16}],16:[function(require,module,exports){
+var ParamCheck = require('./ParamCheck');
+var Team = require('./Team');
+var Contestant = require('./Contestant');
+var Settings = require('./Settings');
+var constants = require('./Constants');
+var random = require('random-js')();
+var idUtility = require('./IdentifierUtility');
+
+/**
+ * Teams module.
+ * @module teams
+ */
+
+/**
+ * Represents a @see {@link Team} collection.
+ * @public
+ * @constructor
+ */
+function Teams() {
+    this._teams = [];
+}
+
+/**
+ * Prototype name
+ */
+Teams.prototype.type = 'Teams';
+
+/**
+ * @private
+ */
+Teams.prototype._teams = [];
+
+/**
+ * Defines a method which checks if the a team is registered with the given name.
+ * @param  {String} teamName
+ * @throw when param teamName equates to false or is an incorrect type.
+ * @return {Boolean} True if the teamName matches an existing team; else false.
+ */
+Teams.prototype.contains = function(teamName) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamName, 'String') || !teamName) {
+        throw new Error(
+            'Argument `teamName` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    return this.getByTeamName(teamName) != null;
+};
+
+/**
+ * Defines a method which gets a team by the team name.
+ * @see{@link Team}.
+ * @public
+ * @param  {String} teamName
+ * @throw when param teamName equates to false or is an incorrect type.
+ * @return {Team} the team with the matching name; else null.
+ */
+Teams.prototype.getByTeamName = function(teamName) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamName, 'String') || !teamName) {
+        throw new Error(
+            'Argument `teamName` is invalid. It is required and must be of the correct type.');
+    }    
+    var t = this._teams.find(function(t) {
+        return t.teamName.toUpperCase() === teamName.toUpperCase();
+    });
+    return t ? t : null;
+};
+
+/**
+ * Defines a property to get all teams.
+ * @public
+ * @throws on set value.
+ * @return {Team[]} a collection of teams.
+ */
+Object.defineProperty(Teams.prototype, 'all', {
+    get: function() {
+        return this._teams.slice();
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to length.
+ * @public
+ * @throws on set value.
+ * @return {Number} the amount of teams.
+ */
+Object.defineProperty(Teams.prototype, 'length', {
+    get: function() {
+        return this._teams.length;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a method which adds (registers) a team with the teams collection.
+ * @public
+ * @param  {Team} team
+ * @throw when param team equates to false or is an incorrect type.
+ * @throw when the team's name is already registered.
+ */
+Teams.prototype.add = function(team) {
+    if (!new ParamCheck().isInstanceAndTypeOf(team, Team) || !team) {
+        throw new Error(
+            'Argument `team` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    if (this.getByTeamName(team.teamName) != null) {
+        throw new Error('Team with teamName of `' + team.teamName + '` has already be added.');
+    }
+    this._teams.push(team);
+};
+
+/**
+ * Defines a method which removes a team from the teams collection.
+ * @public
+ * @param  {Team} team
+ * @throw when param team equates to false or is an incorrect type.
+ * @return {Boolean} true if the team was removed successfully; else false.
+ */
+Teams.prototype.remove = function(team) {
+    if (!new ParamCheck().isInstanceAndTypeOf(team, Team) || !team) {
+        throw new Error(
+            'Argument `team` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    var index = this._teams.indexOf(team);
+    if (index < 0) {
+        return false;
+    }
+    this._teams.splice(index, 1);
+    return true;
+};
+
+/**
+ * Defines a method which removes a team from the teams collection by their
+ * @see{@link team.teamName}.
+ * @public
+ * @param  {Team} team
+ * @throw when param teamName equates to false or is an incorrect type.
+ * @return {Boolean} true if the team was removed successfully; else false.
+ */
+Teams.prototype.removeByTeamName = function(teamName) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamName, 'String') || !teamName) {
+        throw new Error(
+            'Argument `teamName` is invalid. It is required and must be of the correct type.'
+        );
+    }
+    var team = this.getByTeamName(teamName);
+    if (!team) {
+        return false;
+    }
+    return this.remove(team);
+};
+
+/**
+ * Defines a method which adds a contestant to a team.
+ * @see{@link Team}.
+ * @see{@link Contestant}.
+ * @public
+ * @param  {Contestant} contestant
+ * @param  {Settings} settings
+ * @param  {Function} inquireTeamLeaderCallback
+ * @throw when param contestant equates to false or is an incorrect type.
+ * @throw when param settings equates to false or is an incorrect type.
+ * @throw when param inquireTeamLeaderCallback equates to false or is an incorrect type.
+ * @throw when @see {@link Settings.hasTeams} is false.
+ * @return {AddContestantResponse} an add contestant result.
+ */
+Teams.prototype.addContestant = function(contestant, settings, inquireTeamLeaderCallback) {
+    if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
+        throw new Error('Argument `contestant` is invalid. It is required and must be of the correct type.');
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(settings, Settings) || !settings) {
+        throw new Error('Argument `contestant` is invalid. It is required and must be of the correct type.');
+    }
+    if (!new ParamCheck().isInstanceAndTypeOf(inquireTeamLeaderCallback, 'Function')) {
+        throw new Error('Argument `inquireTeamLeaderCallback` is invalid. It is required and must be of the correct type.');
+    }
+    if (!settings.hasTeams) {
+        throw new Error('The settings for this session does not state teams.');
+    }
+
+    // find team with least amount of members
+    var targetTeam = null;
+    this._teams.forEach(function(t) {
+        if (!targetTeam) {
+            targetTeam = t;
+            return;
+        }
+        if (t.contestants.length < targetTeam.contestants.length) {
+            targetTeam = t;
+        }
+    });
+
+    // will they fit?
+    if (targetTeam.contestants.length >= settings.teamSize) {
+        return [false, constants.messages.TEAMS_ARE_FULL];
+    }
+    contestant.id = idUtility.generateParticipantId();
+    targetTeam.contestants.add(contestant);
+
+    // team leader?
+    if (settings.teamLeaderSelectionMethod === constants.teamLeaderSelectionMethod.PLAYER_CHOICE && !targetTeam.teamLeader) {
+        inquireTeamLeaderCallback();
+    }
+
+    // if team is full and team leader selection is random - allocate
+    if (settings.teamLeaderSelectionMethod === constants.teamLeaderSelectionMethod.RANDOM &&
+        targetTeam.contestants.length >= settings.teamSize) {
+        var cc = targetTeam.contestants.all;
+        c = cc[random.integer(0, cc.length - 1)];
+        targetTeam.teamLeader = c;
+    }
+
+    return [true];
+};
+
+/**
+ * Defines a method which gets a team by contestant.
+ * @see{@link Team}.
+ * @see{@link Contestant}.
+ * @public
+ * @param  {Contestant} contestant
+ * @throw when param contestant equates to false or is an incorrect type.
+ * @return {Team} the team the contest belongs to; else null.
+ */
+Teams.prototype.getByContestant = function(contestant) {
+    if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
+        throw new Error(
+            'Argument `contestant` is invalid. It is required and must be of the correct type.'
+        );
+    }
+
+    var teams = this.all;
+    var team = null;
+    var found = false;
+    for (var i = 0; i < teams.length; i++) {
+        team = teams[i];
+        if (team.contestants.contains(contestant.id)) {
+            found = true;
+            break;
+        }
+    }
+
+    return found ? team : null;
+};
+
+//Export the class
+module.exports = Teams;
+
+},{"./Constants":3,"./Contestant":4,"./IdentifierUtility":6,"./ParamCheck":9,"./Settings":13,"./Team":14,"random-js":173}],17:[function(require,module,exports){
 var Validator = require('jsonschema').Validator;
 
 /**
@@ -1816,7 +2642,7 @@ AbstractMessage.prototype.protocol = '0.0.1';
 //Export the class
 module.exports = AbstractMessage;
 
-},{"jsonschema":135}],15:[function(require,module,exports){
+},{"jsonschema":148}],18:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -1930,7 +2756,7 @@ BuzzerActionCommandMessage.prototype.messagePayloadSchema = {
 
 module.exports = BuzzerActionCommandMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],16:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],19:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2018,7 +2844,7 @@ ContestantBuzzerPressMessage.prototype.messagePayloadSchema = {
 
 module.exports = ContestantBuzzerPressMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],17:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],20:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2106,7 +2932,7 @@ ContestantJoinRequestMessage.prototype.messagePayloadSchema = {
 
 module.exports = ContestantJoinRequestMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],18:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],21:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2173,6 +2999,27 @@ Object.defineProperty(ContestantJoinResponseMessage.prototype, 'wasSuccessful', 
 });
 
 /**
+ * Sets or gets the was enquire for team leader position flag.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the enquire for team leader position flag.
+ * @return {Boolean} the enquire for team leader position flag.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'enquireForTeamLeaderPosition', {
+    get: function() {
+        return this.data._enquireForTeamLeaderPosition;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._enquireForTeamLeaderPosition = val;
+    }
+});
+
+/**
  * Sets or gets the failed request reason.
  * @public
  * @throw on set val when param equates to false or is an incorrect type.
@@ -2210,6 +3057,9 @@ ContestantJoinResponseMessage.prototype.messagePayloadSchema = {
         '_failedRequestReason': {
             'type': 'string'
         },
+        '_enquireForTeamLeaderPosition': {
+            'type': 'boolean'
+        },        
     },
     'required': [
         '_wasSuccessful'
@@ -2218,7 +3068,7 @@ ContestantJoinResponseMessage.prototype.messagePayloadSchema = {
 
 module.exports = ContestantJoinResponseMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],19:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],22:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 var Settings = require('../Settings');
@@ -2317,7 +3167,7 @@ CreateSessionMessage.prototype.messagePayloadSchema = {
 
 module.exports = CreateSessionMessage;
 
-},{"../ParamCheck":9,"../Settings":13,"./AbstractMessage":14}],20:[function(require,module,exports){
+},{"../ParamCheck":9,"../Settings":13,"./AbstractMessage":17}],23:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2405,7 +3255,7 @@ CreateSessionResponseMessage.prototype.messagePayloadSchema = {
 
 module.exports = CreateSessionResponseMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],21:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],24:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2469,7 +3319,391 @@ ErrorMessage.prototype.messagePayloadSchema = {
 
 module.exports = ErrorMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],22:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],25:[function(require,module,exports){
+var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
+
+/**
+ * Represents a message to set the team leader.
+ * @extends AbstractMessage
+ * @returns {HostTeamLeaderSetRequestMessage}
+ */
+var HostTeamLeaderSetRequestMessage = function(args) {
+    AbstractMessage.call(this, args);
+};
+
+/**
+ * HostTeamLeaderSetRequestMessage is a subclass of AbstractMessage.
+ */
+HostTeamLeaderSetRequestMessage.prototype = Object.create(AbstractMessage.prototype);
+
+/**
+ * The type of this class.
+ * @public
+ */
+HostTeamLeaderSetRequestMessage.prototype.type = 'HostTeamLeaderSetRequestMessage';
+
+/**
+ * Sets or gets the teamName.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the teamName.
+ * @return {String} the teamName.
+ */
+Object.defineProperty(HostTeamLeaderSetRequestMessage.prototype, 'teamName', {
+    get: function() {
+        return this.data._teamName;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teamName = val;
+    }
+});
+
+/**
+ * Sets or gets the teamLeaderUsername.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the teamLeaderUsername.
+ * @return {String} the teamLeaderUsername.
+ */
+Object.defineProperty(HostTeamLeaderSetRequestMessage.prototype, 'teamLeaderUsername', {
+    get: function() {
+        return this.data._teamLeaderUsername;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teamLeaderUsername = val;
+    }
+});
+
+/**
+ * Sets or gets the host id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the host id.
+ * @return {String} the host id.
+ */
+Object.defineProperty(HostTeamLeaderSetRequestMessage.prototype, 'hostId', {
+    get: function() {
+        return this.data._hostId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._hostId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the session id.
+ * @return {String} the session id.
+ */
+Object.defineProperty(HostTeamLeaderSetRequestMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
+    }
+});
+
+/**
+ * Data structure for json validation of message data property
+ * @private
+ */
+HostTeamLeaderSetRequestMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
+    'type': 'object',
+    'properties': {
+        '_teamName': {
+            'type': 'string'
+        },
+        '_teamLeaderUsername': {
+            'type': 'string'
+        },
+        '_hostId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        '_teamName', '_teamLeaderUsername', '_hostId', '_sessionId'
+    ]
+};
+
+module.exports = HostTeamLeaderSetRequestMessage;
+
+},{"../ParamCheck":9,"./AbstractMessage":17}],26:[function(require,module,exports){
+var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
+
+/**
+ * Represents a message to set the team name.
+ * @extends AbstractMessage
+ * @returns {HostTeamNameUpdateRequestMessage}
+ */
+var HostTeamNameUpdateRequestMessage = function(args) {
+    AbstractMessage.call(this, args);
+};
+
+/**
+ * HostTeamNameUpdateRequestMessage is a subclass of AbstractMessage.
+ */
+HostTeamNameUpdateRequestMessage.prototype = Object.create(AbstractMessage.prototype);
+
+/**
+ * The type of this class.
+ * @public
+ */
+HostTeamNameUpdateRequestMessage.prototype.type = 'HostTeamNameUpdateRequestMessage';
+
+/**
+ * Sets or gets the teamNameFrom.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the teamNameFrom.
+ * @return {String} the teamNameFrom.
+ */
+Object.defineProperty(HostTeamNameUpdateRequestMessage.prototype, 'teamNameFrom', {
+    get: function() {
+        return this.data._teamNameFrom;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teamNameFrom = val;
+    }
+});
+
+/**
+ * Sets or gets the teamNameTo.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the teamNameTo.
+ * @return {String} the teamNameTo.
+ */
+Object.defineProperty(HostTeamNameUpdateRequestMessage.prototype, 'teamNameTo', {
+    get: function() {
+        return this.data._teamNameTo;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teamNameTo = val;
+    }
+});
+
+/**
+ * Sets or gets the host id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the host id.
+ * @return {String} the host id.
+ */
+Object.defineProperty(HostTeamNameUpdateRequestMessage.prototype, 'hostId', {
+    get: function() {
+        return this.data._hostId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._hostId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the session id.
+ * @return {String} the session id.
+ */
+Object.defineProperty(HostTeamNameUpdateRequestMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
+    }
+});
+
+/**
+ * Data structure for json validation of message data property
+ * @private
+ */
+HostTeamNameUpdateRequestMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
+    'type': 'object',
+    'properties': {
+        '_teamNameFrom': {
+            'type': 'string'
+        },
+        '_teamNameTo': {
+            'type': 'string'
+        },
+        '_hostId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        '_teamNameFrom', '_teamNameTo', '_hostId', '_sessionId'
+    ]
+};
+
+module.exports = HostTeamNameUpdateRequestMessage;
+
+},{"../ParamCheck":9,"./AbstractMessage":17}],27:[function(require,module,exports){
+var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
+
+/**
+ * Represents a message to response to an inquiry about being a team leader.
+ * @extends AbstractMessage
+ * @returns {InquireTeamLeaderResponseMessage}
+ */
+var InquireTeamLeaderResponseMessage = function(args) {
+    AbstractMessage.call(this, args);
+};
+
+/**
+ * InquireTeamLeaderResponseMessage is a subclass of AbstractMessage.
+ */
+InquireTeamLeaderResponseMessage.prototype = Object.create(AbstractMessage.prototype);
+
+/**
+ * The type of this class.
+ * @public
+ */
+InquireTeamLeaderResponseMessage.prototype.type = 'InquireTeamLeaderResponseMessage';
+
+/**
+ * Sets or gets the decision.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the decision.
+ * @return {Boolean} the decision.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'decision', {
+    get: function() {
+        return this.data._decision;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._decision = val;
+    }
+});
+
+/**
+ * Sets or gets the contestant id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the contestant id.
+ * @return {String} the contestant id.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'contestantId', {
+    get: function() {
+        return this.data._contestantId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._contestantId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the session id.
+ * @return {String} the session id.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
+    }
+});
+
+/**
+ * Data structure for json validation of message data property
+ * @private
+ */
+InquireTeamLeaderResponseMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
+    'type': 'object',
+    'properties': {
+        '_decision': {
+            'type': 'boolean'
+        },
+        '_contestantId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        '_decision', '_contestantId', '_sessionId'
+    ]
+};
+
+module.exports = InquireTeamLeaderResponseMessage;
+
+},{"../ParamCheck":9,"./AbstractMessage":17}],28:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 var Session = require('../Session');
@@ -2525,7 +3759,7 @@ ObserverUpdateMessage.prototype.populate = function(session) {
     popObj = function(obj, target) {
         var innerObj = (typeof target !== 'undefined') ? target : {};
         for (var f in obj) {
-            if (f === '_id') {
+            if (f === '_id' || f === '_events' || f === '_eventsCount') {
                 continue;
             }
             var val = obj[f];
@@ -2541,18 +3775,32 @@ ObserverUpdateMessage.prototype.populate = function(session) {
         return innerObj;
     };
 
-    //popObj(session, this.data._gameState);
-
     this.data._gameState.contestants = [];
-    for (var i = 0; i < session.contestants.length; i++) {
+    var i = 0;
+    for (i = 0; i < session.contestants.length; i++) {
         this.data._gameState.contestants.push(popObj(session.contestants[i]));
     }
+    this.data._gameState.teams = [];
+    if (session.teams) {
+        for (i = 0; i < session.teams.length; i++) {
+            var t = session.teams.all[i];
+            var dto = {
+                teamName: t.teamName,
+                contestants: []
+            };
+            for (var ii = 0; ii < t.contestants.length; ii++) {
+                dto.contestants.push(popObj(t.contestants.all[ii]));
+            }
 
+            this.data._gameState.teams.push(dto);
+        }
+    }
     this.data._gameState.host = popObj(session.host);
     this.data._gameState.settings = popObj(session.settings);
     this.data._gameState.isCompleted = session.isSessionCompleted;
     this.data._gameState.currentState = session.currentState;
     this.data._gameState.roundWinner = session.roundWinner;
+    this.data._gameState.pendingWinner = session.pendingWinner;
     this.data._gameState.previousWinners = session.previousWinners;
 };
 
@@ -2575,7 +3823,7 @@ ObserverUpdateMessage.prototype.messagePayloadSchema = {
 
 module.exports = ObserverUpdateMessage;
 
-},{"../ParamCheck":9,"../Session":12,"./AbstractMessage":14}],23:[function(require,module,exports){
+},{"../ParamCheck":9,"../Session":12,"./AbstractMessage":17}],29:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2689,7 +3937,7 @@ RejoinSessionMessage.prototype.messagePayloadSchema = {
 
 module.exports = RejoinSessionMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],24:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],30:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2777,7 +4025,7 @@ RoundWonMessage.prototype.messagePayloadSchema = {
 
 module.exports = RoundWonMessage;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],25:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],31:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 var ParamCheck = require('../ParamCheck');
 
@@ -2865,7 +4113,7 @@ SessionComplete.prototype.messagePayloadSchema = {
 
 module.exports = SessionComplete;
 
-},{"../ParamCheck":9,"./AbstractMessage":14}],26:[function(require,module,exports){
+},{"../ParamCheck":9,"./AbstractMessage":17}],32:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 
 /**
@@ -2901,7 +4149,119 @@ SessionCompleted.prototype.messagePayloadSchema = {
 
 module.exports = SessionCompleted;
 
-},{"./AbstractMessage":14}],27:[function(require,module,exports){
+},{"./AbstractMessage":17}],33:[function(require,module,exports){
+var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
+
+/**
+ * Represents a message to set the team name.
+ * @extends AbstractMessage
+ * @returns {SetTeamNameRequestMessage}
+ */
+var SetTeamNameRequestMessage = function(args) {
+    AbstractMessage.call(this, args);
+};
+
+/**
+ * SetTeamNameRequestMessage is a subclass of AbstractMessage.
+ */
+SetTeamNameRequestMessage.prototype = Object.create(AbstractMessage.prototype);
+
+/**
+ * The type of this class.
+ * @public
+ */
+SetTeamNameRequestMessage.prototype.type = 'SetTeamNameRequestMessage';
+
+/**
+ * Sets or gets the teamName.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the teamName.
+ * @return {String} the teamName.
+ */
+Object.defineProperty(SetTeamNameRequestMessage.prototype, 'teamName', {
+    get: function() {
+        return this.data._teamName;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teamName = val;
+    }
+});
+
+/**
+ * Sets or gets the contestant id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the contestant id.
+ * @return {String} the contestant id.
+ */
+Object.defineProperty(SetTeamNameRequestMessage.prototype, 'contestantId', {
+    get: function() {
+        return this.data._contestantId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._contestantId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the session id.
+ * @return {String} the session id.
+ */
+Object.defineProperty(SetTeamNameRequestMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
+    }
+});
+
+/**
+ * Data structure for json validation of message data property
+ * @private
+ */
+SetTeamNameRequestMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
+    'type': 'object',
+    'properties': {
+        '_teamName': {
+            'type': 'string'
+        },
+        '_contestantId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        '_teamName', '_contestantId', '_sessionId'
+    ]
+};
+
+module.exports = SetTeamNameRequestMessage;
+
+},{"../ParamCheck":9,"./AbstractMessage":17}],34:[function(require,module,exports){
 var AbstractMessage = require('./AbstractMessage');
 
 /**
@@ -2937,7 +4297,7 @@ SuccessMessage.prototype.messagePayloadSchema = {
 
 module.exports = SuccessMessage;
 
-},{"./AbstractMessage":14}],28:[function(require,module,exports){
+},{"./AbstractMessage":17}],35:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -2967,7 +4327,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],29:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -2998,7 +4358,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var asn1 = exports;
 
 asn1.bignum = require('bn.js');
@@ -3009,7 +4369,7 @@ asn1.constants = require('./asn1/constants');
 asn1.decoders = require('./asn1/decoders');
 asn1.encoders = require('./asn1/encoders');
 
-},{"./asn1/api":31,"./asn1/base":33,"./asn1/constants":37,"./asn1/decoders":39,"./asn1/encoders":42,"bn.js":48}],31:[function(require,module,exports){
+},{"./asn1/api":38,"./asn1/base":40,"./asn1/constants":44,"./asn1/decoders":46,"./asn1/encoders":49,"bn.js":61}],38:[function(require,module,exports){
 var asn1 = require('../asn1');
 var inherits = require('inherits');
 
@@ -3072,7 +4432,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
   return this._getEncoder(enc).encode(data, reporter);
 };
 
-},{"../asn1":30,"inherits":128,"vm":216}],32:[function(require,module,exports){
+},{"../asn1":37,"inherits":141,"vm":232}],39:[function(require,module,exports){
 var inherits = require('inherits');
 var Reporter = require('../base').Reporter;
 var Buffer = require('buffer').Buffer;
@@ -3190,7 +4550,7 @@ EncoderBuffer.prototype.join = function join(out, offset) {
   return out;
 };
 
-},{"../base":33,"buffer":77,"inherits":128}],33:[function(require,module,exports){
+},{"../base":40,"buffer":90,"inherits":141}],40:[function(require,module,exports){
 var base = exports;
 
 base.Reporter = require('./reporter').Reporter;
@@ -3198,7 +4558,7 @@ base.DecoderBuffer = require('./buffer').DecoderBuffer;
 base.EncoderBuffer = require('./buffer').EncoderBuffer;
 base.Node = require('./node');
 
-},{"./buffer":32,"./node":34,"./reporter":35}],34:[function(require,module,exports){
+},{"./buffer":39,"./node":41,"./reporter":42}],41:[function(require,module,exports){
 var Reporter = require('../base').Reporter;
 var EncoderBuffer = require('../base').EncoderBuffer;
 var DecoderBuffer = require('../base').DecoderBuffer;
@@ -3829,7 +5189,7 @@ Node.prototype._isPrintstr = function isPrintstr(str) {
   return /^[A-Za-z0-9 '\(\)\+,\-\.\/:=\?]*$/.test(str);
 };
 
-},{"../base":33,"minimalistic-assert":138}],35:[function(require,module,exports){
+},{"../base":40,"minimalistic-assert":151}],42:[function(require,module,exports){
 var inherits = require('inherits');
 
 function Reporter(options) {
@@ -3952,7 +5312,7 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
   return this;
 };
 
-},{"inherits":128}],36:[function(require,module,exports){
+},{"inherits":141}],43:[function(require,module,exports){
 var constants = require('../constants');
 
 exports.tagClass = {
@@ -3996,7 +5356,7 @@ exports.tag = {
 };
 exports.tagByName = constants._reverse(exports.tag);
 
-},{"../constants":37}],37:[function(require,module,exports){
+},{"../constants":44}],44:[function(require,module,exports){
 var constants = exports;
 
 // Helper
@@ -4017,7 +5377,7 @@ constants._reverse = function reverse(map) {
 
 constants.der = require('./der');
 
-},{"./der":36}],38:[function(require,module,exports){
+},{"./der":43}],45:[function(require,module,exports){
 var inherits = require('inherits');
 
 var asn1 = require('../../asn1');
@@ -4341,13 +5701,13 @@ function derDecodeLen(buf, primitive, fail) {
   return len;
 }
 
-},{"../../asn1":30,"inherits":128}],39:[function(require,module,exports){
+},{"../../asn1":37,"inherits":141}],46:[function(require,module,exports){
 var decoders = exports;
 
 decoders.der = require('./der');
 decoders.pem = require('./pem');
 
-},{"./der":38,"./pem":40}],40:[function(require,module,exports){
+},{"./der":45,"./pem":47}],47:[function(require,module,exports){
 var inherits = require('inherits');
 var Buffer = require('buffer').Buffer;
 
@@ -4398,7 +5758,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
   return DERDecoder.prototype.decode.call(this, input, options);
 };
 
-},{"./der":38,"buffer":77,"inherits":128}],41:[function(require,module,exports){
+},{"./der":45,"buffer":90,"inherits":141}],48:[function(require,module,exports){
 var inherits = require('inherits');
 var Buffer = require('buffer').Buffer;
 
@@ -4693,13 +6053,13 @@ function encodeTag(tag, primitive, cls, reporter) {
   return res;
 }
 
-},{"../../asn1":30,"buffer":77,"inherits":128}],42:[function(require,module,exports){
+},{"../../asn1":37,"buffer":90,"inherits":141}],49:[function(require,module,exports){
 var encoders = exports;
 
 encoders.der = require('./der');
 encoders.pem = require('./pem');
 
-},{"./der":41,"./pem":43}],43:[function(require,module,exports){
+},{"./der":48,"./pem":50}],50:[function(require,module,exports){
 var inherits = require('inherits');
 
 var DEREncoder = require('./der');
@@ -4722,7 +6082,7 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-},{"./der":41,"inherits":128}],44:[function(require,module,exports){
+},{"./der":48,"inherits":141}],51:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -4809,7 +6169,534 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],45:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
+var Filter = (function() {
+  function Filter(options) {
+    options = options || {};
+    this.list = options.emptyList && [] || Array.prototype.concat.apply(require('./lang.json').words, [require('badwords-list').array, options.list || []]);
+    this.placeHolder = options.placeHolder || '*';
+    this.regex = options.regex || /[^a-zA-z0-9|\$|\@]|\^/g;
+  }
+
+  Filter.prototype.isProfane = function isProfane(string) {
+    var words = string.split(' ');
+    for (var j = 0; j < words.length; j++) {
+      var word = words[j].toLowerCase().replace(this.regex, '');
+      if (~this.list.indexOf(word)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  Filter.prototype.replaceWord = function replaceWord(string) {
+    return string.replace(this.regex, '').replace(/\w/g, this.placeHolder);
+  };
+
+  Filter.prototype.clean = function clean(string) {
+    return string.split(' ').map(function(word) {
+      return this.isProfane(word) ? this.replaceWord(word) : word;
+    }.bind(this)).join(' ');
+  };
+
+  Filter.prototype.addWords = function addWords(words) {
+    words = (words instanceof Array) ? words : [words];
+    this.list = this.list.concat(words);
+  };
+
+  Filter.prototype.removeWords = function removeWords() {
+    var words = Array.prototype.slice.call(arguments);
+    words.map(function(word) {
+      return this.list.indexOf(word);
+    }, this).filter(function(index) {
+      return !!~index;
+    }).forEach(function(index){
+      this.list.splice(index, 1);
+    }, this);
+  };
+
+  return Filter;
+})();
+
+module.exports = Filter;
+},{"./lang.json":53,"badwords-list":55}],53:[function(require,module,exports){
+module.exports={
+  "words":[
+    "ahole",
+    "anus",
+    "ash0le",
+    "ash0les",
+    "asholes",
+    "ass",
+    "Ass Monkey",
+    "Assface",
+    "assh0le",
+    "assh0lez",
+    "asshole",
+    "assholes",
+    "assholz",
+    "asswipe",
+    "azzhole",
+    "bassterds",
+    "bastard",
+    "bastards",
+    "bastardz",
+    "basterds",
+    "basterdz",
+    "Biatch",
+    "bitch",
+    "bitches",
+    "Blow Job",
+    "boffing",
+    "butthole",
+    "buttwipe",
+    "c0ck",
+    "c0cks",
+    "c0k",
+    "Carpet Muncher",
+    "cawk",
+    "cawks",
+    "Clit",
+    "cnts",
+    "cntz",
+    "cock",
+    "cockhead",
+    "cock-head",
+    "cocks",
+    "CockSucker",
+    "cock-sucker",
+    "crap",
+    "cum",
+    "cunt",
+    "cunts",
+    "cuntz",
+    "dick",
+    "dild0",
+    "dild0s",
+    "dildo",
+    "dildos",
+    "dilld0",
+    "dilld0s",
+    "dominatricks",
+    "dominatrics",
+    "dominatrix",
+    "dyke",
+    "enema",
+    "f u c k",
+    "f u c k e r",
+    "fag",
+    "fag1t",
+    "faget",
+    "fagg1t",
+    "faggit",
+    "faggot",
+    "fagit",
+    "fags",
+    "fagz",
+    "faig",
+    "faigs",
+    "fart",
+    "flipping the bird",
+    "fuck",
+    "fucker",
+    "fuckin",
+    "fucking",
+    "fucks",
+    "Fudge Packer",
+    "fuk",
+    "Fukah",
+    "Fuken",
+    "fuker",
+    "Fukin",
+    "Fukk",
+    "Fukkah",
+    "Fukken",
+    "Fukker",
+    "Fukkin",
+    "g00k",
+    "gay",
+    "gayboy",
+    "gaygirl",
+    "gays",
+    "gayz",
+    "God-damned",
+    "h00r",
+    "h0ar",
+    "h0re",
+    "hells",
+    "hoar",
+    "hoor",
+    "hoore",
+    "jackoff",
+    "jap",
+    "japs",
+    "jerk-off",
+    "jisim",
+    "jiss",
+    "jizm",
+    "jizz",
+    "knob",
+    "knobs",
+    "knobz",
+    "kunt",
+    "kunts",
+    "kuntz",
+    "Lesbian",
+    "Lezzian",
+    "Lipshits",
+    "Lipshitz",
+    "masochist",
+    "masokist",
+    "massterbait",
+    "masstrbait",
+    "masstrbate",
+    "masterbaiter",
+    "masterbate",
+    "masterbates",
+    "Motha Fucker",
+    "Motha Fuker",
+    "Motha Fukkah",
+    "Motha Fukker",
+    "Mother Fucker",
+    "Mother Fukah",
+    "Mother Fuker",
+    "Mother Fukkah",
+    "Mother Fukker",
+    "mother-fucker",
+    "Mutha Fucker",
+    "Mutha Fukah",
+    "Mutha Fuker",
+    "Mutha Fukkah",
+    "Mutha Fukker",
+    "n1gr",
+    "nastt",
+    "nigger;",
+    "nigur;",
+    "niiger;",
+    "niigr;",
+    "orafis",
+    "orgasim;",
+    "orgasm",
+    "orgasum",
+    "oriface",
+    "orifice",
+    "orifiss",
+    "packi",
+    "packie",
+    "packy",
+    "paki",
+    "pakie",
+    "paky",
+    "pecker",
+    "peeenus",
+    "peeenusss",
+    "peenus",
+    "peinus",
+    "pen1s",
+    "penas",
+    "penis",
+    "penis-breath",
+    "penus",
+    "penuus",
+    "Phuc",
+    "Phuck",
+    "Phuk",
+    "Phuker",
+    "Phukker",
+    "polac",
+    "polack",
+    "polak",
+    "Poonani",
+    "pr1c",
+    "pr1ck",
+    "pr1k",
+    "pusse",
+    "pussee",
+    "pussy",
+    "puuke",
+    "puuker",
+    "queer",
+    "queers",
+    "queerz",
+    "qweers",
+    "qweerz",
+    "qweir",
+    "recktum",
+    "rectum",
+    "retard",
+    "sadist",
+    "scank",
+    "schlong",
+    "screwing",
+    "semen",
+    "sex",
+    "sexy",
+    "Sh!t",
+    "sh1t",
+    "sh1ter",
+    "sh1ts",
+    "sh1tter",
+    "sh1tz",
+    "shit",
+    "shits",
+    "shitter",
+    "Shitty",
+    "Shity",
+    "shitz",
+    "Shyt",
+    "Shyte",
+    "Shytty",
+    "Shyty",
+    "skanck",
+    "skank",
+    "skankee",
+    "skankey",
+    "skanks",
+    "Skanky",
+    "slag",
+    "slut",
+    "sluts",
+    "Slutty",
+    "slutz",
+    "son-of-a-bitch",
+    "tit",
+    "turd",
+    "va1jina",
+    "vag1na",
+    "vagiina",
+    "vagina",
+    "vaj1na",
+    "vajina",
+    "vullva",
+    "vulva",
+    "w0p",
+    "wh00r",
+    "wh0re",
+    "whore",
+    "xrated",
+    "xxx",
+    "b!+ch",
+    "bitch",
+    "blowjob",
+    "clit",
+    "arschloch",
+    "fuck",
+    "shit",
+    "ass",
+    "asshole",
+    "b!tch",
+    "b17ch",
+    "b1tch",
+    "bastard",
+    "bi+ch",
+    "boiolas",
+    "buceta",
+    "c0ck",
+    "cawk",
+    "chink",
+    "cipa",
+    "clits",
+    "cock",
+    "cum",
+    "cunt",
+    "dildo",
+    "dirsa",
+    "ejakulate",
+    "fatass",
+    "fcuk",
+    "fuk",
+    "fux0r",
+    "hoer",
+    "hore",
+    "jism",
+    "kawk",
+    "l3itch",
+    "l3i+ch",
+    "lesbian",
+    "masturbate",
+    "masterbat*",
+    "masterbat3",
+    "motherfucker",
+    "s.o.b.",
+    "mofo",
+    "nazi",
+    "nigga",
+    "nigger",
+    "nutsack",
+    "phuck",
+    "pimpis",
+    "pusse",
+    "pussy",
+    "scrotum",
+    "sh!t",
+    "shemale",
+    "shi+",
+    "sh!+",
+    "slut",
+    "smut",
+    "teets",
+    "tits",
+    "boobs",
+    "b00bs",
+    "teez",
+    "testical",
+    "testicle",
+    "titt",
+    "w00se",
+    "jackoff",
+    "wank",
+    "whoar",
+    "whore",
+    "*damn",
+    "*dyke",
+    "*fuck*",
+    "*shit*",
+    "@$$",
+    "amcik",
+    "andskota",
+    "arse*",
+    "assrammer",
+    "ayir",
+    "bi7ch",
+    "bitch*",
+    "bollock*",
+    "breasts",
+    "butt-pirate",
+    "cabron",
+    "cazzo",
+    "chraa",
+    "chuj",
+    "Cock*",
+    "cunt*",
+    "d4mn",
+    "daygo",
+    "dego",
+    "dick*",
+    "dike*",
+    "dupa",
+    "dziwka",
+    "ejackulate",
+    "Ekrem*",
+    "Ekto",
+    "enculer",
+    "faen",
+    "fag*",
+    "fanculo",
+    "fanny",
+    "feces",
+    "feg",
+    "Felcher",
+    "ficken",
+    "fitt*",
+    "Flikker",
+    "foreskin",
+    "Fotze",
+    "Fu(*",
+    "fuk*",
+    "futkretzn",
+    "gay",
+    "gook",
+    "guiena",
+    "h0r",
+    "h4x0r",
+    "hell",
+    "helvete",
+    "hoer*",
+    "honkey",
+    "Huevon",
+    "hui",
+    "injun",
+    "jizz",
+    "kanker*",
+    "kike",
+    "klootzak",
+    "kraut",
+    "knulle",
+    "kuk",
+    "kuksuger",
+    "Kurac",
+    "kurwa",
+    "kusi*",
+    "kyrpa*",
+    "lesbo",
+    "mamhoon",
+    "masturbat*",
+    "merd*",
+    "mibun",
+    "monkleigh",
+    "mouliewop",
+    "muie",
+    "mulkku",
+    "muschi",
+    "nazis",
+    "nepesaurio",
+    "nigger*",
+    "orospu",
+    "paska*",
+    "perse",
+    "picka",
+    "pierdol*",
+    "pillu*",
+    "pimmel",
+    "piss*",
+    "pizda",
+    "poontsee",
+    "poop",
+    "porn",
+    "p0rn",
+    "pr0n",
+    "preteen",
+    "pula",
+    "pule",
+    "puta",
+    "puto",
+    "qahbeh",
+    "queef*",
+    "rautenberg",
+    "schaffer",
+    "scheiss*",
+    "schlampe",
+    "schmuck",
+    "screw",
+    "sh!t*",
+    "sharmuta",
+    "sharmute",
+    "shipal",
+    "shiz",
+    "skribz",
+    "skurwysyn",
+    "sphencter",
+    "spic",
+    "spierdalaj",
+    "splooge",
+    "suka",
+    "b00b*",
+    "testicle*",
+    "titt*",
+    "twat",
+    "vittu",
+    "wank*",
+    "wetback*",
+    "wichser",
+    "wop*",
+    "yed",
+    "zabourah"
+  ]
+}
+
+},{}],54:[function(require,module,exports){
+module.exports = ["4r5e", "5h1t", "5hit", "a55", "anal", "anus", "ar5e", "arrse", "arse", "ass", "ass-fucker", "asses", "assfucker", "assfukka", "asshole", "assholes", "asswhole", "a_s_s", "b!tch", "b00bs", "b17ch", "b1tch", "ballbag", "balls", "ballsack", "bastard", "beastial", "beastiality", "bellend", "bestial", "bestiality", "bi+ch", "biatch", "bitch", "bitcher", "bitchers", "bitches", "bitchin", "bitching", "bloody", "blow job", "blowjob", "blowjobs", "boiolas", "bollock", "bollok", "boner", "boob", "boobs", "booobs", "boooobs", "booooobs", "booooooobs", "breasts", "buceta", "bugger", "bum", "bunny fucker", "butt", "butthole", "buttmuch", "buttplug", "c0ck", "c0cksucker", "carpet muncher", "cawk", "chink", "cipa", "cl1t", "clit", "clitoris", "clits", "cnut", "cock", "cock-sucker", "cockface", "cockhead", "cockmunch", "cockmuncher", "cocks", "cocksuck", "cocksucked", "cocksucker", "cocksucking", "cocksucks", "cocksuka", "cocksukka", "cok", "cokmuncher", "coksucka", "coon", "cox", "crap", "cum", "cummer", "cumming", "cums", "cumshot", "cunilingus", "cunillingus", "cunnilingus", "cunt", "cuntlick", "cuntlicker", "cuntlicking", "cunts", "cyalis", "cyberfuc", "cyberfuck", "cyberfucked", "cyberfucker", "cyberfuckers", "cyberfucking", "d1ck", "damn", "dick", "dickhead", "dildo", "dildos", "dink", "dinks", "dirsa", "dlck", "dog-fucker", "doggin", "dogging", "donkeyribber", "doosh", "duche", "dyke", "ejaculate", "ejaculated", "ejaculates", "ejaculating", "ejaculatings", "ejaculation", "ejakulate", "f u c k", "f u c k e r", "f4nny", "fag", "fagging", "faggitt", "faggot", "faggs", "fagot", "fagots", "fags", "fanny", "fannyflaps", "fannyfucker", "fanyy", "fatass", "fcuk", "fcuker", "fcuking", "feck", "fecker", "felching", "fellate", "fellatio", "fingerfuck", "fingerfucked", "fingerfucker", "fingerfuckers", "fingerfucking", "fingerfucks", "fistfuck", "fistfucked", "fistfucker", "fistfuckers", "fistfucking", "fistfuckings", "fistfucks", "flange", "fook", "fooker", "fuck", "fucka", "fucked", "fucker", "fuckers", "fuckhead", "fuckheads", "fuckin", "fucking", "fuckings", "fuckingshitmotherfucker", "fuckme", "fucks", "fuckwhit", "fuckwit", "fudge packer", "fudgepacker", "fuk", "fuker", "fukker", "fukkin", "fuks", "fukwhit", "fukwit", "fux", "fux0r", "f_u_c_k", "gangbang", "gangbanged", "gangbangs", "gaylord", "gaysex", "goatse", "God", "god-dam", "god-damned", "goddamn", "goddamned", "hardcoresex", "hell", "heshe", "hoar", "hoare", "hoer", "homo", "hore", "horniest", "horny", "hotsex", "jack-off", "jackoff", "jap", "jerk-off", "jism", "jiz", "jizm", "jizz", "kawk", "knob", "knobead", "knobed", "knobend", "knobhead", "knobjocky", "knobjokey", "kock", "kondum", "kondums", "kum", "kummer", "kumming", "kums", "kunilingus", "l3i+ch", "l3itch", "labia", "lust", "lusting", "m0f0", "m0fo", "m45terbate", "ma5terb8", "ma5terbate", "masochist", "master-bate", "masterb8", "masterbat*", "masterbat3", "masterbate", "masterbation", "masterbations", "masturbate", "mo-fo", "mof0", "mofo", "mothafuck", "mothafucka", "mothafuckas", "mothafuckaz", "mothafucked", "mothafucker", "mothafuckers", "mothafuckin", "mothafucking", "mothafuckings", "mothafucks", "mother fucker", "motherfuck", "motherfucked", "motherfucker", "motherfuckers", "motherfuckin", "motherfucking", "motherfuckings", "motherfuckka", "motherfucks", "muff", "mutha", "muthafecker", "muthafuckker", "muther", "mutherfucker", "n1gga", "n1gger", "nazi", "nigg3r", "nigg4h", "nigga", "niggah", "niggas", "niggaz", "nigger", "niggers", "nob", "nob jokey", "nobhead", "nobjocky", "nobjokey", "numbnuts", "nutsack", "orgasim", "orgasims", "orgasm", "orgasms", "p0rn", "pawn", "pecker", "penis", "penisfucker", "phonesex", "phuck", "phuk", "phuked", "phuking", "phukked", "phukking", "phuks", "phuq", "pigfucker", "pimpis", "piss", "pissed", "pisser", "pissers", "pisses", "pissflaps", "pissin", "pissing", "pissoff", "poop", "porn", "porno", "pornography", "pornos", "prick", "pricks", "pron", "pube", "pusse", "pussi", "pussies", "pussy", "pussys", "rectum", "retard", "rimjaw", "rimming", "s hit", "s.o.b.", "sadist", "schlong", "screwing", "scroat", "scrote", "scrotum", "semen", "sex", "sh!+", "sh!t", "sh1t", "shag", "shagger", "shaggin", "shagging", "shemale", "shi+", "shit", "shitdick", "shite", "shited", "shitey", "shitfuck", "shitfull", "shithead", "shiting", "shitings", "shits", "shitted", "shitter", "shitters", "shitting", "shittings", "shitty", "skank", "slut", "sluts", "smegma", "smut", "snatch", "son-of-a-bitch", "spac", "spunk", "s_h_i_t", "t1tt1e5", "t1tties", "teets", "teez", "testical", "testicle", "tit", "titfuck", "tits", "titt", "tittie5", "tittiefucker", "titties", "tittyfuck", "tittywank", "titwank", "tosser", "turd", "tw4t", "twat", "twathead", "twatty", "twunt", "twunter", "v14gra", "v1gra", "vagina", "viagra", "vulva", "w00se", "wang", "wank", "wanker", "wanky", "whoar", "whore", "willies", "willy", "xrated", "xxx"];
+},{}],55:[function(require,module,exports){
+module.exports = {
+  object: require('./object'),
+  array: require('./array'),
+  regex: require('./regexp')
+};
+},{"./array":54,"./object":56,"./regexp":57}],56:[function(require,module,exports){
+module.exports = {"4r5e": 1, "5h1t": 1, "5hit": 1, "a55": 1, "anal": 1, "anus": 1, "ar5e": 1, "arrse": 1, "arse": 1, "ass": 1, "ass-fucker": 1, "asses": 1, "assfucker": 1, "assfukka": 1, "asshole": 1, "assholes": 1, "asswhole": 1, "a_s_s": 1, "b!tch": 1, "b00bs": 1, "b17ch": 1, "b1tch": 1, "ballbag": 1, "balls": 1, "ballsack": 1, "bastard": 1, "beastial": 1, "beastiality": 1, "bellend": 1, "bestial": 1, "bestiality": 1, "bi+ch": 1, "biatch": 1, "bitch": 1, "bitcher": 1, "bitchers": 1, "bitches": 1, "bitchin": 1, "bitching": 1, "bloody": 1, "blow job": 1, "blowjob": 1, "blowjobs": 1, "boiolas": 1, "bollock": 1, "bollok": 1, "boner": 1, "boob": 1, "boobs": 1, "booobs": 1, "boooobs": 1, "booooobs": 1, "booooooobs": 1, "breasts": 1, "buceta": 1, "bugger": 1, "bum": 1, "bunny fucker": 1, "butt": 1, "butthole": 1, "buttmuch": 1, "buttplug": 1, "c0ck": 1, "c0cksucker": 1, "carpet muncher": 1, "cawk": 1, "chink": 1, "cipa": 1, "cl1t": 1, "clit": 1, "clitoris": 1, "clits": 1, "cnut": 1, "cock": 1, "cock-sucker": 1, "cockface": 1, "cockhead": 1, "cockmunch": 1, "cockmuncher": 1, "cocks": 1, "cocksuck": 1, "cocksucked": 1, "cocksucker": 1, "cocksucking": 1, "cocksucks": 1, "cocksuka": 1, "cocksukka": 1, "cok": 1, "cokmuncher": 1, "coksucka": 1, "coon": 1, "cox": 1, "crap": 1, "cum": 1, "cummer": 1, "cumming": 1, "cums": 1, "cumshot": 1, "cunilingus": 1, "cunillingus": 1, "cunnilingus": 1, "cunt": 1, "cuntlick": 1, "cuntlicker": 1, "cuntlicking": 1, "cunts": 1, "cyalis": 1, "cyberfuc": 1, "cyberfuck": 1, "cyberfucked": 1, "cyberfucker": 1, "cyberfuckers": 1, "cyberfucking": 1, "d1ck": 1, "damn": 1, "dick": 1, "dickhead": 1, "dildo": 1, "dildos": 1, "dink": 1, "dinks": 1, "dirsa": 1, "dlck": 1, "dog-fucker": 1, "doggin": 1, "dogging": 1, "donkeyribber": 1, "doosh": 1, "duche": 1, "dyke": 1, "ejaculate": 1, "ejaculated": 1, "ejaculates": 1, "ejaculating": 1, "ejaculatings": 1, "ejaculation": 1, "ejakulate": 1, "f u c k": 1, "f u c k e r": 1, "f4nny": 1, "fag": 1, "fagging": 1, "faggitt": 1, "faggot": 1, "faggs": 1, "fagot": 1, "fagots": 1, "fags": 1, "fanny": 1, "fannyflaps": 1, "fannyfucker": 1, "fanyy": 1, "fatass": 1, "fcuk": 1, "fcuker": 1, "fcuking": 1, "feck": 1, "fecker": 1, "felching": 1, "fellate": 1, "fellatio": 1, "fingerfuck": 1, "fingerfucked": 1, "fingerfucker": 1, "fingerfuckers": 1, "fingerfucking": 1, "fingerfucks": 1, "fistfuck": 1, "fistfucked": 1, "fistfucker": 1, "fistfuckers": 1, "fistfucking": 1, "fistfuckings": 1, "fistfucks": 1, "flange": 1, "fook": 1, "fooker": 1, "fuck": 1, "fucka": 1, "fucked": 1, "fucker": 1, "fuckers": 1, "fuckhead": 1, "fuckheads": 1, "fuckin": 1, "fucking": 1, "fuckings": 1, "fuckingshitmotherfucker": 1, "fuckme": 1, "fucks": 1, "fuckwhit": 1, "fuckwit": 1, "fudge packer": 1, "fudgepacker": 1, "fuk": 1, "fuker": 1, "fukker": 1, "fukkin": 1, "fuks": 1, "fukwhit": 1, "fukwit": 1, "fux": 1, "fux0r": 1, "f_u_c_k": 1, "gangbang": 1, "gangbanged": 1, "gangbangs": 1, "gaylord": 1, "gaysex": 1, "goatse": 1, "God": 1, "god-dam": 1, "god-damned": 1, "goddamn": 1, "goddamned": 1, "hardcoresex": 1, "hell": 1, "heshe": 1, "hoar": 1, "hoare": 1, "hoer": 1, "homo": 1, "hore": 1, "horniest": 1, "horny": 1, "hotsex": 1, "jack-off": 1, "jackoff": 1, "jap": 1, "jerk-off": 1, "jism": 1, "jiz": 1, "jizm": 1, "jizz": 1, "kawk": 1, "knob": 1, "knobead": 1, "knobed": 1, "knobend": 1, "knobhead": 1, "knobjocky": 1, "knobjokey": 1, "kock": 1, "kondum": 1, "kondums": 1, "kum": 1, "kummer": 1, "kumming": 1, "kums": 1, "kunilingus": 1, "l3i+ch": 1, "l3itch": 1, "labia": 1, "lust": 1, "lusting": 1, "m0f0": 1, "m0fo": 1, "m45terbate": 1, "ma5terb8": 1, "ma5terbate": 1, "masochist": 1, "master-bate": 1, "masterb8": 1, "masterbat*": 1, "masterbat3": 1, "masterbate": 1, "masterbation": 1, "masterbations": 1, "masturbate": 1, "mo-fo": 1, "mof0": 1, "mofo": 1, "mothafuck": 1, "mothafucka": 1, "mothafuckas": 1, "mothafuckaz": 1, "mothafucked": 1, "mothafucker": 1, "mothafuckers": 1, "mothafuckin": 1, "mothafucking": 1, "mothafuckings": 1, "mothafucks": 1, "mother fucker": 1, "motherfuck": 1, "motherfucked": 1, "motherfucker": 1, "motherfuckers": 1, "motherfuckin": 1, "motherfucking": 1, "motherfuckings": 1, "motherfuckka": 1, "motherfucks": 1, "muff": 1, "mutha": 1, "muthafecker": 1, "muthafuckker": 1, "muther": 1, "mutherfucker": 1, "n1gga": 1, "n1gger": 1, "nazi": 1, "nigg3r": 1, "nigg4h": 1, "nigga": 1, "niggah": 1, "niggas": 1, "niggaz": 1, "nigger": 1, "niggers": 1, "nob": 1, "nob jokey": 1, "nobhead": 1, "nobjocky": 1, "nobjokey": 1, "numbnuts": 1, "nutsack": 1, "orgasim": 1, "orgasims": 1, "orgasm": 1, "orgasms": 1, "p0rn": 1, "pawn": 1, "pecker": 1, "penis": 1, "penisfucker": 1, "phonesex": 1, "phuck": 1, "phuk": 1, "phuked": 1, "phuking": 1, "phukked": 1, "phukking": 1, "phuks": 1, "phuq": 1, "pigfucker": 1, "pimpis": 1, "piss": 1, "pissed": 1, "pisser": 1, "pissers": 1, "pisses": 1, "pissflaps": 1, "pissin": 1, "pissing": 1, "pissoff": 1, "poop": 1, "porn": 1, "porno": 1, "pornography": 1, "pornos": 1, "prick": 1, "pricks": 1, "pron": 1, "pube": 1, "pusse": 1, "pussi": 1, "pussies": 1, "pussy": 1, "pussys": 1, "rectum": 1, "retard": 1, "rimjaw": 1, "rimming": 1, "s hit": 1, "s.o.b.": 1, "sadist": 1, "schlong": 1, "screwing": 1, "scroat": 1, "scrote": 1, "scrotum": 1, "semen": 1, "sex": 1, "sh!+": 1, "sh!t": 1, "sh1t": 1, "shag": 1, "shagger": 1, "shaggin": 1, "shagging": 1, "shemale": 1, "shi+": 1, "shit": 1, "shitdick": 1, "shite": 1, "shited": 1, "shitey": 1, "shitfuck": 1, "shitfull": 1, "shithead": 1, "shiting": 1, "shitings": 1, "shits": 1, "shitted": 1, "shitter": 1, "shitters": 1, "shitting": 1, "shittings": 1, "shitty": 1, "skank": 1, "slut": 1, "sluts": 1, "smegma": 1, "smut": 1, "snatch": 1, "son-of-a-bitch": 1, "spac": 1, "spunk": 1, "s_h_i_t": 1, "t1tt1e5": 1, "t1tties": 1, "teets": 1, "teez": 1, "testical": 1, "testicle": 1, "tit": 1, "titfuck": 1, "tits": 1, "titt": 1, "tittie5": 1, "tittiefucker": 1, "titties": 1, "tittyfuck": 1, "tittywank": 1, "titwank": 1, "tosser": 1, "turd": 1, "tw4t": 1, "twat": 1, "twathead": 1, "twatty": 1, "twunt": 1, "twunter": 1, "v14gra": 1, "v1gra": 1, "vagina": 1, "viagra": 1, "vulva": 1, "w00se": 1, "wang": 1, "wank": 1, "wanker": 1, "wanky": 1, "whoar": 1, "whore": 1, "willies": 1, "willy": 1, "xrated": 1, "xxx": 1};
+},{}],57:[function(require,module,exports){
+module.exports = /\b(4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b!tch|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|bi\+ch|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blow job|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|bunny fucker|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|carpet muncher|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksuck|cocksucked|cocksucker|cocksucking|cocksucks|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cuntlick|cuntlicker|cuntlicking|cunts|cyalis|cyberfuc|cyberfuck|cyberfucked|cyberfucker|cyberfuckers|cyberfucking|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculates|ejaculating|ejaculatings|ejaculation|ejakulate|f u c k|f u c k e r|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuck|fingerfucked|fingerfucker|fingerfuckers|fingerfucking|fingerfucks|fistfuck|fistfucked|fistfucker|fistfuckers|fistfucking|fistfuckings|fistfucks|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fuckme|fucks|fuckwhit|fuckwit|fudge packer|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gangbanged|gangbangs|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hardcoresex|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jack-off|jackoff|jap|jerk-off|jism|jiz|jizm|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3i\+ch|l3itch|labia|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat*|masterbat3|masterbate|masterbation|masterbations|masturbate|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucked|mothafucker|mothafuckers|mothafuckin|mothafucking|mothafuckings|mothafucks|mother fucker|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|niggers|nob|nob jokey|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasim|orgasims|orgasm|orgasms|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pisses|pissflaps|pissin|pissing|pissoff|poop|porn|porno|pornography|pornos|prick|pricks|pron|pube|pusse|pussi|pussies|pussy|pussys|rectum|retard|rimjaw|rimming|s hit|s.o.b.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex|sh!\+|sh!t|sh1t|shag|shagger|shaggin|shagging|shemale|shi\+|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitters|shitting|shittings|shitty|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)\b/gi;
+},{}],58:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -4870,7 +6757,7 @@ Backoff.prototype.setJitter = function(jitter){
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],46:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -4996,7 +6883,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],47:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -5096,7 +6983,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],48:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -8521,7 +10408,7 @@ module.exports = (function() {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{}],49:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 var r;
 
 module.exports = function rand(len) {
@@ -8580,9 +10467,9 @@ if (typeof window === 'object') {
   }
 }
 
-},{}],50:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 
-},{}],51:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 (function (Buffer){
 // based on the aes implimentation in triple sec
 // https://github.com/keybase/triplesec
@@ -8763,7 +10650,7 @@ AES.prototype._doCryptBlock = function (M, keySchedule, SUB_MIX, SBOX) {
 exports.AES = AES
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],52:[function(require,module,exports){
+},{"buffer":90}],65:[function(require,module,exports){
 (function (Buffer){
 var aes = require('./aes')
 var Transform = require('cipher-base')
@@ -8864,7 +10751,7 @@ function xorTest (a, b) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./aes":51,"./ghash":56,"buffer":77,"buffer-xor":76,"cipher-base":79,"inherits":128}],53:[function(require,module,exports){
+},{"./aes":64,"./ghash":69,"buffer":90,"buffer-xor":89,"cipher-base":92,"inherits":141}],66:[function(require,module,exports){
 var ciphers = require('./encrypter')
 exports.createCipher = exports.Cipher = ciphers.createCipher
 exports.createCipheriv = exports.Cipheriv = ciphers.createCipheriv
@@ -8877,7 +10764,7 @@ function getCiphers () {
 }
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"./decrypter":54,"./encrypter":55,"./modes":57}],54:[function(require,module,exports){
+},{"./decrypter":67,"./encrypter":68,"./modes":70}],67:[function(require,module,exports){
 (function (Buffer){
 var aes = require('./aes')
 var Transform = require('cipher-base')
@@ -9018,7 +10905,7 @@ exports.createDecipher = createDecipher
 exports.createDecipheriv = createDecipheriv
 
 }).call(this,require("buffer").Buffer)
-},{"./aes":51,"./authCipher":52,"./modes":57,"./modes/cbc":58,"./modes/cfb":59,"./modes/cfb1":60,"./modes/cfb8":61,"./modes/ctr":62,"./modes/ecb":63,"./modes/ofb":64,"./streamCipher":65,"buffer":77,"cipher-base":79,"evp_bytestokey":119,"inherits":128}],55:[function(require,module,exports){
+},{"./aes":64,"./authCipher":65,"./modes":70,"./modes/cbc":71,"./modes/cfb":72,"./modes/cfb1":73,"./modes/cfb8":74,"./modes/ctr":75,"./modes/ecb":76,"./modes/ofb":77,"./streamCipher":78,"buffer":90,"cipher-base":92,"evp_bytestokey":132,"inherits":141}],68:[function(require,module,exports){
 (function (Buffer){
 var aes = require('./aes')
 var Transform = require('cipher-base')
@@ -9144,7 +11031,7 @@ exports.createCipheriv = createCipheriv
 exports.createCipher = createCipher
 
 }).call(this,require("buffer").Buffer)
-},{"./aes":51,"./authCipher":52,"./modes":57,"./modes/cbc":58,"./modes/cfb":59,"./modes/cfb1":60,"./modes/cfb8":61,"./modes/ctr":62,"./modes/ecb":63,"./modes/ofb":64,"./streamCipher":65,"buffer":77,"cipher-base":79,"evp_bytestokey":119,"inherits":128}],56:[function(require,module,exports){
+},{"./aes":64,"./authCipher":65,"./modes":70,"./modes/cbc":71,"./modes/cfb":72,"./modes/cfb1":73,"./modes/cfb8":74,"./modes/ctr":75,"./modes/ecb":76,"./modes/ofb":77,"./streamCipher":78,"buffer":90,"cipher-base":92,"evp_bytestokey":132,"inherits":141}],69:[function(require,module,exports){
 (function (Buffer){
 var zeros = new Buffer(16)
 zeros.fill(0)
@@ -9246,7 +11133,7 @@ function xor (a, b) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],57:[function(require,module,exports){
+},{"buffer":90}],70:[function(require,module,exports){
 exports['aes-128-ecb'] = {
   cipher: 'AES',
   key: 128,
@@ -9419,7 +11306,7 @@ exports['aes-256-gcm'] = {
   type: 'auth'
 }
 
-},{}],58:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 var xor = require('buffer-xor')
 
 exports.encrypt = function (self, block) {
@@ -9438,7 +11325,7 @@ exports.decrypt = function (self, block) {
   return xor(out, pad)
 }
 
-},{"buffer-xor":76}],59:[function(require,module,exports){
+},{"buffer-xor":89}],72:[function(require,module,exports){
 (function (Buffer){
 var xor = require('buffer-xor')
 
@@ -9473,7 +11360,7 @@ function encryptStart (self, data, decrypt) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"buffer-xor":76}],60:[function(require,module,exports){
+},{"buffer":90,"buffer-xor":89}],73:[function(require,module,exports){
 (function (Buffer){
 function encryptByte (self, byteParam, decrypt) {
   var pad
@@ -9511,7 +11398,7 @@ function shiftIn (buffer, value) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],61:[function(require,module,exports){
+},{"buffer":90}],74:[function(require,module,exports){
 (function (Buffer){
 function encryptByte (self, byteParam, decrypt) {
   var pad = self._cipher.encryptBlock(self._prev)
@@ -9530,7 +11417,7 @@ exports.encrypt = function (self, chunk, decrypt) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],62:[function(require,module,exports){
+},{"buffer":90}],75:[function(require,module,exports){
 (function (Buffer){
 var xor = require('buffer-xor')
 
@@ -9565,7 +11452,7 @@ exports.encrypt = function (self, chunk) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"buffer-xor":76}],63:[function(require,module,exports){
+},{"buffer":90,"buffer-xor":89}],76:[function(require,module,exports){
 exports.encrypt = function (self, block) {
   return self._cipher.encryptBlock(block)
 }
@@ -9573,7 +11460,7 @@ exports.decrypt = function (self, block) {
   return self._cipher.decryptBlock(block)
 }
 
-},{}],64:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 (function (Buffer){
 var xor = require('buffer-xor')
 
@@ -9593,7 +11480,7 @@ exports.encrypt = function (self, chunk) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"buffer-xor":76}],65:[function(require,module,exports){
+},{"buffer":90,"buffer-xor":89}],78:[function(require,module,exports){
 (function (Buffer){
 var aes = require('./aes')
 var Transform = require('cipher-base')
@@ -9622,7 +11509,7 @@ StreamCipher.prototype._final = function () {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./aes":51,"buffer":77,"cipher-base":79,"inherits":128}],66:[function(require,module,exports){
+},{"./aes":64,"buffer":90,"cipher-base":92,"inherits":141}],79:[function(require,module,exports){
 var ebtk = require('evp_bytestokey')
 var aes = require('browserify-aes/browser')
 var DES = require('browserify-des')
@@ -9697,7 +11584,7 @@ function getCiphers () {
 }
 exports.listCiphers = exports.getCiphers = getCiphers
 
-},{"browserify-aes/browser":53,"browserify-aes/modes":57,"browserify-des":67,"browserify-des/modes":68,"evp_bytestokey":119}],67:[function(require,module,exports){
+},{"browserify-aes/browser":66,"browserify-aes/modes":70,"browserify-des":80,"browserify-des/modes":81,"evp_bytestokey":132}],80:[function(require,module,exports){
 (function (Buffer){
 var CipherBase = require('cipher-base')
 var des = require('des.js')
@@ -9744,7 +11631,7 @@ DES.prototype._final = function () {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"cipher-base":79,"des.js":91,"inherits":128}],68:[function(require,module,exports){
+},{"buffer":90,"cipher-base":92,"des.js":104,"inherits":141}],81:[function(require,module,exports){
 exports['des-ecb'] = {
   key: 8,
   iv: 0
@@ -9770,7 +11657,7 @@ exports['des-ede'] = {
   iv: 0
 }
 
-},{}],69:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 (function (Buffer){
 var bn = require('bn.js');
 var randomBytes = require('randombytes');
@@ -9814,7 +11701,7 @@ function getr(priv) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"bn.js":48,"buffer":77,"randombytes":160}],70:[function(require,module,exports){
+},{"bn.js":61,"buffer":90,"randombytes":174}],83:[function(require,module,exports){
 (function (Buffer){
 'use strict'
 exports['RSA-SHA224'] = exports.sha224WithRSAEncryption = {
@@ -9890,7 +11777,7 @@ exports['RSA-MD5'] = exports.md5WithRSAEncryption = {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],71:[function(require,module,exports){
+},{"buffer":90}],84:[function(require,module,exports){
 (function (Buffer){
 var _algos = require('./algos')
 var createHash = require('create-hash')
@@ -9997,7 +11884,7 @@ module.exports = {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./algos":70,"./sign":73,"./verify":74,"buffer":77,"create-hash":84,"inherits":128,"stream":211}],72:[function(require,module,exports){
+},{"./algos":83,"./sign":86,"./verify":87,"buffer":90,"create-hash":97,"inherits":141,"stream":225}],85:[function(require,module,exports){
 'use strict'
 exports['1.3.132.0.10'] = 'secp256k1'
 
@@ -10011,7 +11898,7 @@ exports['1.3.132.0.34'] = 'p384'
 
 exports['1.3.132.0.35'] = 'p521'
 
-},{}],73:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 (function (Buffer){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var createHmac = require('create-hmac')
@@ -10200,7 +12087,7 @@ module.exports.getKey = getKey
 module.exports.makeKey = makeKey
 
 }).call(this,require("buffer").Buffer)
-},{"./curves":72,"bn.js":48,"browserify-rsa":69,"buffer":77,"create-hmac":87,"elliptic":101,"parse-asn1":144}],74:[function(require,module,exports){
+},{"./curves":85,"bn.js":61,"browserify-rsa":82,"buffer":90,"create-hmac":100,"elliptic":114,"parse-asn1":157}],87:[function(require,module,exports){
 (function (Buffer){
 // much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var curves = require('./curves')
@@ -10307,7 +12194,7 @@ function checkValue (b, q) {
 module.exports = verify
 
 }).call(this,require("buffer").Buffer)
-},{"./curves":72,"bn.js":48,"buffer":77,"elliptic":101,"parse-asn1":144}],75:[function(require,module,exports){
+},{"./curves":85,"bn.js":61,"buffer":90,"elliptic":114,"parse-asn1":157}],88:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -10419,7 +12306,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":77}],76:[function(require,module,exports){
+},{"buffer":90}],89:[function(require,module,exports){
 (function (Buffer){
 module.exports = function xor (a, b) {
   var length = Math.min(a.length, b.length)
@@ -10433,7 +12320,7 @@ module.exports = function xor (a, b) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],77:[function(require,module,exports){
+},{"buffer":90}],90:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -11985,14 +13872,14 @@ function blitBuffer (src, dst, offset, length) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":46,"ieee754":126,"isarray":78}],78:[function(require,module,exports){
+},{"base64-js":59,"ieee754":139,"isarray":91}],91:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],79:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 (function (Buffer){
 var Transform = require('stream').Transform
 var inherits = require('inherits')
@@ -12086,7 +13973,7 @@ CipherBase.prototype._toString = function (value, enc, final) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"inherits":128,"stream":211,"string_decoder":212}],80:[function(require,module,exports){
+},{"buffer":90,"inherits":141,"stream":225,"string_decoder":226}],93:[function(require,module,exports){
 /**
  * Slice reference.
  */
@@ -12111,7 +13998,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],81:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -12119,7 +14006,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],82:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -12230,7 +14117,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":129}],83:[function(require,module,exports){
+},{"../../is-buffer/index.js":142}],96:[function(require,module,exports){
 (function (Buffer){
 var elliptic = require('elliptic');
 var BN = require('bn.js');
@@ -12356,7 +14243,7 @@ function formatReturnValue(bn, enc, len) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"bn.js":48,"buffer":77,"elliptic":101}],84:[function(require,module,exports){
+},{"bn.js":61,"buffer":90,"elliptic":114}],97:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var inherits = require('inherits')
@@ -12412,7 +14299,7 @@ module.exports = function createHash (alg) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./md5":86,"buffer":77,"cipher-base":79,"inherits":128,"ripemd160":172,"sha.js":175}],85:[function(require,module,exports){
+},{"./md5":99,"buffer":90,"cipher-base":92,"inherits":141,"ripemd160":186,"sha.js":189}],98:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var intSize = 4;
@@ -12449,7 +14336,7 @@ function hash(buf, fn, hashSize, bigEndian) {
 }
 exports.hash = hash;
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],86:[function(require,module,exports){
+},{"buffer":90}],99:[function(require,module,exports){
 'use strict';
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
@@ -12606,7 +14493,7 @@ function bit_rol(num, cnt)
 module.exports = function md5(buf) {
   return helpers.hash(buf, core_md5, 16);
 };
-},{"./helpers":85}],87:[function(require,module,exports){
+},{"./helpers":98}],100:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var createHash = require('create-hash/browser');
@@ -12678,7 +14565,7 @@ module.exports = function createHmac(alg, key) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"create-hash/browser":84,"inherits":128,"stream":211}],88:[function(require,module,exports){
+},{"buffer":90,"create-hash/browser":97,"inherits":141,"stream":225}],101:[function(require,module,exports){
 'use strict'
 
 exports.randomBytes = exports.rng = exports.pseudoRandomBytes = exports.prng = require('randombytes')
@@ -12757,7 +14644,7 @@ var publicEncrypt = require('public-encrypt')
   }
 })
 
-},{"browserify-cipher":66,"browserify-sign":71,"browserify-sign/algos":70,"create-ecdh":83,"create-hash":84,"create-hmac":87,"diffie-hellman":97,"pbkdf2":147,"public-encrypt":150,"randombytes":160}],89:[function(require,module,exports){
+},{"browserify-cipher":79,"browserify-sign":84,"browserify-sign/algos":83,"create-ecdh":96,"create-hash":97,"create-hmac":100,"diffie-hellman":110,"pbkdf2":160,"public-encrypt":163,"randombytes":174}],102:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -12927,7 +14814,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":90}],90:[function(require,module,exports){
+},{"./debug":103}],103:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -13126,7 +15013,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":139}],91:[function(require,module,exports){
+},{"ms":152}],104:[function(require,module,exports){
 'use strict';
 
 exports.utils = require('./des/utils');
@@ -13135,7 +15022,7 @@ exports.DES = require('./des/des');
 exports.CBC = require('./des/cbc');
 exports.EDE = require('./des/ede');
 
-},{"./des/cbc":92,"./des/cipher":93,"./des/des":94,"./des/ede":95,"./des/utils":96}],92:[function(require,module,exports){
+},{"./des/cbc":105,"./des/cipher":106,"./des/des":107,"./des/ede":108,"./des/utils":109}],105:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -13202,7 +15089,7 @@ proto._update = function _update(inp, inOff, out, outOff) {
   }
 };
 
-},{"inherits":128,"minimalistic-assert":138}],93:[function(require,module,exports){
+},{"inherits":141,"minimalistic-assert":151}],106:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -13345,7 +15232,7 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
   return this._unpad(out);
 };
 
-},{"minimalistic-assert":138}],94:[function(require,module,exports){
+},{"minimalistic-assert":151}],107:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -13490,7 +15377,7 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
   utils.rip(l, r, out, off);
 };
 
-},{"../des":91,"inherits":128,"minimalistic-assert":138}],95:[function(require,module,exports){
+},{"../des":104,"inherits":141,"minimalistic-assert":151}],108:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -13547,7 +15434,7 @@ EDE.prototype._update = function _update(inp, inOff, out, outOff) {
 EDE.prototype._pad = DES.prototype._pad;
 EDE.prototype._unpad = DES.prototype._unpad;
 
-},{"../des":91,"inherits":128,"minimalistic-assert":138}],96:[function(require,module,exports){
+},{"../des":104,"inherits":141,"minimalistic-assert":151}],109:[function(require,module,exports){
 'use strict';
 
 exports.readUInt32BE = function readUInt32BE(bytes, off) {
@@ -13805,7 +15692,7 @@ exports.padSplit = function padSplit(num, size, group) {
   return out.join(' ');
 };
 
-},{}],97:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 (function (Buffer){
 var generatePrime = require('./lib/generatePrime')
 var primes = require('./lib/primes.json')
@@ -13851,7 +15738,7 @@ exports.DiffieHellmanGroup = exports.createDiffieHellmanGroup = exports.getDiffi
 exports.createDiffieHellman = exports.DiffieHellman = createDiffieHellman
 
 }).call(this,require("buffer").Buffer)
-},{"./lib/dh":98,"./lib/generatePrime":99,"./lib/primes.json":100,"buffer":77}],98:[function(require,module,exports){
+},{"./lib/dh":111,"./lib/generatePrime":112,"./lib/primes.json":113,"buffer":90}],111:[function(require,module,exports){
 (function (Buffer){
 var BN = require('bn.js');
 var MillerRabin = require('miller-rabin');
@@ -14019,7 +15906,7 @@ function formatReturnValue(bn, enc) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./generatePrime":99,"bn.js":48,"buffer":77,"miller-rabin":137,"randombytes":160}],99:[function(require,module,exports){
+},{"./generatePrime":112,"bn.js":61,"buffer":90,"miller-rabin":150,"randombytes":174}],112:[function(require,module,exports){
 var randomBytes = require('randombytes');
 module.exports = findPrime;
 findPrime.simpleSieve = simpleSieve;
@@ -14126,7 +16013,7 @@ function findPrime(bits, gen) {
 
 }
 
-},{"bn.js":48,"miller-rabin":137,"randombytes":160}],100:[function(require,module,exports){
+},{"bn.js":61,"miller-rabin":150,"randombytes":174}],113:[function(require,module,exports){
 module.exports={
     "modp1": {
         "gen": "02",
@@ -14161,7 +16048,7 @@ module.exports={
         "prime": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a92108011a723c12a787e6d788719a10bdba5b2699c327186af4e23c1a946834b6150bda2583e9ca2ad44ce8dbbbc2db04de8ef92e8efc141fbecaa6287c59474e6bc05d99b2964fa090c3a2233ba186515be7ed1f612970cee2d7afb81bdd762170481cd0069127d5b05aa993b4ea988d8fddc186ffb7dc90a6c08f4df435c93402849236c3fab4d27c7026c1d4dcb2602646dec9751e763dba37bdf8ff9406ad9e530ee5db382f413001aeb06a53ed9027d831179727b0865a8918da3edbebcf9b14ed44ce6cbaced4bb1bdb7f1447e6cc254b332051512bd7af426fb8f401378cd2bf5983ca01c64b92ecf032ea15d1721d03f482d7ce6e74fef6d55e702f46980c82b5a84031900b1c9e59e7c97fbec7e8f323a97a7e36cc88be0f1d45b7ff585ac54bd407b22b4154aacc8f6d7ebf48e1d814cc5ed20f8037e0a79715eef29be32806a1d58bb7c5da76f550aa3d8a1fbff0eb19ccb1a313d55cda56c9ec2ef29632387fe8d76e3c0468043e8f663f4860ee12bf2d5b0b7474d6e694f91e6dbe115974a3926f12fee5e438777cb6a932df8cd8bec4d073b931ba3bc832b68d9dd300741fa7bf8afc47ed2576f6936ba424663aab639c5ae4f5683423b4742bf1c978238f16cbe39d652de3fdb8befc848ad922222e04a4037c0713eb57a81a23f0c73473fc646cea306b4bcbc8862f8385ddfa9d4b7fa2c087e879683303ed5bdd3a062b3cf5b3a278a66d2a13f83f44f82ddf310ee074ab6a364597e899a0255dc164f31cc50846851df9ab48195ded7ea1b1d510bd7ee74d73faf36bc31ecfa268359046f4eb879f924009438b481c6cd7889a002ed5ee382bc9190da6fc026e479558e4475677e9aa9e3050e2765694dfc81f56e880b96e7160c980dd98edd3dfffffffffffffffff"
     }
 }
-},{}],101:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
@@ -14177,7 +16064,7 @@ elliptic.curves = require('./elliptic/curves');
 elliptic.ec = require('./elliptic/ec');
 elliptic.eddsa = require('./elliptic/eddsa');
 
-},{"../package.json":117,"./elliptic/curve":104,"./elliptic/curves":107,"./elliptic/ec":108,"./elliptic/eddsa":111,"./elliptic/hmac-drbg":114,"./elliptic/utils":116,"brorand":49}],102:[function(require,module,exports){
+},{"../package.json":130,"./elliptic/curve":117,"./elliptic/curves":120,"./elliptic/ec":121,"./elliptic/eddsa":124,"./elliptic/hmac-drbg":127,"./elliptic/utils":129,"brorand":62}],115:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -14554,7 +16441,7 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../../elliptic":101,"bn.js":48}],103:[function(require,module,exports){
+},{"../../elliptic":114,"bn.js":61}],116:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -14989,7 +16876,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../../elliptic":101,"../curve":104,"bn.js":48,"inherits":128}],104:[function(require,module,exports){
+},{"../../elliptic":114,"../curve":117,"bn.js":61,"inherits":141}],117:[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -14999,7 +16886,7 @@ curve.short = require('./short');
 curve.mont = require('./mont');
 curve.edwards = require('./edwards');
 
-},{"./base":102,"./edwards":103,"./mont":105,"./short":106}],105:[function(require,module,exports){
+},{"./base":115,"./edwards":116,"./mont":118,"./short":119}],118:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -15181,7 +17068,7 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../../elliptic":101,"../curve":104,"bn.js":48,"inherits":128}],106:[function(require,module,exports){
+},{"../../elliptic":114,"../curve":117,"bn.js":61,"inherits":141}],119:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -16121,7 +18008,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../../elliptic":101,"../curve":104,"bn.js":48,"inherits":128}],107:[function(require,module,exports){
+},{"../../elliptic":114,"../curve":117,"bn.js":61,"inherits":141}],120:[function(require,module,exports){
 'use strict';
 
 var curves = exports;
@@ -16328,7 +18215,7 @@ defineCurve('secp256k1', {
   ]
 });
 
-},{"../elliptic":101,"./precomputed/secp256k1":115,"hash.js":120}],108:[function(require,module,exports){
+},{"../elliptic":114,"./precomputed/secp256k1":128,"hash.js":133}],121:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -16566,7 +18453,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../../elliptic":101,"./key":109,"./signature":110,"bn.js":48}],109:[function(require,module,exports){
+},{"../../elliptic":114,"./key":122,"./signature":123,"bn.js":61}],122:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -16675,7 +18562,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"bn.js":48}],110:[function(require,module,exports){
+},{"bn.js":61}],123:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -16812,7 +18699,7 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../../elliptic":101,"bn.js":48}],111:[function(require,module,exports){
+},{"../../elliptic":114,"bn.js":61}],124:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -16932,7 +18819,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../../elliptic":101,"./key":112,"./signature":113,"hash.js":120}],112:[function(require,module,exports){
+},{"../../elliptic":114,"./key":125,"./signature":126,"hash.js":133}],125:[function(require,module,exports){
 'use strict';
 
 var elliptic = require('../../elliptic');
@@ -17030,7 +18917,7 @@ KeyPair.prototype.getPublic = function getPublic(enc) {
 
 module.exports = KeyPair;
 
-},{"../../elliptic":101}],113:[function(require,module,exports){
+},{"../../elliptic":114}],126:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -17098,7 +18985,7 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../../elliptic":101,"bn.js":48}],114:[function(require,module,exports){
+},{"../../elliptic":114,"bn.js":61}],127:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -17214,7 +19101,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
   return utils.encode(res, enc);
 };
 
-},{"../elliptic":101,"hash.js":120}],115:[function(require,module,exports){
+},{"../elliptic":114,"hash.js":133}],128:[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
@@ -17996,7 +19883,7 @@ module.exports = {
   }
 };
 
-},{}],116:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -18170,7 +20057,7 @@ function intFromLE(bytes) {
 utils.intFromLE = intFromLE;
 
 
-},{"bn.js":48}],117:[function(require,module,exports){
+},{"bn.js":61}],130:[function(require,module,exports){
 module.exports={
   "_args": [
     [
@@ -18291,7 +20178,7 @@ module.exports={
   "version": "6.3.1"
 }
 
-},{}],118:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -18594,7 +20481,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],119:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 (function (Buffer){
 var md5 = require('create-hash/md5')
 module.exports = EVP_BytesToKey
@@ -18666,7 +20553,7 @@ function EVP_BytesToKey (password, salt, keyLen, ivLen) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"create-hash/md5":86}],120:[function(require,module,exports){
+},{"buffer":90,"create-hash/md5":99}],133:[function(require,module,exports){
 var hash = exports;
 
 hash.utils = require('./hash/utils');
@@ -18683,7 +20570,7 @@ hash.sha384 = hash.sha.sha384;
 hash.sha512 = hash.sha.sha512;
 hash.ripemd160 = hash.ripemd.ripemd160;
 
-},{"./hash/common":121,"./hash/hmac":122,"./hash/ripemd":123,"./hash/sha":124,"./hash/utils":125}],121:[function(require,module,exports){
+},{"./hash/common":134,"./hash/hmac":135,"./hash/ripemd":136,"./hash/sha":137,"./hash/utils":138}],134:[function(require,module,exports){
 var hash = require('../hash');
 var utils = hash.utils;
 var assert = utils.assert;
@@ -18776,7 +20663,7 @@ BlockHash.prototype._pad = function pad() {
   return res;
 };
 
-},{"../hash":120}],122:[function(require,module,exports){
+},{"../hash":133}],135:[function(require,module,exports){
 var hmac = exports;
 
 var hash = require('../hash');
@@ -18826,7 +20713,7 @@ Hmac.prototype.digest = function digest(enc) {
   return this.outer.digest(enc);
 };
 
-},{"../hash":120}],123:[function(require,module,exports){
+},{"../hash":133}],136:[function(require,module,exports){
 var hash = require('../hash');
 var utils = hash.utils;
 
@@ -18972,7 +20859,7 @@ var sh = [
   8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11
 ];
 
-},{"../hash":120}],124:[function(require,module,exports){
+},{"../hash":133}],137:[function(require,module,exports){
 var hash = require('../hash');
 var utils = hash.utils;
 var assert = utils.assert;
@@ -19538,7 +21425,7 @@ function g1_512_lo(xh, xl) {
   return r;
 }
 
-},{"../hash":120}],125:[function(require,module,exports){
+},{"../hash":133}],138:[function(require,module,exports){
 var utils = exports;
 var inherits = require('inherits');
 
@@ -19797,7 +21684,7 @@ function shr64_lo(ah, al, num) {
 };
 exports.shr64_lo = shr64_lo;
 
-},{"inherits":128}],126:[function(require,module,exports){
+},{"inherits":141}],139:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -19883,7 +21770,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],127:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -19894,7 +21781,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],128:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -19919,7 +21806,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],129:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -19938,12 +21825,12 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],130:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],131:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 /*
 
   Javascript State Machine Library - https://github.com/jakesgordon/javascript-state-machine
@@ -20172,7 +22059,7 @@ module.exports = Array.isArray || function (arr) {
 
 }());
 
-},{}],132:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20219,7 +22106,7 @@ function expiresFromLive(live) {
 exports["default"] = Cookie;
 module.exports = exports["default"];
 
-},{}],133:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 'use strict';
 
 var helpers = require('./helpers');
@@ -21006,7 +22893,7 @@ validators.not = validators.disallow = function validateNot (instance, schema, o
 
 module.exports = attribute;
 
-},{"./helpers":134}],134:[function(require,module,exports){
+},{"./helpers":147}],147:[function(require,module,exports){
 'use strict';
 
 var uri = require('url');
@@ -21287,7 +23174,7 @@ exports.encodePath = function encodePointer(a){
 	return a.map(function(v){ return '/'+encodeURIComponent(v).replace(/~/g,'%7E'); }).join('');
 };
 
-},{"url":213}],135:[function(require,module,exports){
+},{"url":227}],148:[function(require,module,exports){
 'use strict';
 
 var Validator = module.exports.Validator = require('./validator');
@@ -21301,7 +23188,7 @@ module.exports.validate = function (instance, schema, options) {
   return v.validate(instance, schema, options);
 };
 
-},{"./helpers":134,"./validator":136}],136:[function(require,module,exports){
+},{"./helpers":147,"./validator":149}],149:[function(require,module,exports){
 'use strict';
 
 var urilib = require('url');
@@ -21623,7 +23510,7 @@ types.object = function testObject (instance) {
 
 module.exports = Validator;
 
-},{"./attribute":133,"./helpers":134,"url":213}],137:[function(require,module,exports){
+},{"./attribute":146,"./helpers":147,"url":227}],150:[function(require,module,exports){
 var bn = require('bn.js');
 var brorand = require('brorand');
 
@@ -21738,7 +23625,7 @@ MillerRabin.prototype.getDivisor = function getDivisor(n, k) {
   return false;
 };
 
-},{"bn.js":48,"brorand":49}],138:[function(require,module,exports){
+},{"bn.js":61,"brorand":62}],151:[function(require,module,exports){
 module.exports = assert;
 
 function assert(val, msg) {
@@ -21751,7 +23638,7 @@ assert.equal = function assertEqual(l, r, msg) {
     throw new Error(msg || ('Assertion failed: ' + l + ' != ' + r));
 };
 
-},{}],139:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -21878,7 +23765,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],140:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 (function (Buffer){
 //     uuid.js
 //
@@ -22154,7 +24041,7 @@ function plural(ms, n, name) {
 })('undefined' !== typeof window ? window : null);
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"crypto":88}],141:[function(require,module,exports){
+},{"buffer":90,"crypto":101}],154:[function(require,module,exports){
 module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.2": "aes-128-cbc",
 "2.16.840.1.101.3.4.1.3": "aes-128-ofb",
@@ -22168,7 +24055,7 @@ module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.43": "aes-256-ofb",
 "2.16.840.1.101.3.4.1.44": "aes-256-cfb"
 }
-},{}],142:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 // from https://github.com/indutny/self-signed/blob/gh-pages/lib/asn1.js
 // Fedor, you are amazing.
 
@@ -22287,7 +24174,7 @@ exports.signature = asn1.define('signature', function () {
   )
 })
 
-},{"asn1.js":30}],143:[function(require,module,exports){
+},{"asn1.js":37}],156:[function(require,module,exports){
 (function (Buffer){
 // adapted from https://github.com/apatil/pemstrip
 var findProc = /Proc-Type: 4,ENCRYPTED\r?\nDEK-Info: AES-((?:128)|(?:192)|(?:256))-CBC,([0-9A-H]+)\r?\n\r?\n([0-9A-z\n\r\+\/\=]+)\r?\n/m
@@ -22321,7 +24208,7 @@ module.exports = function (okey, password) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"browserify-aes":53,"buffer":77,"evp_bytestokey":119}],144:[function(require,module,exports){
+},{"browserify-aes":66,"buffer":90,"evp_bytestokey":132}],157:[function(require,module,exports){
 (function (Buffer){
 var asn1 = require('./asn1')
 var aesid = require('./aesid.json')
@@ -22426,7 +24313,7 @@ function decrypt (data, password) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./aesid.json":141,"./asn1":142,"./fixProc":143,"browserify-aes":53,"buffer":77,"pbkdf2":147}],145:[function(require,module,exports){
+},{"./aesid.json":154,"./asn1":155,"./fixProc":156,"browserify-aes":66,"buffer":90,"pbkdf2":160}],158:[function(require,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -22461,7 +24348,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],146:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -22500,7 +24387,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],147:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 (function (Buffer){
 var createHmac = require('create-hmac')
 var MAX_ALLOC = Math.pow(2, 30) - 1 // default in iojs
@@ -22584,7 +24471,7 @@ function pbkdf2Sync (password, salt, iterations, keylen, digest) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"create-hmac":87}],148:[function(require,module,exports){
+},{"buffer":90,"create-hmac":100}],161:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -22631,7 +24518,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":149}],149:[function(require,module,exports){
+},{"_process":162}],162:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -22752,7 +24639,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],150:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 exports.publicEncrypt = require('./publicEncrypt');
 exports.privateDecrypt = require('./privateDecrypt');
 
@@ -22763,7 +24650,7 @@ exports.privateEncrypt = function privateEncrypt(key, buf) {
 exports.publicDecrypt = function publicDecrypt(key, buf) {
   return exports.privateDecrypt(key, buf, true);
 };
-},{"./privateDecrypt":152,"./publicEncrypt":153}],151:[function(require,module,exports){
+},{"./privateDecrypt":165,"./publicEncrypt":166}],164:[function(require,module,exports){
 (function (Buffer){
 var createHash = require('create-hash');
 module.exports = function (seed, len) {
@@ -22782,7 +24669,7 @@ function i2ops(c) {
   return out;
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":77,"create-hash":84}],152:[function(require,module,exports){
+},{"buffer":90,"create-hash":97}],165:[function(require,module,exports){
 (function (Buffer){
 var parseKeys = require('parse-asn1');
 var mgf = require('./mgf');
@@ -22893,7 +24780,7 @@ function compare(a, b){
   return dif;
 }
 }).call(this,require("buffer").Buffer)
-},{"./mgf":151,"./withPublic":154,"./xor":155,"bn.js":48,"browserify-rsa":69,"buffer":77,"create-hash":84,"parse-asn1":144}],153:[function(require,module,exports){
+},{"./mgf":164,"./withPublic":167,"./xor":168,"bn.js":61,"browserify-rsa":82,"buffer":90,"create-hash":97,"parse-asn1":157}],166:[function(require,module,exports){
 (function (Buffer){
 var parseKeys = require('parse-asn1');
 var randomBytes = require('randombytes');
@@ -22991,7 +24878,7 @@ function nonZero(len, crypto) {
   return out;
 }
 }).call(this,require("buffer").Buffer)
-},{"./mgf":151,"./withPublic":154,"./xor":155,"bn.js":48,"browserify-rsa":69,"buffer":77,"create-hash":84,"parse-asn1":144,"randombytes":160}],154:[function(require,module,exports){
+},{"./mgf":164,"./withPublic":167,"./xor":168,"bn.js":61,"browserify-rsa":82,"buffer":90,"create-hash":97,"parse-asn1":157,"randombytes":174}],167:[function(require,module,exports){
 (function (Buffer){
 var bn = require('bn.js');
 function withPublic(paddedMsg, key) {
@@ -23004,7 +24891,7 @@ function withPublic(paddedMsg, key) {
 
 module.exports = withPublic;
 }).call(this,require("buffer").Buffer)
-},{"bn.js":48,"buffer":77}],155:[function(require,module,exports){
+},{"bn.js":61,"buffer":90}],168:[function(require,module,exports){
 module.exports = function xor(a, b) {
   var len = a.length;
   var i = -1;
@@ -23013,7 +24900,7 @@ module.exports = function xor(a, b) {
   }
   return a
 };
-},{}],156:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -23550,7 +25437,7 @@ module.exports = function xor(a, b) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],157:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -23636,7 +25523,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],158:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -23723,13 +25610,730 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],159:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":157,"./encode":158}],160:[function(require,module,exports){
+},{"./decode":170,"./encode":171}],173:[function(require,module,exports){
+/*jshint eqnull:true*/
+(function (root) {
+  "use strict";
+
+  var GLOBAL_KEY = "Random";
+
+  var imul = (typeof Math.imul !== "function" || Math.imul(0xffffffff, 5) !== -5 ?
+    function (a, b) {
+      var ah = (a >>> 16) & 0xffff;
+      var al = a & 0xffff;
+      var bh = (b >>> 16) & 0xffff;
+      var bl = b & 0xffff;
+      // the shift by 0 fixes the sign on the high part
+      // the final |0 converts the unsigned value into a signed value
+      return (al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0;
+    } :
+    Math.imul);
+
+  var stringRepeat = (typeof String.prototype.repeat === "function" && "x".repeat(3) === "xxx" ?
+    function (x, y) {
+      return x.repeat(y);
+    } : function (pattern, count) {
+      var result = "";
+      while (count > 0) {
+        if (count & 1) {
+          result += pattern;
+        }
+        count >>= 1;
+        pattern += pattern;
+      }
+      return result;
+    });
+
+  function Random(engine) {
+    if (!(this instanceof Random)) {
+      return new Random(engine);
+    }
+
+    if (engine == null) {
+      engine = Random.engines.nativeMath;
+    } else if (typeof engine !== "function") {
+      throw new TypeError("Expected engine to be a function, got " + typeof engine);
+    }
+    this.engine = engine;
+  }
+  var proto = Random.prototype;
+
+  Random.engines = {
+    nativeMath: function () {
+      return (Math.random() * 0x100000000) | 0;
+    },
+    mt19937: (function (Int32Array) {
+      // http://en.wikipedia.org/wiki/Mersenne_twister
+      function refreshData(data) {
+        var k = 0;
+        var tmp = 0;
+        for (;
+          (k | 0) < 227; k = (k + 1) | 0) {
+          tmp = (data[k] & 0x80000000) | (data[(k + 1) | 0] & 0x7fffffff);
+          data[k] = data[(k + 397) | 0] ^ (tmp >>> 1) ^ ((tmp & 0x1) ? 0x9908b0df : 0);
+        }
+
+        for (;
+          (k | 0) < 623; k = (k + 1) | 0) {
+          tmp = (data[k] & 0x80000000) | (data[(k + 1) | 0] & 0x7fffffff);
+          data[k] = data[(k - 227) | 0] ^ (tmp >>> 1) ^ ((tmp & 0x1) ? 0x9908b0df : 0);
+        }
+
+        tmp = (data[623] & 0x80000000) | (data[0] & 0x7fffffff);
+        data[623] = data[396] ^ (tmp >>> 1) ^ ((tmp & 0x1) ? 0x9908b0df : 0);
+      }
+
+      function temper(value) {
+        value ^= value >>> 11;
+        value ^= (value << 7) & 0x9d2c5680;
+        value ^= (value << 15) & 0xefc60000;
+        return value ^ (value >>> 18);
+      }
+
+      function seedWithArray(data, source) {
+        var i = 1;
+        var j = 0;
+        var sourceLength = source.length;
+        var k = Math.max(sourceLength, 624) | 0;
+        var previous = data[0] | 0;
+        for (;
+          (k | 0) > 0; --k) {
+          data[i] = previous = ((data[i] ^ imul((previous ^ (previous >>> 30)), 0x0019660d)) + (source[j] | 0) + (j | 0)) | 0;
+          i = (i + 1) | 0;
+          ++j;
+          if ((i | 0) > 623) {
+            data[0] = data[623];
+            i = 1;
+          }
+          if (j >= sourceLength) {
+            j = 0;
+          }
+        }
+        for (k = 623;
+          (k | 0) > 0; --k) {
+          data[i] = previous = ((data[i] ^ imul((previous ^ (previous >>> 30)), 0x5d588b65)) - i) | 0;
+          i = (i + 1) | 0;
+          if ((i | 0) > 623) {
+            data[0] = data[623];
+            i = 1;
+          }
+        }
+        data[0] = 0x80000000;
+      }
+
+      function mt19937() {
+        var data = new Int32Array(624);
+        var index = 0;
+        var uses = 0;
+
+        function next() {
+          if ((index | 0) >= 624) {
+            refreshData(data);
+            index = 0;
+          }
+
+          var value = data[index];
+          index = (index + 1) | 0;
+          uses += 1;
+          return temper(value) | 0;
+        }
+        next.getUseCount = function() {
+          return uses;
+        };
+        next.discard = function (count) {
+          uses += count;
+          if ((index | 0) >= 624) {
+            refreshData(data);
+            index = 0;
+          }
+          while ((count - index) > 624) {
+            count -= 624 - index;
+            refreshData(data);
+            index = 0;
+          }
+          index = (index + count) | 0;
+          return next;
+        };
+        next.seed = function (initial) {
+          var previous = 0;
+          data[0] = previous = initial | 0;
+
+          for (var i = 1; i < 624; i = (i + 1) | 0) {
+            data[i] = previous = (imul((previous ^ (previous >>> 30)), 0x6c078965) + i) | 0;
+          }
+          index = 624;
+          uses = 0;
+          return next;
+        };
+        next.seedWithArray = function (source) {
+          next.seed(0x012bd6aa);
+          seedWithArray(data, source);
+          return next;
+        };
+        next.autoSeed = function () {
+          return next.seedWithArray(Random.generateEntropyArray());
+        };
+        return next;
+      }
+
+      return mt19937;
+    }(typeof Int32Array === "function" ? Int32Array : Array)),
+    browserCrypto: (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function" && typeof Int32Array === "function") ? (function () {
+      var data = null;
+      var index = 128;
+
+      return function () {
+        if (index >= 128) {
+          if (data === null) {
+            data = new Int32Array(128);
+          }
+          crypto.getRandomValues(data);
+          index = 0;
+        }
+
+        return data[index++] | 0;
+      };
+    }()) : null
+  };
+
+  Random.generateEntropyArray = function () {
+    var array = [];
+    var engine = Random.engines.nativeMath;
+    for (var i = 0; i < 16; ++i) {
+      array[i] = engine() | 0;
+    }
+    array.push(new Date().getTime() | 0);
+    return array;
+  };
+
+  function returnValue(value) {
+    return function () {
+      return value;
+    };
+  }
+
+  // [-0x80000000, 0x7fffffff]
+  Random.int32 = function (engine) {
+    return engine() | 0;
+  };
+  proto.int32 = function () {
+    return Random.int32(this.engine);
+  };
+
+  // [0, 0xffffffff]
+  Random.uint32 = function (engine) {
+    return engine() >>> 0;
+  };
+  proto.uint32 = function () {
+    return Random.uint32(this.engine);
+  };
+
+  // [0, 0x1fffffffffffff]
+  Random.uint53 = function (engine) {
+    var high = engine() & 0x1fffff;
+    var low = engine() >>> 0;
+    return (high * 0x100000000) + low;
+  };
+  proto.uint53 = function () {
+    return Random.uint53(this.engine);
+  };
+
+  // [0, 0x20000000000000]
+  Random.uint53Full = function (engine) {
+    while (true) {
+      var high = engine() | 0;
+      if (high & 0x200000) {
+        if ((high & 0x3fffff) === 0x200000 && (engine() | 0) === 0) {
+          return 0x20000000000000;
+        }
+      } else {
+        var low = engine() >>> 0;
+        return ((high & 0x1fffff) * 0x100000000) + low;
+      }
+    }
+  };
+  proto.uint53Full = function () {
+    return Random.uint53Full(this.engine);
+  };
+
+  // [-0x20000000000000, 0x1fffffffffffff]
+  Random.int53 = function (engine) {
+    var high = engine() | 0;
+    var low = engine() >>> 0;
+    return ((high & 0x1fffff) * 0x100000000) + low + (high & 0x200000 ? -0x20000000000000 : 0);
+  };
+  proto.int53 = function () {
+    return Random.int53(this.engine);
+  };
+
+  // [-0x20000000000000, 0x20000000000000]
+  Random.int53Full = function (engine) {
+    while (true) {
+      var high = engine() | 0;
+      if (high & 0x400000) {
+        if ((high & 0x7fffff) === 0x400000 && (engine() | 0) === 0) {
+          return 0x20000000000000;
+        }
+      } else {
+        var low = engine() >>> 0;
+        return ((high & 0x1fffff) * 0x100000000) + low + (high & 0x200000 ? -0x20000000000000 : 0);
+      }
+    }
+  };
+  proto.int53Full = function () {
+    return Random.int53Full(this.engine);
+  };
+
+  function add(generate, addend) {
+    if (addend === 0) {
+      return generate;
+    } else {
+      return function (engine) {
+        return generate(engine) + addend;
+      };
+    }
+  }
+
+  Random.integer = (function () {
+    function isPowerOfTwoMinusOne(value) {
+      return ((value + 1) & value) === 0;
+    }
+
+    function bitmask(masking) {
+      return function (engine) {
+        return engine() & masking;
+      };
+    }
+
+    function downscaleToLoopCheckedRange(range) {
+      var extendedRange = range + 1;
+      var maximum = extendedRange * Math.floor(0x100000000 / extendedRange);
+      return function (engine) {
+        var value = 0;
+        do {
+          value = engine() >>> 0;
+        } while (value >= maximum);
+        return value % extendedRange;
+      };
+    }
+
+    function downscaleToRange(range) {
+      if (isPowerOfTwoMinusOne(range)) {
+        return bitmask(range);
+      } else {
+        return downscaleToLoopCheckedRange(range);
+      }
+    }
+
+    function isEvenlyDivisibleByMaxInt32(value) {
+      return (value | 0) === 0;
+    }
+
+    function upscaleWithHighMasking(masking) {
+      return function (engine) {
+        var high = engine() & masking;
+        var low = engine() >>> 0;
+        return (high * 0x100000000) + low;
+      };
+    }
+
+    function upscaleToLoopCheckedRange(extendedRange) {
+      var maximum = extendedRange * Math.floor(0x20000000000000 / extendedRange);
+      return function (engine) {
+        var ret = 0;
+        do {
+          var high = engine() & 0x1fffff;
+          var low = engine() >>> 0;
+          ret = (high * 0x100000000) + low;
+        } while (ret >= maximum);
+        return ret % extendedRange;
+      };
+    }
+
+    function upscaleWithinU53(range) {
+      var extendedRange = range + 1;
+      if (isEvenlyDivisibleByMaxInt32(extendedRange)) {
+        var highRange = ((extendedRange / 0x100000000) | 0) - 1;
+        if (isPowerOfTwoMinusOne(highRange)) {
+          return upscaleWithHighMasking(highRange);
+        }
+      }
+      return upscaleToLoopCheckedRange(extendedRange);
+    }
+
+    function upscaleWithinI53AndLoopCheck(min, max) {
+      return function (engine) {
+        var ret = 0;
+        do {
+          var high = engine() | 0;
+          var low = engine() >>> 0;
+          ret = ((high & 0x1fffff) * 0x100000000) + low + (high & 0x200000 ? -0x20000000000000 : 0);
+        } while (ret < min || ret > max);
+        return ret;
+      };
+    }
+
+    return function (min, max) {
+      min = Math.floor(min);
+      max = Math.floor(max);
+      if (min < -0x20000000000000 || !isFinite(min)) {
+        throw new RangeError("Expected min to be at least " + (-0x20000000000000));
+      } else if (max > 0x20000000000000 || !isFinite(max)) {
+        throw new RangeError("Expected max to be at most " + 0x20000000000000);
+      }
+
+      var range = max - min;
+      if (range <= 0 || !isFinite(range)) {
+        return returnValue(min);
+      } else if (range === 0xffffffff) {
+        if (min === 0) {
+          return Random.uint32;
+        } else {
+          return add(Random.int32, min + 0x80000000);
+        }
+      } else if (range < 0xffffffff) {
+        return add(downscaleToRange(range), min);
+      } else if (range === 0x1fffffffffffff) {
+        return add(Random.uint53, min);
+      } else if (range < 0x1fffffffffffff) {
+        return add(upscaleWithinU53(range), min);
+      } else if (max - 1 - min === 0x1fffffffffffff) {
+        return add(Random.uint53Full, min);
+      } else if (min === -0x20000000000000 && max === 0x20000000000000) {
+        return Random.int53Full;
+      } else if (min === -0x20000000000000 && max === 0x1fffffffffffff) {
+        return Random.int53;
+      } else if (min === -0x1fffffffffffff && max === 0x20000000000000) {
+        return add(Random.int53, 1);
+      } else if (max === 0x20000000000000) {
+        return add(upscaleWithinI53AndLoopCheck(min - 1, max - 1), 1);
+      } else {
+        return upscaleWithinI53AndLoopCheck(min, max);
+      }
+    };
+  }());
+  proto.integer = function (min, max) {
+    return Random.integer(min, max)(this.engine);
+  };
+
+  // [0, 1] (floating point)
+  Random.realZeroToOneInclusive = function (engine) {
+    return Random.uint53Full(engine) / 0x20000000000000;
+  };
+  proto.realZeroToOneInclusive = function () {
+    return Random.realZeroToOneInclusive(this.engine);
+  };
+
+  // [0, 1) (floating point)
+  Random.realZeroToOneExclusive = function (engine) {
+    return Random.uint53(engine) / 0x20000000000000;
+  };
+  proto.realZeroToOneExclusive = function () {
+    return Random.realZeroToOneExclusive(this.engine);
+  };
+
+  Random.real = (function () {
+    function multiply(generate, multiplier) {
+      if (multiplier === 1) {
+        return generate;
+      } else if (multiplier === 0) {
+        return function () {
+          return 0;
+        };
+      } else {
+        return function (engine) {
+          return generate(engine) * multiplier;
+        };
+      }
+    }
+
+    return function (left, right, inclusive) {
+      if (!isFinite(left)) {
+        throw new RangeError("Expected left to be a finite number");
+      } else if (!isFinite(right)) {
+        throw new RangeError("Expected right to be a finite number");
+      }
+      return add(
+        multiply(
+          inclusive ? Random.realZeroToOneInclusive : Random.realZeroToOneExclusive,
+          right - left),
+        left);
+    };
+  }());
+  proto.real = function (min, max, inclusive) {
+    return Random.real(min, max, inclusive)(this.engine);
+  };
+
+  Random.bool = (function () {
+    function isLeastBitTrue(engine) {
+      return (engine() & 1) === 1;
+    }
+
+    function lessThan(generate, value) {
+      return function (engine) {
+        return generate(engine) < value;
+      };
+    }
+
+    function probability(percentage) {
+      if (percentage <= 0) {
+        return returnValue(false);
+      } else if (percentage >= 1) {
+        return returnValue(true);
+      } else {
+        var scaled = percentage * 0x100000000;
+        if (scaled % 1 === 0) {
+          return lessThan(Random.int32, (scaled - 0x80000000) | 0);
+        } else {
+          return lessThan(Random.uint53, Math.round(percentage * 0x20000000000000));
+        }
+      }
+    }
+
+    return function (numerator, denominator) {
+      if (denominator == null) {
+        if (numerator == null) {
+          return isLeastBitTrue;
+        }
+        return probability(numerator);
+      } else {
+        if (numerator <= 0) {
+          return returnValue(false);
+        } else if (numerator >= denominator) {
+          return returnValue(true);
+        }
+        return lessThan(Random.integer(0, denominator - 1), numerator);
+      }
+    };
+  }());
+  proto.bool = function (numerator, denominator) {
+    return Random.bool(numerator, denominator)(this.engine);
+  };
+
+  function toInteger(value) {
+    var number = +value;
+    if (number < 0) {
+      return Math.ceil(number);
+    } else {
+      return Math.floor(number);
+    }
+  }
+
+  function convertSliceArgument(value, length) {
+    if (value < 0) {
+      return Math.max(value + length, 0);
+    } else {
+      return Math.min(value, length);
+    }
+  }
+  Random.pick = function (engine, array, begin, end) {
+    var length = array.length;
+    var start = begin == null ? 0 : convertSliceArgument(toInteger(begin), length);
+    var finish = end === void 0 ? length : convertSliceArgument(toInteger(end), length);
+    if (start >= finish) {
+      return void 0;
+    }
+    var distribution = Random.integer(start, finish - 1);
+    return array[distribution(engine)];
+  };
+  proto.pick = function (array, begin, end) {
+    return Random.pick(this.engine, array, begin, end);
+  };
+
+  function returnUndefined() {
+    return void 0;
+  }
+  var slice = Array.prototype.slice;
+  Random.picker = function (array, begin, end) {
+    var clone = slice.call(array, begin, end);
+    if (!clone.length) {
+      return returnUndefined;
+    }
+    var distribution = Random.integer(0, clone.length - 1);
+    return function (engine) {
+      return clone[distribution(engine)];
+    };
+  };
+
+  Random.shuffle = function (engine, array, downTo) {
+    var length = array.length;
+    if (length) {
+      if (downTo == null) {
+        downTo = 0;
+      }
+      for (var i = (length - 1) >>> 0; i > downTo; --i) {
+        var distribution = Random.integer(0, i);
+        var j = distribution(engine);
+        if (i !== j) {
+          var tmp = array[i];
+          array[i] = array[j];
+          array[j] = tmp;
+        }
+      }
+    }
+    return array;
+  };
+  proto.shuffle = function (array) {
+    return Random.shuffle(this.engine, array);
+  };
+
+  Random.sample = function (engine, population, sampleSize) {
+    if (sampleSize < 0 || sampleSize > population.length || !isFinite(sampleSize)) {
+      throw new RangeError("Expected sampleSize to be within 0 and the length of the population");
+    }
+
+    if (sampleSize === 0) {
+      return [];
+    }
+
+    var clone = slice.call(population);
+    var length = clone.length;
+    if (length === sampleSize) {
+      return Random.shuffle(engine, clone, 0);
+    }
+    var tailLength = length - sampleSize;
+    return Random.shuffle(engine, clone, tailLength - 1).slice(tailLength);
+  };
+  proto.sample = function (population, sampleSize) {
+    return Random.sample(this.engine, population, sampleSize);
+  };
+
+  Random.die = function (sideCount) {
+    return Random.integer(1, sideCount);
+  };
+  proto.die = function (sideCount) {
+    return Random.die(sideCount)(this.engine);
+  };
+
+  Random.dice = function (sideCount, dieCount) {
+    var distribution = Random.die(sideCount);
+    return function (engine) {
+      var result = [];
+      result.length = dieCount;
+      for (var i = 0; i < dieCount; ++i) {
+        result[i] = distribution(engine);
+      }
+      return result;
+    };
+  };
+  proto.dice = function (sideCount, dieCount) {
+    return Random.dice(sideCount, dieCount)(this.engine);
+  };
+
+  // http://en.wikipedia.org/wiki/Universally_unique_identifier
+  Random.uuid4 = (function () {
+    function zeroPad(string, zeroCount) {
+      return stringRepeat("0", zeroCount - string.length) + string;
+    }
+
+    return function (engine) {
+      var a = engine() >>> 0;
+      var b = engine() | 0;
+      var c = engine() | 0;
+      var d = engine() >>> 0;
+
+      return (
+        zeroPad(a.toString(16), 8) +
+        "-" +
+        zeroPad((b & 0xffff).toString(16), 4) +
+        "-" +
+        zeroPad((((b >> 4) & 0x0fff) | 0x4000).toString(16), 4) +
+        "-" +
+        zeroPad(((c & 0x3fff) | 0x8000).toString(16), 4) +
+        "-" +
+        zeroPad(((c >> 4) & 0xffff).toString(16), 4) +
+        zeroPad(d.toString(16), 8));
+    };
+  }());
+  proto.uuid4 = function () {
+    return Random.uuid4(this.engine);
+  };
+
+  Random.string = (function () {
+    // has 2**x chars, for faster uniform distribution
+    var DEFAULT_STRING_POOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
+
+    return function (pool) {
+      if (pool == null) {
+        pool = DEFAULT_STRING_POOL;
+      }
+
+      var length = pool.length;
+      if (!length) {
+        throw new Error("Expected pool not to be an empty string");
+      }
+
+      var distribution = Random.integer(0, length - 1);
+      return function (engine, length) {
+        var result = "";
+        for (var i = 0; i < length; ++i) {
+          var j = distribution(engine);
+          result += pool.charAt(j);
+        }
+        return result;
+      };
+    };
+  }());
+  proto.string = function (length, pool) {
+    return Random.string(pool)(this.engine, length);
+  };
+
+  Random.hex = (function () {
+    var LOWER_HEX_POOL = "0123456789abcdef";
+    var lowerHex = Random.string(LOWER_HEX_POOL);
+    var upperHex = Random.string(LOWER_HEX_POOL.toUpperCase());
+
+    return function (upper) {
+      if (upper) {
+        return upperHex;
+      } else {
+        return lowerHex;
+      }
+    };
+  }());
+  proto.hex = function (length, upper) {
+    return Random.hex(upper)(this.engine, length);
+  };
+
+  Random.date = function (start, end) {
+    if (!(start instanceof Date)) {
+      throw new TypeError("Expected start to be a Date, got " + typeof start);
+    } else if (!(end instanceof Date)) {
+      throw new TypeError("Expected end to be a Date, got " + typeof end);
+    }
+    var distribution = Random.integer(start.getTime(), end.getTime());
+    return function (engine) {
+      return new Date(distribution(engine));
+    };
+  };
+  proto.date = function (start, end) {
+    return Random.date(start, end)(this.engine);
+  };
+
+  if (typeof define === "function" && define.amd) {
+    define(function () {
+      return Random;
+    });
+  } else if (typeof module !== "undefined" && typeof require === "function") {
+    module.exports = Random;
+  } else {
+    (function () {
+      var oldGlobal = root[GLOBAL_KEY];
+      Random.noConflict = function () {
+        root[GLOBAL_KEY] = oldGlobal;
+        return this;
+      };
+    }());
+    root[GLOBAL_KEY] = Random;
+  }
+}(this));
+},{}],174:[function(require,module,exports){
 (function (process,global,Buffer){
 'use strict'
 
@@ -23769,10 +26373,10 @@ function randomBytes (size, cb) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"_process":149,"buffer":77}],161:[function(require,module,exports){
+},{"_process":162,"buffer":90}],175:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":162}],162:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":176}],176:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -23848,7 +26452,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":164,"./_stream_writable":166,"core-util-is":82,"inherits":128,"process-nextick-args":148}],163:[function(require,module,exports){
+},{"./_stream_readable":178,"./_stream_writable":180,"core-util-is":95,"inherits":141,"process-nextick-args":161}],177:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -23875,7 +26479,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":165,"core-util-is":82,"inherits":128}],164:[function(require,module,exports){
+},{"./_stream_transform":179,"core-util-is":95,"inherits":141}],178:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -24771,7 +27375,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":162,"_process":149,"buffer":77,"buffer-shims":75,"core-util-is":82,"events":118,"inherits":128,"isarray":167,"process-nextick-args":148,"string_decoder/":212,"util":50}],165:[function(require,module,exports){
+},{"./_stream_duplex":176,"_process":162,"buffer":90,"buffer-shims":88,"core-util-is":95,"events":131,"inherits":141,"isarray":181,"process-nextick-args":161,"string_decoder/":226,"util":63}],179:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -24952,7 +27556,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":162,"core-util-is":82,"inherits":128}],166:[function(require,module,exports){
+},{"./_stream_duplex":176,"core-util-is":95,"inherits":141}],180:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -25481,12 +28085,12 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":162,"_process":149,"buffer":77,"buffer-shims":75,"core-util-is":82,"events":118,"inherits":128,"process-nextick-args":148,"util-deprecate":215}],167:[function(require,module,exports){
-arguments[4][78][0].apply(exports,arguments)
-},{"dup":78}],168:[function(require,module,exports){
+},{"./_stream_duplex":176,"_process":162,"buffer":90,"buffer-shims":88,"core-util-is":95,"events":131,"inherits":141,"process-nextick-args":161,"util-deprecate":229}],181:[function(require,module,exports){
+arguments[4][91][0].apply(exports,arguments)
+},{"dup":91}],182:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":163}],169:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":177}],183:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -25506,13 +28110,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":162,"./lib/_stream_passthrough.js":163,"./lib/_stream_readable.js":164,"./lib/_stream_transform.js":165,"./lib/_stream_writable.js":166,"_process":149}],170:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":176,"./lib/_stream_passthrough.js":177,"./lib/_stream_readable.js":178,"./lib/_stream_transform.js":179,"./lib/_stream_writable.js":180,"_process":162}],184:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":165}],171:[function(require,module,exports){
+},{"./lib/_stream_transform.js":179}],185:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":166}],172:[function(require,module,exports){
+},{"./lib/_stream_writable.js":180}],186:[function(require,module,exports){
 (function (Buffer){
 /*
 CryptoJS v3.1.2
@@ -25726,7 +28330,7 @@ function ripemd160 (message) {
 module.exports = ripemd160
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],173:[function(require,module,exports){
+},{"buffer":90}],187:[function(require,module,exports){
 (function (process){
 exports = module.exports = SemVer;
 
@@ -26933,7 +29537,7 @@ function prerelease(version, loose) {
 }
 
 }).call(this,require('_process'))
-},{"_process":149}],174:[function(require,module,exports){
+},{"_process":162}],188:[function(require,module,exports){
 (function (Buffer){
 // prototype class for hash functions
 function Hash (blockSize, finalSize) {
@@ -27006,7 +29610,7 @@ Hash.prototype._update = function () {
 module.exports = Hash
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":77}],175:[function(require,module,exports){
+},{"buffer":90}],189:[function(require,module,exports){
 var exports = module.exports = function SHA (algorithm) {
   algorithm = algorithm.toLowerCase()
 
@@ -27023,7 +29627,7 @@ exports.sha256 = require('./sha256')
 exports.sha384 = require('./sha384')
 exports.sha512 = require('./sha512')
 
-},{"./sha":176,"./sha1":177,"./sha224":178,"./sha256":179,"./sha384":180,"./sha512":181}],176:[function(require,module,exports){
+},{"./sha":190,"./sha1":191,"./sha224":192,"./sha256":193,"./sha384":194,"./sha512":195}],190:[function(require,module,exports){
 (function (Buffer){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-0, as defined
@@ -27120,7 +29724,7 @@ Sha.prototype._hash = function () {
 module.exports = Sha
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"buffer":77,"inherits":128}],177:[function(require,module,exports){
+},{"./hash":188,"buffer":90,"inherits":141}],191:[function(require,module,exports){
 (function (Buffer){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
@@ -27222,7 +29826,7 @@ Sha1.prototype._hash = function () {
 module.exports = Sha1
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"buffer":77,"inherits":128}],178:[function(require,module,exports){
+},{"./hash":188,"buffer":90,"inherits":141}],192:[function(require,module,exports){
 (function (Buffer){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -27278,7 +29882,7 @@ Sha224.prototype._hash = function () {
 module.exports = Sha224
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"./sha256":179,"buffer":77,"inherits":128}],179:[function(require,module,exports){
+},{"./hash":188,"./sha256":193,"buffer":90,"inherits":141}],193:[function(require,module,exports){
 (function (Buffer){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -27416,7 +30020,7 @@ Sha256.prototype._hash = function () {
 module.exports = Sha256
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"buffer":77,"inherits":128}],180:[function(require,module,exports){
+},{"./hash":188,"buffer":90,"inherits":141}],194:[function(require,module,exports){
 (function (Buffer){
 var inherits = require('inherits')
 var SHA512 = require('./sha512')
@@ -27476,7 +30080,7 @@ Sha384.prototype._hash = function () {
 module.exports = Sha384
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"./sha512":181,"buffer":77,"inherits":128}],181:[function(require,module,exports){
+},{"./hash":188,"./sha512":195,"buffer":90,"inherits":141}],195:[function(require,module,exports){
 (function (Buffer){
 var inherits = require('inherits')
 var Hash = require('./hash')
@@ -27739,7 +30343,7 @@ Sha512.prototype._hash = function () {
 module.exports = Sha512
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":174,"buffer":77,"inherits":128}],182:[function(require,module,exports){
+},{"./hash":188,"buffer":90,"inherits":141}],196:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -27833,7 +30437,7 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./manager":183,"./socket":185,"./url":186,"debug":89,"socket.io-parser":207}],183:[function(require,module,exports){
+},{"./manager":197,"./socket":199,"./url":200,"debug":102,"socket.io-parser":221}],197:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -28392,7 +30996,7 @@ Manager.prototype.onreconnect = function(){
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":184,"./socket":185,"backo2":44,"component-bind":80,"component-emitter":187,"debug":89,"engine.io-client":188,"indexof":127,"socket.io-parser":207}],184:[function(require,module,exports){
+},{"./on":198,"./socket":199,"backo2":51,"component-bind":93,"component-emitter":201,"debug":102,"engine.io-client":202,"indexof":140,"socket.io-parser":221}],198:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -28418,7 +31022,7 @@ function on(obj, ev, fn) {
   };
 }
 
-},{}],185:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -28832,7 +31436,7 @@ Socket.prototype.compress = function(compress){
   return this;
 };
 
-},{"./on":184,"component-bind":80,"component-emitter":187,"debug":89,"has-binary":202,"socket.io-parser":207,"to-array":210}],186:[function(require,module,exports){
+},{"./on":198,"component-bind":93,"component-emitter":201,"debug":102,"has-binary":216,"socket.io-parser":221,"to-array":224}],200:[function(require,module,exports){
 (function (global){
 
 /**
@@ -28912,7 +31516,7 @@ function url(uri, loc){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"debug":89,"parseuri":205}],187:[function(require,module,exports){
+},{"debug":102,"parseuri":219}],201:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -29075,11 +31679,11 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],188:[function(require,module,exports){
+},{}],202:[function(require,module,exports){
 
 module.exports =  require('./lib/');
 
-},{"./lib/":189}],189:[function(require,module,exports){
+},{"./lib/":203}],203:[function(require,module,exports){
 
 module.exports = require('./socket');
 
@@ -29091,7 +31695,7 @@ module.exports = require('./socket');
  */
 module.exports.parser = require('engine.io-parser');
 
-},{"./socket":190,"engine.io-parser":199}],190:[function(require,module,exports){
+},{"./socket":204,"engine.io-parser":213}],204:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -29823,7 +32427,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":191,"./transports":192,"component-emitter":198,"debug":89,"engine.io-parser":199,"indexof":127,"parsejson":145,"parseqs":146,"parseuri":205}],191:[function(require,module,exports){
+},{"./transport":205,"./transports":206,"component-emitter":212,"debug":102,"engine.io-parser":213,"indexof":140,"parsejson":158,"parseqs":159,"parseuri":219}],205:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -29980,7 +32584,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":198,"engine.io-parser":199}],192:[function(require,module,exports){
+},{"component-emitter":212,"engine.io-parser":213}],206:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -30037,7 +32641,7 @@ function polling(opts){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling-jsonp":193,"./polling-xhr":194,"./websocket":196,"xmlhttprequest-ssl":197}],193:[function(require,module,exports){
+},{"./polling-jsonp":207,"./polling-xhr":208,"./websocket":210,"xmlhttprequest-ssl":211}],207:[function(require,module,exports){
 (function (global){
 
 /**
@@ -30279,7 +32883,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":195,"component-inherit":81}],194:[function(require,module,exports){
+},{"./polling":209,"component-inherit":94}],208:[function(require,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -30695,7 +33299,7 @@ function unloadHandler() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":195,"component-emitter":198,"component-inherit":81,"debug":89,"xmlhttprequest-ssl":197}],195:[function(require,module,exports){
+},{"./polling":209,"component-emitter":212,"component-inherit":94,"debug":102,"xmlhttprequest-ssl":211}],209:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -30944,7 +33548,7 @@ Polling.prototype.uri = function(){
   return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
 };
 
-},{"../transport":191,"component-inherit":81,"debug":89,"engine.io-parser":199,"parseqs":146,"xmlhttprequest-ssl":197,"yeast":217}],196:[function(require,module,exports){
+},{"../transport":205,"component-inherit":94,"debug":102,"engine.io-parser":213,"parseqs":159,"xmlhttprequest-ssl":211,"yeast":233}],210:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -31236,7 +33840,7 @@ WS.prototype.check = function(){
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../transport":191,"component-inherit":81,"debug":89,"engine.io-parser":199,"parseqs":146,"ws":50,"yeast":217}],197:[function(require,module,exports){
+},{"../transport":205,"component-inherit":94,"debug":102,"engine.io-parser":213,"parseqs":159,"ws":63,"yeast":233}],211:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 var hasCORS = require('has-cors');
 
@@ -31274,7 +33878,7 @@ module.exports = function(opts) {
   }
 }
 
-},{"has-cors":203}],198:[function(require,module,exports){
+},{"has-cors":217}],212:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -31440,7 +34044,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],199:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -32038,7 +34642,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":200,"after":28,"arraybuffer.slice":29,"base64-arraybuffer":45,"blob":47,"has-binary":201,"utf8":214}],200:[function(require,module,exports){
+},{"./keys":214,"after":35,"arraybuffer.slice":36,"base64-arraybuffer":58,"blob":60,"has-binary":215,"utf8":228}],214:[function(require,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -32059,7 +34663,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],201:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 (function (global){
 
 /*
@@ -32121,7 +34725,7 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":130}],202:[function(require,module,exports){
+},{"isarray":143}],216:[function(require,module,exports){
 (function (global){
 
 /*
@@ -32184,7 +34788,7 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":130}],203:[function(require,module,exports){
+},{"isarray":143}],217:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -32203,7 +34807,7 @@ try {
   module.exports = false;
 }
 
-},{}],204:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 (function (global){
 /*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 ;(function () {
@@ -33109,7 +35713,7 @@ try {
 }).call(this);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],205:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -33150,7 +35754,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],206:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -33295,7 +35899,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./is-buffer":208,"isarray":130}],207:[function(require,module,exports){
+},{"./is-buffer":222,"isarray":143}],221:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -33697,7 +36301,7 @@ function error(data){
   };
 }
 
-},{"./binary":206,"./is-buffer":208,"component-emitter":209,"debug":89,"isarray":130,"json3":204}],208:[function(require,module,exports){
+},{"./binary":220,"./is-buffer":222,"component-emitter":223,"debug":102,"isarray":143,"json3":218}],222:[function(require,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -33714,9 +36318,9 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],209:[function(require,module,exports){
-arguments[4][198][0].apply(exports,arguments)
-},{"dup":198}],210:[function(require,module,exports){
+},{}],223:[function(require,module,exports){
+arguments[4][212][0].apply(exports,arguments)
+},{"dup":212}],224:[function(require,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {
@@ -33731,7 +36335,7 @@ function toArray(list, index) {
     return array
 }
 
-},{}],211:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -33860,7 +36464,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":118,"inherits":128,"readable-stream/duplex.js":161,"readable-stream/passthrough.js":168,"readable-stream/readable.js":169,"readable-stream/transform.js":170,"readable-stream/writable.js":171}],212:[function(require,module,exports){
+},{"events":131,"inherits":141,"readable-stream/duplex.js":175,"readable-stream/passthrough.js":182,"readable-stream/readable.js":183,"readable-stream/transform.js":184,"readable-stream/writable.js":185}],226:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -34083,7 +36687,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":77}],213:[function(require,module,exports){
+},{"buffer":90}],227:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -34792,7 +37396,7 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":156,"querystring":159}],214:[function(require,module,exports){
+},{"punycode":169,"querystring":172}],228:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/utf8js v2.0.0 by @mathias */
 ;(function(root) {
@@ -35040,7 +37644,7 @@ function isNullOrUndefined(arg) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],215:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 (function (global){
 
 /**
@@ -35111,7 +37715,604 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],216:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],231:[function(require,module,exports){
+(function (process,global){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = require('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = require('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":230,"_process":162,"inherits":141}],232:[function(require,module,exports){
 var indexOf = require('indexof');
 
 var Object_keys = function (obj) {
@@ -35251,7 +38452,7 @@ exports.createContext = Script.createContext = function (context) {
     return copy;
 };
 
-},{"indexof":127}],217:[function(require,module,exports){
+},{"indexof":140}],233:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
