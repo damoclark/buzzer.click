@@ -232,7 +232,7 @@ function sessionInformationRequest(sessionId, participantId) {
 
     client.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, sir, function (m) {
         if (m.type === messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE) {
-            handleSessionInformatonRequest(m);
+            handleSessionInformationRequest(m);
         }
     });
 }
