@@ -36,7 +36,7 @@
                     <div id="options-max-players" class="form-group row">
                         <label class="col-sm-3 col-form-label" for="max-players">Max Players</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="number" id="max-players" placeholder="25" name="max-players" />
+                            <input class="form-control" type="number" min="0" id="max-players" placeholder="For unlimited please set to 0" name="max-players" />
                         </div>
                     </div>
 
@@ -45,13 +45,13 @@
                         <div class="form-group row">
                             <label class="col-sm-3 col-form-label" for="num-teams">Teams</label>
                             <div class="col-sm-9">
-                                <input class="form-control" type="number" id="num-teams" placeholder="3" name="num-teams" />
+                                <input class="form-control" type="number" min="1" id="num-teams" placeholder="e.g. 3" name="num-teams" />
                             </div>
                         </div>
                         <div class="form-group row">
                             <label class="col-sm-3 col-form-label" for="max-players-teams">Max players per team</label>
                             <div class="col-sm-9">
-                                <input class="form-control" type="number" id="max-players-teams" placeholder="3" name="max-players-teams" />
+                                <input class="form-control" type="number" min="0" id="max-players-teams" placeholder="For unlimited please set to 0" name="max-players-teams" />
                             </div>
                         </div>
                         <div class="form-group row">

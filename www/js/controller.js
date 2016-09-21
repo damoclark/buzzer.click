@@ -23,8 +23,10 @@ function createSession(values) {
         }
         if (values['option-teams'] === 'true') {
             settings.hasTeams = true;
-            if (validateNumber(values['max-players-teams'])) {
+            if (validateNumber(values['max-players-teams']) && parseInt(values['max-players-teams']) !== 0) {
                 settings.teamSize = parseInt(values['max-players-teams']);
+            } else { //set to max
+                settings.teamSize = 9999;
             }
             if (validateNumber(values['num-teams'])) {
                 settings.maxTeams = parseInt(values['num-teams']);
@@ -50,7 +52,7 @@ function createSession(values) {
                 }
             }
         } else { //set max-players if teams option is false
-            if (!isNaN(parseInt(values['max-players']))) {
+            if (validateNumber(values['max-players']) && parseInt(values['max-players']) !== 0) {
                 settings.maxContestants = parseInt(values['max-players']);
             } else { //set to max
                 settings.maxContestants = 9999;

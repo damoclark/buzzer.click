@@ -59,7 +59,7 @@
 					</div>
 					<div class="row">
 						<div><h4 id="session-participant-header">Participants</h4></div>
-						<div id="participant-info" class="well no-bullets-all"><ul></ul></div>
+						<div id="participant-info" class="well no-bullets-all"><ul class="top-header"></ul></div>
 					</div>
 				</div>
 			</div>
@@ -111,8 +111,13 @@
 					var listKey = key;
 					var totalScore = 0;
 					$.each(item.contestants, function(key,contestant){
-						$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>')
-						totalScore += contestant.score
+						if(contestant.disconnected){
+							$('#team-li-'+listKey + ' > ul').append('<li><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+						
+						}else{
+							$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+						}
+						totalScore += contestant.score;
 					});
 					
 					$('#team-li-'+listKey + ' > .total-team-score').text(totalScore);
@@ -123,7 +128,12 @@
 
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
-					$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+					if(item.disconnected){
+						$('#participant-info > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+				
+					}else{
+						$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+					}
 				});
 			}
 
