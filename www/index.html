@@ -52,6 +52,11 @@
 	<script src="bootstrap/js/bootstrap.min.js"></script>
 	<script src="js/bundle.js"></script>
 	<script>
+		var generateWebUrl = function(){
+			var port = (window.location.port) ? ':' + window.location.port : '';
+			var url = window.location.protocol + '//' + window.location.hostname + port;
+			return url;
+		}
 		$(function(){
 
             //Check useragent and display qrcode scan button on Android: http://stackoverflow.com/a/6031480
@@ -62,11 +67,11 @@
             }
 
 			$('#btn-new').click(function(){
-				window.location.href=window.location.href+'New';
+				window.location.href=generateWebUrl()+'/New';
 			});
 
 			$('#btn-join').click(function(){
-				window.location.href=window.location.href + 'Join';
+				window.location.href=generateWebUrl() + '/Join';
 			});
 
             $('#btn-qrcode-scan').click(function(){
@@ -77,7 +82,7 @@
 			$('#btn-share').click(function(){
 				var sessionCookie = buzzapi.Cookie.get('sessionId');
 				if(sessionCookie){
-					window.location.href = window.location.href+'Share';
+					window.location.href = generateWebUrl()+'/Share';
 				}else{
 					$('#modal-sessionid').modal();
 				}
@@ -85,7 +90,7 @@
 
 			$('#btn-share-connect').click(function(){
 				var session = $('#session-id').val().toUpperCase();
-				window.location.href = window.location.href+'Share?sessionid=' + session;
+				window.location.href = generateWebUrl()+'/Share?sessionid=' + session;
 			});
 		});
 	</script>
