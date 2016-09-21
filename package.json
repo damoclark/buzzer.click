@@ -4,7 +4,7 @@
   "description": "Online realtime electronic buzzer for games",
   "main": "app.js",
   "engines": {
-      "node": "6.6.0"
+      "node": "6.5.0"
   },
   "scripts": {
     "tests-bdd": "Mocha --reporter spec tests/BDD/**/*.js",
