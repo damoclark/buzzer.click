@@ -6,7 +6,7 @@ var express = require('express');
 var BuzzerServer = require('./lib/BuzzerServer');
 
 var app = express();
-var server = http.createServer(app).listen('3000');
+var server = http.createServer(app).listen(process.env.port ? process.env.port : 3000);
 BuzzerServer.listen(server);
 
 //Publish the www directory
