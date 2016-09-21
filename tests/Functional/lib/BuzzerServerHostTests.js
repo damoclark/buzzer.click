@@ -1441,7 +1441,7 @@ describe('Buzzer server', function() {
                         done();
                     });
                 });
-            });            
+            });
             it('should not allow it when session is completed', function(done) {
                 var s = new Settings();
                 s.hasTeams = true;
