@@ -29,10 +29,10 @@ function createSession(values) {
             }
             //Set teamleader selection setting
             if (values['team-leader-selection'] === 'Random') {
-                settings.teamSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.RANDOM;
+                settings.teamLeaderSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.RANDOM;
             }
             if (values['team-leader-selection'] === 'PlayerChoice') {
-                settings.teamSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
+                settings.teamLeaderSelectionMethod = buzzapi.constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
             }
             //Set team name selection settings
             if (values['team-name-selection'] === 'Auto') {
@@ -179,7 +179,7 @@ function joinSession(values) {
                     }
                 );
                 if (rm.enquireForTeamLeaderPosition) {
-                    handleTeamLeaderPostionRequest();
+                    handleTeamLeaderPositionRequest();
                 } else {
                     redirectContestant();
                 }
@@ -196,14 +196,47 @@ function sendTeamLeaderResponse(sessionId,contestantId,response) {
     rqm.contestantId = contestantId;
     rqm.decision = response;
 
-    cc.emit(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE, rqm,
-        function(m) {
-            var sm = messageFactory.restore(m, messageConstants.ERROR);
-            if (sm) {
+    client.emit(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE, rqm,
+        function (m) {
+            if (m.type === messageConstants.ERROR) {
+                var sm = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
                 alertBootstrap(sm.error, 'warning');
             }
         });
 }
+
+function setTeamName(sessionId, contestantId, name) {
+    var req = buzzapi.messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+    req.sessionId = sessionId;
+    req.contestantId = contestantId;
+    req.teamName = name;
+
+    client.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req,
+        function (m) {
+            if (m.type === messageConstants.ERROR) {
+                var sm = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+                alertBootstrap(sm.error, 'warning',false,'#modal-team-name .modal-body');
+            } else {
+                redirectContestant();
+            }
+        });
+}
+
+/**
+ * Request session info, calls handleSessionInformatonRequest() in the view
+ */
+function sessionInformationRequest(sessionId, participantId) {
+    var sir = buzzapi.messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+    sir.sessionId = sessionId;
+    sir.participantId = participantId;
+
+    client.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, sir, function (m) {
+        if (m.type === messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE) {
+            handleSessionInformationRequest(m);
+        }
+    });
+}
+
 /**
  * rejoin Session as type,
  * if participantId is ommited then observer is default
@@ -231,7 +264,7 @@ function rejoinSession(sessionId, participantId, type) {
     // listen for observer update
     client.on(messageConstants.OBSERVER_UPDATE, function(message) {
         var ob = buzzapi.messageFactory.restore(message, messageConstants.OBSERVER_UPDATE);
-        console.clear();
+        //console.clear();
         console.log(ob);
         if (ob.gameState.isCompleted) { //Let client know that the session has been completed
             alertBootstrap('Session has been completed', 'info',true);
@@ -324,14 +357,18 @@ function validateNumber(val) {
  * More information: http://getbootstrap.com/components/#alerts
  */
 /* eslint-disable no-unused-vars */
-function alertBootstrap(message, type,nodismiss) {
+function alertBootstrap(message, type,nodismiss,target) {
     /* eslint-enable no-unused-vars */
     $('#error-alert').remove();
+    var targetDOM = $('body .container .row');
+    if (target) {
+         targetDOM = $(target);
+    }
     if (nodismiss) {
-        $('body .container .row').first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
+        targetDOM.first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
             '<strong>' + message + '</strong></div>');
     } else {
-        $('body .container .row').first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
+        targetDOM.first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
             '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' +
             '<strong>' + message + '</strong></div>');
     }

@@ -55,7 +55,7 @@
 					</div>
 					<div class="row hide-if-not-teams">
 						<div><h4>Team members</h4></div>
-						<div id="session-team-members" class="well"></div>
+						<div id="session-team-members" class="well no-bullets-all"><ul></ul></div>
 					</div>
 					<div class="row">
 						<div><h4 id="session-participant-header">Participants</h4></div>
@@ -77,6 +77,11 @@
 		var handleBuzzSuccess = function(){
 			//$('#buzzer').addClass('circle-disabled');
 		}
+
+		var handleSessionInformationRequest = function(values){
+			console.log(values);
+		}
+
 		var updateShareView = function(values)
 		{
 			//clear alerts
@@ -100,6 +105,18 @@
 
 			
 			if(values.gameState.settings.hasTeams){
+				$('#participant-info > ul').empty();
+				$.each(values.gameState.teams, function(key,item){
+					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					var listKey = key;
+					var totalScore = 0;
+					$.each(item.contestants, function(key,contestant){
+						$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>')
+						totalScore += contestant.score
+					});
+					
+					$('#team-li-'+listKey + ' > .total-team-score').text(totalScore);
+				});
 				
 			}else{ //non-teams game so list all players
 				$('.hide-if-not-teams').hide();
@@ -130,6 +147,7 @@
 	
             if(sessionCookie != undefined && participantCookie != undefined){
                 rejoinSession(sessionCookie,participantCookie,buzzapi.constants.rejoinAs.CONTESTANT);
+				sessionInformationRequest(sessionCookie,participantCookie);
             }
 			else{
 				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
