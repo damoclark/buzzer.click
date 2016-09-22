@@ -5,91 +5,96 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Buzzer.click with socket.io and node.js</title>
+	<title>Buzzer Web Application</title>
 	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-	<style>
-		#chat {
-			height: 500px;
-		}
-		
-		#contentWrap {
-			display: none;
-		}
-		
-		#chatWrap {
-			float: left;
-			border: 1px #000 solid;
-		}
-	</style>
+	<link href="content/style.css" rel="stylesheet">
 </head>
 
 <body>
+	<nav class="navbar navbar-inverse">
+		<div class="navbar-brand">Buzzer</div>
+	</nav>
 	<div class="container">
-		<div id="nickWrap">
-			<p>Enter a name:</p>
-			<p id="nameError"></p>
-			<form id="setName">
-				<input size="35" id="name"></input>
-				<input type="submit"></input>
-			</form>
-		</div>
-
-		<div id="contentWrap">
-			<div id="chatWrap">
-				<div id="chat"></div>
-				<form id="send-message">
-					<input size="35" id="message"></input>
-					<input type="submit"></input>
-				</form>
+		<!-- Main Row encapsulates whole interface -->
+		<div class="row">
+			<div class="col-xs-12">
+				<button class="btn btn-primary btn-lg" id="btn-new">New</button>
+				<button class="btn btn-primary btn-lg" id="btn-join">Join</button>
+				<button class="btn btn-primary btn-lg" id="btn-share">Results</button>
+				<button class="btn btn-primary btn-lg" id="btn-qrcode-scan" style="display:none">Scan QR Code</button>
+				
 			</div>
-			<div id="users"></div>
 		</div>
 	</div>
 
-	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
-	<script src="js/socket.io.js"></script>
-	<script src="bootstrap/js/bootstrap.min.js"></script>
+	
+	<div class="modal fade" id="modal-sessionid">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title">Session ID</h4>
+				</div>
+				<div class="modal-body">
+					<label for="session-id">Session data has not been found on this device. Please enter a valid session ID to continue:</label>
+					<input class="input-group" id="session-id" name="session-id" style="text-transform:uppercase" />
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="button" id="btn-share-connect" class="btn btn-primary">Connect</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
 
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="bootstrap/js/bootstrap.min.js"></script>
 	<script src="js/bundle.js"></script>
 	<script>
-			$(function(){
-					var socket = io() ;
-					var $nameForm = $('#setName') ;
-					var $nameError = $('#nameError') ;
-					var $nameBox = $('#name') ;
-					var $messageForm = $('#send-message') ;
-					var $messageBox = $('#message') ;
-					var $chat = $('#chat') ;
-					
-					$nameForm.submit(function (e){
-							e.preventDefault();
-							socket.emit('choose nickname',$nameBox.val(), function(data){
-								console.log(data + '\n');
-									if(!data){
-										$('#nickWrap').hide() ;
-										$('#contentWrap').show() ;
-									}
-									else{
-										$nameError.html('That name is already taken') ;
-									}
-								}
-							);
-							return false;
-						}
-					) ;
-					$nameBox.val('') ;
-					$messageForm.submit(function(e){
-							e.preventDefault() ;
-							socket.emit('send message', $messageBox.val()) ;
-							$messageBox.val('') ;
-						}
-					);
-					socket.on('new message',function(data){
-							$chat.append(data+"<br/>") ;
-						}) ;
-				}) ;
-		</script>
+		var generateWebUrl = function(){
+			var port = (window.location.port) ? ':' + window.location.port : '';
+			var url = window.location.protocol + '//' + window.location.hostname + port;
+			return url;
+		}
+		$(function(){
+
+            //Check useragent and display qrcode scan button on Android: http://stackoverflow.com/a/6031480
+            var ua = navigator.userAgent.toLowerCase();
+            var isAndroid = ua.indexOf("android") > -1;
+            if(isAndroid) {
+                $('#btn-qrcode-scan').show();
+            }
+
+			$('#btn-new').click(function(){
+				window.location.href=generateWebUrl()+'/New';
+			});
+
+			$('#btn-join').click(function(){
+				window.location.href=generateWebUrl() + '/Join';
+			});
+
+            $('#btn-qrcode-scan').click(function(){
+                window.location.href='intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end';
+               
+            });
+
+			$('#btn-share').click(function(){
+				var sessionCookie = buzzapi.Cookie.get('sessionId');
+				if(sessionCookie){
+					window.location.href = generateWebUrl()+'/Share';
+				}else{
+					$('#modal-sessionid').modal();
+				}
+			});
+
+			$('#btn-share-connect').click(function(){
+				var session = $('#session-id').val().toUpperCase();
+				window.location.href = generateWebUrl()+'/Share?sessionid=' + session;
+			});
+		});
+	</script>
+
 </body>
 
 </html>

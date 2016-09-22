@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Create Session</title>
+	<title>Join Session</title>
 	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link href="content/style.css" rel="stylesheet">
 </head>
@@ -17,12 +17,15 @@
 	<div class="container">
         <div class="row">
             <div class="col-sm-6 col-sm-offset-3">
-                <h5>Joining Session</h5>
-                <h4 class="text-center" id="session-name">PLACEHOLDER</h4>
+                <h2>Join Session</h2>
                 <form class="form" id="join-session-form">
                     <div class="form-group">
+                        <label for="session-id">Session</label>
+                        <input class="form-control" style="text-transform:uppercase" type="text" id="session-id" name="session-id" required />
+                    </div>
+                    <div class="form-group">
                         <label for="session-username">Enter a username</label>
-                        <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" />
+                        <input class="form-control" type="text" placeholder="username" id="session-username" name="session-username" required />
                     </div>
                     <button class="btn btn-lg pull-right btn-primary" type="submit" id="session-submit">Join</button>
                 </form>
@@ -44,8 +47,8 @@
                     Would you like to be teamleader?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-                    <button type="button" class="btn btn-primary" id="session-teamleader">Yes</button>
+                    <button type="button" class="btn btn-default" id="session-teamleader-no">No</button>
+                    <button type="button" class="btn btn-primary" id="session-teamleader-yes">Yes</button>
                 </div>
             </div>
         </div>
@@ -73,19 +76,91 @@
         </div>
     </div>
     
+    
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/bundle.js"></script>
+    <script src="js/controller.js"></script>
     <script type="text/javascript">
+        var handleExistingSession = function(){
+            redirectContestant();
+        }
+        var handleTeamLeaderPositionRequest = function(){
+            $("#modal-teamleader").modal("show");
+        }
+        
+        var handleSessionInformationRequest = function(values) {
+            $('#session-team-name').val(values.data._info.team.teamName);
+            if(values.data._info.session.settings.teamNameEdit === buzzapi.constants.teamNameEdit.ALLOW)
+            {
+                $('#modal-team-name').modal();
+            }else{
+                redirectContestant();
+            }
+        }
+
         $(function(){
+            handleDisconnect();
+            var values = [];
+            //first check for existing session
+            var sessionCookie = buzzapi.Cookie.get('sessionId');
+            var participantCookie = buzzapi.Cookie.get('contestantId');
+	
+            if(sessionCookie != undefined && participantCookie != undefined){
+				checkExistingSession(sessionCookie,participantCookie);
+            }
+            
+            //Check parameter for ?sessionid=
+            var session = getParameterByName('sessionid');
+            if(session){
+                $('#session-id').prop('readonly',true);
+                $('#session-id').val(session);
+            }
             $('#join-session-form').submit(function(event){
                 event.preventDefault();
-                $("#modal-teamleader").modal("show");
+                
+                $('input',this).each(function(){
+                    values[this.id] = $(this).val();
+                });
+                joinSession(values);
                 
             });
             //For the moment bind the yes click on teamleader modal to show team name update modal (mainly for testing)
-            $('#session-teamleader').click(function(){
+            $('#session-teamleader-yes').click(function(){
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    sendTeamLeaderResponse(sessionCookie,participantCookie,true);
+                    sessionInformationRequest(sessionCookie,participantCookie);
+                }
                 $("#modal-teamleader").modal("hide");
-                $("#modal-team-name").modal("show");
+            });
+
+            $('#session-teamleader-no').click(function(){
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    sendTeamLeaderResponse(sessionCookie,participantCookie,false);
+                }
+                
+                $("#modal-teamleader").modal("hide");
+                redirectContestant();
+            });
+
+            $('#team-name-form').submit(function(event){
+                event.preventDefault();
+                var teamName = $('#session-team-name').val();
+                //Check session cookies that were set in the last JoinSession.
+                var sessionCookie = buzzapi.Cookie.get('sessionId');
+                var participantCookie = buzzapi.Cookie.get('contestantId');
+        
+                if(sessionCookie != undefined && participantCookie != undefined){
+                    setTeamName(sessionCookie,participantCookie,teamName);
+                }
             });
         });
     </script>

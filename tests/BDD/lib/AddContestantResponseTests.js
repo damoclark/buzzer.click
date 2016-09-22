@@ -20,6 +20,19 @@ describe('AddContestantResponse', function() {
                 r.wasSuccessful.should.be.true();
             });
     });
+    describe('#enquireForTeamLeaderPosition', function() {
+        it('should set value', function(){
+            var r = new AddContestantResponse();
+            r.enquireForTeamLeaderPosition = true;
+            r._enquireForTeamLeaderPosition.should.be.true();
+        });
+        it('should get value',
+            function() {
+                var r = new AddContestantResponse();
+                r._enquireForTeamLeaderPosition = true;
+                r.enquireForTeamLeaderPosition.should.be.true();
+            });
+    });    
     describe('#errorMessage', function() {
         it('should throw on set value',
             function() {

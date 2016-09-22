@@ -8,8 +8,8 @@
   "newcap": true,
   "quotmark": "single",
   "maxdepth": 3,
-  "maxstatements": 15,
-  "maxlen": 100,
+  "maxstatements": 25,
+  "maxlen": 140,
   "eqnull": true,
   "funcscope": true,
   "node": true
