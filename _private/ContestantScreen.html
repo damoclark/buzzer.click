@@ -1,4 +1,4 @@
-<!DOCTYPE hml>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,8 +6,8 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Contestant</title>
-	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link href="content/style.css" rel="stylesheet">
+	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -24,12 +24,12 @@
 					</div>
 					<div class="row">
 						<div class="row">
-							<div class="col-xs-6">Username</div>
-							<div class="col-xs-6">Team</div>
+							<div class="col-xs-6"><h4>Username</h4></div>
+							<div class="col-xs-6 hide-if-not-teams"><h4>Team</h4></div>
 						</div>
 						<div class="row">
-							<div class="col-xs-6"><h4 id="session-username"></h4></div>
-							<div class="col-xs-6"><h4 id="session-team"></h4></div>
+							<div class="col-xs-6"><h5 id="session-username"></h5></div>
+							<div class="col-xs-6 hide-if-not-teams"><h5 id="session-team"></h5></div>
 						</div>
 					</div>
 					<div class="row">
@@ -58,7 +58,7 @@
 						<div id="session-team-members" class="well no-bullets-all"><ul></ul></div>
 					</div>
 					<div class="row">
-						<div><h4 id="session-participant-header">Participants</h4></div>
+						<h4 id="participant-info-header">Participants</h4>
 						<div id="participant-info" class="well no-bullets-all"><ul class="top-header"></ul></div>
 					</div>
 				</div>
@@ -75,15 +75,31 @@
 
 		}
 		var handleBuzzSuccess = function(){
-			//$('#buzzer').addClass('circle-disabled');
+			//No need to do anything yet. Observer update message disables the buzzer.
 		}
 
 		var handleSessionInformationRequest = function(values){
+			var username = values.data._info.contestant.username ? values.data._info.contestant.username : '';
+			$('#session-username').text(username);
+			if(values.data._info.session.settings.hasTeams){
+				$('#session-team').text(values.data._info.team.teamName);
+				$('#session-team-members > ul').empty();
+				$.each(values.data._info.team.contestants.participants,function(key,item){
+					if(item.disconnected){
+						$('#session-team-members > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+				
+					}else{
+						$('#session-team-members > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+					}
+				});
+			}
+			
 			console.log(values);
 		}
 
 		var updateShareView = function(values)
 		{
+			sessionInformationRequest(values.sessionId,values.participantId);
 			//clear alerts
             $('#error-alert').remove();
 			
@@ -139,9 +155,11 @@
 
 			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
 				$('#round-winner-header').text("Round winner");
-					$('#round-winner').removeClass("bg-success");
+				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}else if(values.gameState.roundWinner === null){
+			}else if(values.gameState.roundWinner === null && values.gameState.currentState !== 'pending'){
+				$('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
                 $('#round-winner').text();
             }
 			$('#previous-winners > ul').empty();
@@ -157,7 +175,7 @@
 	
             if(sessionCookie != undefined && participantCookie != undefined){
                 rejoinSession(sessionCookie,participantCookie,buzzapi.constants.rejoinAs.CONTESTANT);
-				sessionInformationRequest(sessionCookie,participantCookie);
+				//sessionInformationRequest(sessionCookie,participantCookie);
             }
 			else{
 				alertBootstrap('No session data found, please join or create a session and try again','warning',true);

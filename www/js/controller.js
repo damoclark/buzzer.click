@@ -271,9 +271,13 @@ function rejoinSession(sessionId, participantId, type) {
         //console.clear();
         console.log(ob);
         if (ob.gameState.isCompleted) { //Let client know that the session has been completed
-            alertBootstrap('Session has been completed', 'info',true);
+            alertBootstrap('Session has been completed', 'info', true);
             $('.container > .row  div:not(:first)').hide();
+            $('#participant-info-header').text('Final Score');
+            $('#participant-info').show().parents().show();;
         } else {
+            ob.sessionId = sessionId;
+            ob.participantId = participantId;
             updateShareView(ob);
         }
     });

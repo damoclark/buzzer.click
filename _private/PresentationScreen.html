@@ -1,4 +1,4 @@
-<!DOCTYPE hml>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -42,7 +42,7 @@
 						</div>
 					</div>
 					<div class="col-sm-6">
-						<h4 id="session-participant-header">Participants</h4>
+						<h4 id="participant-info-header">Participants</h4>
 						<div id="participant-info" class="well well-lg no-bullets-all">
 							<ul class="top-header">
 								<li>test <span class="badge badge-primary">3</span></li>
@@ -106,7 +106,7 @@
 
 			$('#session-id').text(values.gameState.settings.sessionName);
 			if(values.gameState.settings.hasTeams){
-				$('#session-participant-header').text('Teams');
+				$('#participant-info-header').text('Teams');
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
 					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
@@ -140,7 +140,9 @@
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}else if(values.gameState.roundWinner === null){
+			}else if(values.gameState.roundWinner === null && values.gameState.currentState !== 'pending'){
+				$('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
                 $('#round-winner').text();
             }
 			$('#previous-winners > ul').empty();

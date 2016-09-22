@@ -1,16 +1,3 @@
-#chat {
-    height: 500px;
-}
-
-#contentWrap {
-    display: none;
-}
-
-#chatWrap {
-    float: left;
-    border: 1px #000 solid;
-}
-
 .form-group > label{
     text-align:right;
 }

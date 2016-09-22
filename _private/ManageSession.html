@@ -1,4 +1,4 @@
-<!DOCTYPE hml>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -131,7 +131,7 @@
                 </div>
             </div>
             <div class="col-sm-6">
-                <h4 id="session-participant-header">Participants</h4>
+                <h4 id="participant-info-header">Participants</h4>
                 <div id="participant-info" class="well well-lg no-bullets-all">
                     <ul class="top-header">
                         <li>test <span class="badge badge-primary">3</span></li>
@@ -316,7 +316,7 @@
                 //Hide non-team info
                 $('.hide-if-teams').hide();
 
-                $('#session-participant-header').text('Teams');
+                $('#participant-info-header').text('Teams');
                 $('#session-max-teams').text(values.gameState.settings.maxTeams);
                 $('#session-max-team-players').text(values.gameState.settings.teamSize);
                 $('#session-leader-selection').text(Object.keys(buzzapi.constants.teamLeaderSelectionMethod)[values.gameState.settings.teamLeaderSelectionMethod]);
@@ -360,7 +360,9 @@
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}else if(values.gameState.roundWinner === null){
+			}else if(values.gameState.roundWinner === null && values.gameState.currentState !== 'pending'){
+                $('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
                 $('#round-winner').text();
             }
 
