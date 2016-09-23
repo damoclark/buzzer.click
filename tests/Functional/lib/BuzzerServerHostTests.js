@@ -1611,19 +1611,24 @@ describe('Buzzer server', function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
                             var teamLeaderUsername = team.teamLeader.username;
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = hostId;
                             req.teamName = team.teamName;
-                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
-                            
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
-                                sm.should.not.be.null();
-                                team.teamLeader.username.should.not.equal(teamLeaderUsername);
-                                done();
-                            });
+                            req.teamLeaderUsername = team.teamLeader.username ===
+                                'c1' ? 'c2' : 'c1';
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var sm = messageFactory.restore(m,
+                                        messageConstants.SUCCESS);
+                                    sm.should.not.be.null();
+                                    team.teamLeader.username.should.not.equal(
+                                        teamLeaderUsername);
+                                    done();
+                                });
                         });
                     });
                 });
@@ -1648,23 +1653,27 @@ describe('Buzzer server', function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
                             var teamLeaderUsername = team.teamLeader.username;
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = hostId;
                             req.teamName = team.teamName;
                             req.teamLeaderUsername = team.teamLeader.username;
-                            
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var sm = messageFactory.restore(m, messageConstants.SUCCESS);
-                                sm.should.not.be.null();
-                                team.teamLeader.username.should.equal(teamLeaderUsername);
-                                done();
-                            });
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var sm = messageFactory.restore(m,
+                                        messageConstants.SUCCESS);
+                                    sm.should.not.be.null();
+                                    team.teamLeader.username.should.equal(
+                                        teamLeaderUsername);
+                                    done();
+                                });
                         });
                     });
                 });
-            });            
+            });
             it('should not allow it when session is completed', function(done) {
                 var s = new Settings();
                 s.hasTeams = true;
@@ -1684,21 +1693,25 @@ describe('Buzzer server', function() {
                         helper.contestantJoin(c2, 'c2', sessionId, function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = hostId;
                             req.teamName = team.teamName;
-                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+                            req.teamLeaderUsername = team.teamLeader.username ===
+                                'c1' ? 'c2' : 'c1';
 
                             session.complete();
-                            
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var em = messageFactory.restore(m, messageConstants.ERROR);
-                                em.should.not.be.null();
-                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
-                                done();
-                            });
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var em = messageFactory.restore(m,
+                                        messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                    done();
+                                });
                         });
                     });
                 });
@@ -1721,19 +1734,23 @@ describe('Buzzer server', function() {
                         helper.contestantJoin(c2, 'c2', sessionId, function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = idUtility.generateParticipantId();
                             req.teamName = team.teamName;
-                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+                            req.teamLeaderUsername = team.teamLeader.username ===
+                                'c1' ? 'c2' : 'c1';
 
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var em = messageFactory.restore(m, messageConstants.ERROR);
-                                em.should.not.be.null();
-                                em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST);
-                                done();
-                            });
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var em = messageFactory.restore(m,
+                                        messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST);
+                                    done();
+                                });
                         });
                     });
                 });
@@ -1757,19 +1774,23 @@ describe('Buzzer server', function() {
                         helper.contestantJoin(c2, 'c2', sessionId, function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = hostId;
                             req.teamName = 'does not exist team name';
-                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+                            req.teamLeaderUsername = team.teamLeader.username ===
+                                'c1' ? 'c2' : 'c1';
 
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var em = messageFactory.restore(m, messageConstants.ERROR);
-                                em.should.not.be.null();
-                                em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND);
-                                done();
-                            });
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var em = messageFactory.restore(m,
+                                        messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND);
+                                    done();
+                                });
                         });
                     });
                 });
@@ -1793,21 +1814,25 @@ describe('Buzzer server', function() {
                         helper.contestantJoin(c2, 'c2', sessionId, function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = idUtility.generateSessionId();
                             req.hostId = hostId;
                             req.teamName = team.teamName;
-                            req.teamLeaderUsername = team.teamLeader.username === 'c1' ? 'c2' : 'c1';
+                            req.teamLeaderUsername = team.teamLeader.username ===
+                                'c1' ? 'c2' : 'c1';
 
                             session.complete();
-                            
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var em = messageFactory.restore(m, messageConstants.ERROR);
-                                em.should.not.be.null();
-                                em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
-                                done();
-                            });
+
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var em = messageFactory.restore(m,
+                                        messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                                    done();
+                                });
                         });
                     });
                 });
@@ -1831,20 +1856,117 @@ describe('Buzzer server', function() {
                         helper.contestantJoin(c2, 'c2', sessionId, function() {
                             var session = helper.getLatestSession();
                             var team = session.teams.all[0];
-                            
+
                             var req = messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
                             req.sessionId = sessionId;
                             req.hostId = hostId;
                             req.teamName = team.teamName;
                             req.teamLeaderUsername = 'does not exist';
 
-                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, req, function(m) {
-                                var em = messageFactory.restore(m, messageConstants.ERROR);
-                                em.should.not.be.null();
-                                em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_NOT_FOUND);
-                                done();
-                            });
+                            hc.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE,
+                                req,
+                                function(m) {
+                                    var em = messageFactory.restore(m,
+                                        messageConstants.ERROR);
+                                    em.should.not.be.null();
+                                    em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_NOT_FOUND);
+                                    done();
+                                });
                         });
+                    });
+                });
+            });
+        });
+        describe('info request', function() {
+            it('should return in a valid state for individuals contestant', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.participantId = hostId;
+
+                    hc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                        var irm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+                        irm.should.not.be.null();
+
+                        should(irm.info).not.be.null();
+                        should(irm.info.host).not.be.null();
+                        should(irm.info.contestant).be.null();
+                        should(irm.info.team).be.null();
+                        should(irm.info.session).not.be.null();
+                        should(irm.info.sessionState).be.equal('ready');
+                        should(irm.info.isObserver).be.false();
+                        should(irm.info.isHost).be.true();
+                        should(irm.info.isContestant).be.false();
+                        should(irm.info.isSessionCompleted).be.false();
+                        done();
+                    });
+                });
+            });
+            it('should not allow when session does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                    req.sessionId = idUtility.generateSessionId();
+                    req.participantId = hostId;
+
+                    hc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                        var em = messageFactory.restore(rm, messageConstants.ERROR);
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND);
+                        done();
+                    });
+                });
+            });
+            it('should not allow when contestant does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+
+                    var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.participantId = idUtility.generateParticipantId();
+
+                    hc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                        var em = messageFactory.restore(rm, messageConstants.ERROR);
+                        em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_OR_HOST_NOT_FOUND);
+                        done();
+                    });
+                });
+            });
+            it('should allow when session is complete', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.participantId = hostId;
+
+                    var session = helper.getLatestSession();
+                    session.complete();
+
+                    hc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                        var irm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+                        irm.should.not.be.null();
+                        done();
                     });
                 });
             });
