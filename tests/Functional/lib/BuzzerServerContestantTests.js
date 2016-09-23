@@ -1095,7 +1095,7 @@ describe('Buzzer server', function() {
                             });
                     });
                 });
-            });            
+            });
             it('should not allow it when not team leader', function(done) {
                 var s = new Settings();
                 s.hasTeams = true;
@@ -1359,6 +1359,155 @@ describe('Buzzer server', function() {
                                 var sm = messageFactory.restore(m, messageConstants.SUCCESS);
                                 sm.should.not.be.null();
                             });
+                    });
+                });
+            });
+        });
+        describe('info request', function() {
+            it('should return in a valid state for individuals contestant', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.participantId = contestantId;
+
+                        cc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                            var irm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+                            irm.should.not.be.null();
+
+                            should(irm.info).not.be.null();
+                            should(irm.info.host).be.null();
+                            should(irm.info.contestant).not.be.null();
+                            should(irm.info.team).be.null();
+                            should(irm.info.session).not.be.null();
+                            should(irm.info.sessionState).be.equal('ready');
+                            should(irm.info.isObserver).be.false();
+                            should(irm.info.isHost).be.false();
+                            should(irm.info.isContestant).be.true();
+                            should(irm.info.isSessionCompleted).be.false();
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should return in a valid state for teams contestant', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 3;
+                s.teamSize = 3;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.participantId = contestantId;
+
+                        cc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                            var rm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+                            rm.should.not.be.null();
+
+                            should(rm.info).not.be.null();
+                            should(rm.info.host).be.null();
+                            should(rm.info.contestant).not.be.null();
+                            should(rm.info.team).not.be.null();
+                            should(rm.info.session).not.be.null();
+                            should(rm.info.sessionState).be.equal('ready');
+                            should(rm.info.isObserver).be.false();
+                            should(rm.info.isHost).be.false();
+                            should(rm.info.isContestant).be.true();
+                            should(rm.info.isSessionCompleted).be.false();
+                            done();
+                        });
+                    });
+                });
+            });            
+            it('should not allow when session does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                        req.sessionId = idUtility.generateSessionId();
+                        req.participantId = contestantId;
+
+                        cc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                            var em = messageFactory.restore(rm, messageConstants.ERROR);
+                            em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND);
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should not allow when contestant does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.participantId = idUtility.generateParticipantId();
+
+                        cc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                            var em = messageFactory.restore(rm, messageConstants.ERROR);
+                            em.error.should.equal(constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_OR_HOST_NOT_FOUND);
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should allow when session is complete', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var cc = helper.createClient();
+
+                    helper.contestantJoin(cc, 'username', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        var req = messageFactory.create(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.participantId = contestantId;
+
+                        var session = helper.getLatestSession();
+                        session.complete();
+
+                        cc.emit(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, req, function(rm) {
+                            var irm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+                            irm.should.not.be.null();
+                            done();
+                        });
                     });
                 });
             });
