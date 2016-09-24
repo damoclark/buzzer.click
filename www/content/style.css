@@ -78,7 +78,7 @@
 .bg-success{
     background-color: #dff0d8 !important;
 }
-.inline-headers h4 {
+.inline-headers h4, .inline-headers h2{
   display: inline-block;
   vertical-align: baseline;
 }

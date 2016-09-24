@@ -13,8 +13,9 @@
 <body>
     <div class="container">
         <!-- Main Row encapsulates whole interface -->
-        <div class="row">
+        <div class="row inline-headers">
             <h2>Buzzer control</h2>
+            <h2 class="pull-right"><a class="btn btn-info" href="/Share" target="share">Share Screen</a></h2>
         </div>
         <!-- Buttons row -->
         <div class="row">
@@ -122,12 +123,16 @@
         <div class="row">
             <div class="col-sm-6">
                 <div class="row">
+                    <div class="col-xs-12">
                     <h4 id="round-winner-header">Round winner</h4>
                     <div id="round-winner" class="well"></div>
+                    </div>
                 </div>
                 <div class="row">
+                    <div class="col-xs-12">
                     <h4>Previous winners</h4>
                     <div id="previous-winners" class="well no-bullets-all"><ul></ul></div>
+                    </div>
                 </div>
             </div>
             <div class="col-sm-6">
