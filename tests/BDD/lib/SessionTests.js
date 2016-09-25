@@ -20,13 +20,14 @@ describe('Session', function() {
         host = new Host();
     });
     describe('#constructor', function() {
-        it('should create teams', function(){
+        it('should create teams', function() {
             settings.hasTeams = true;
             settings.maxTeams = 5;
+            settings.teamSize = 5;
             var s = new Session(id, settings, host);
             s.teams.length.should.equal(5);
         });
-        it('should not create teams', function(){
+        it('should not create teams', function() {
             settings.hasTeams = false;
             var s = new Session(id, settings, host);
             should(s.teams).be.null();
@@ -227,6 +228,16 @@ describe('Session', function() {
                 response.should.not.be.null();
                 response.wasSuccessful.should.be.false();
                 response.errorMessage.should.be.equal(constants.messages.USERNAME_TAKEN);
+            });
+            it('should allow unlimited contestants when max is set to constants.UNLIMITED', function() {
+                settings.maxContestants = constants.UNLIMITED;
+                var s = new Session(id, settings, host);
+                for (var i = 0; i < 1000; i++) {
+                    var c = new Contestant();
+                    c.username = 'c' + i;
+                    var response = s.addContestant(c);
+                    response.wasSuccessful.should.be.true();
+                }
             });
         });
         describe('when in team mode', function() {
@@ -470,7 +481,7 @@ describe('Session', function() {
 
                 s.currentState.should.equal(constants.gameStates.READY);
             });
-            it('should clear pending winner', function(){
+            it('should clear pending winner', function() {
                 var c1 = new Contestant();
                 c1.username = 'testUser1';
 
@@ -767,7 +778,7 @@ describe('Session', function() {
         });
     });
     describe('#pendingWinner', function() {
-        it('should return the pending winner', function(){
+        it('should return the pending winner', function() {
             var c = new Contestant();
             c.username = 'testUser';
 
@@ -781,7 +792,7 @@ describe('Session', function() {
 
             s.pendingWinner.should.equal('testUser');
         });
-        it('should not return the pending winner', function(){
+        it('should not return the pending winner', function() {
             var c = new Contestant();
             c.username = 'testUser';
 
