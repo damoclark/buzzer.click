@@ -339,6 +339,37 @@ describe('Teams', function() {
                 });
             });
         });
+        describe('when set to use unlimited teams', function() {
+            it('should add team when teams are full', function(){ 
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = constants.UNLIMITED;
+                s.teamSize = 1;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c1';
+
+                var [r, em] = tc.addContestant(c1, s, function() {});
+                r.should.be.true();
+                should.not.exist(em);
+
+                tc.all.length.should.equal(1);
+
+                [r, em] = tc.addContestant(c1, s, function() {});
+                r.should.be.true();
+                should.not.exist(em);
+
+                tc.all.length.should.equal(2);
+            });
+        });
     });
     describe('getByContestant(contestant)', function() {
         it('should get team of contestant', function() {
