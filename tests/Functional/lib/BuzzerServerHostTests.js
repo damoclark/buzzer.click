@@ -68,6 +68,24 @@ describe('Buzzer server', function() {
                         helper.forceObserveUpdate(rm.sessionId);
                     });
                 });
+                it('should not allow when settings are not valid', function(done) {
+                    var s = new Settings();
+                    s.hasTeams = true;
+
+                    var [r, e] = s.validate();
+                    r.should.be.false();
+
+                    var csm = messageFactory.create(messageConstants.CREATE_SESSION);
+                    csm.settings = s;
+
+                    var c = helper.createClient();
+                    c.emit(messageConstants.CREATE_SESSION, csm, function(m) {
+                        m.should.be.Object();
+                        m.type.should.equal(messageConstants.ERROR);
+                        helper.sessions.all.length.should.equal(0);
+                        done();
+                    });
+                });
             });
         });
         describe('rejoin', function() {
