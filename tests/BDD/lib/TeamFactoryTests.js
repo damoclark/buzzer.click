@@ -5,6 +5,8 @@ var should = require('should');
 var teamFactory = require('../../../lib/TeamFactory');
 var Settings = require('../../../lib/Settings');
 var Teams = require('../../../lib/Teams');
+var constants = require('../../../lib/Constants');
+var unique = require('array-unique');
 
 describe('TeamFactory', function() {
     describe('#create(teams, settings)', function() {
@@ -67,6 +69,61 @@ describe('TeamFactory', function() {
             teamFactory._names.indexOf(tc.all[7].teamName).should.be.above(-1);
             teamFactory._names.indexOf(tc.all[8].teamName).should.be.above(-1);
             teamFactory._names.indexOf(tc.all[9].teamName).should.be.above(-1);
+        });
+        it('should only create a single team when using unlimited teams', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = constants.UNLIMITED;
+            s.teamSize = 5;
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+            tc.all.length.should.equal(1);
+        });
+    });
+    describe('#add(teams, settings)', function() {
+        it('should add a team', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = constants.UNLIMITED;
+            s.teamSize = 5;
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+            tc.all.length.should.equal(1);
+            teamFactory.add(tc, s);
+            tc.all.length.should.equal(2);
+        });
+        it('should reuse team names specified in settings', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = constants.UNLIMITED;
+            s.teamSize = 5;
+            s.teamNames = ['t1', 't2'];
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+            teamFactory.add(tc, s);
+            tc.all[0].teamName.should.equal('t1');
+            tc.all[1].teamName.should.equal('t2');
+        });
+        it('should factor in team names which are already in use', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = constants.UNLIMITED;
+            s.teamSize = 5;
+            s.teamNames = ['t1', 't2'];
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+            for (var i = 0; i < 1000; i++) {
+                teamFactory.add(tc, s);
+            }
+            tc.all.length.should.equal(1001);
+
+            var names = [];
+            tc.all.forEach(function(t) {
+                names.push(t.teamName);
+            });
+            var uniqueNames = unique(names);
+
+            names.length.should.equal(uniqueNames.length);
         });
     });
 });
