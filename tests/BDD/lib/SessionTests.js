@@ -23,6 +23,7 @@ describe('Session', function() {
         it('should create teams', function() {
             settings.hasTeams = true;
             settings.maxTeams = 5;
+            settings.teamSize = 5;
             var s = new Session(id, settings, host);
             s.teams.length.should.equal(5);
         });
