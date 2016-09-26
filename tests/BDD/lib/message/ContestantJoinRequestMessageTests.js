@@ -32,6 +32,20 @@ describe('ContestantJoinRequestMessage', function() {
                 m.sessionId.should.equal('xyz123');
             });
     });
+    describe('#teamName', function() {
+        it('should set value',
+            function() {
+                var m = new ContestantJoinRequestMessage();
+                m.teamName = 'xyz123';
+                m.data._teamName.should.equal('xyz123');
+            });
+        it('should get value',
+            function() {
+                var m = new ContestantJoinRequestMessage();
+                m.data._teamName = 'xyz123';
+                m.teamName.should.equal('xyz123');
+            });
+    });    
     describe('#isValid()', function() {
         it('should return true when valid', function() {
             var m = new ContestantJoinRequestMessage();
