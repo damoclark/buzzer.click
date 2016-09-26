@@ -60,6 +60,34 @@ describe('ContestantJoinResponseMessage', function() {
                 m.contestantId.should.equal('xyz123');
             });
     });
+    describe('#mustChooseTeam', function() {
+        it('should set value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.mustChooseTeam = true;
+                m.data._mustChooseTeam.should.be.true();
+            });
+        it('should get value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.data._mustChooseTeam = true;
+                m.mustChooseTeam.should.be.true();
+            });
+    }); 
+    describe('#teams', function() {
+        it('should set value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.teams = ['t1', 't2'];
+                m.data._teams[0].should.equal('t1');
+            });
+        it('should get value',
+            function() {
+                var m = new ContestantJoinResponseMessage();
+                m.data._teams = ['t1', 't2'];
+                m.teams[0].should.equal('t1');
+            });
+    });            
     describe('#isValid()', function() {
         it('should return true when valid', function() {
             var m = new ContestantJoinResponseMessage();

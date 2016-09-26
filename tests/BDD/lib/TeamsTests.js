@@ -435,4 +435,57 @@ describe('Teams', function() {
             should(t).be.null();
         });
     });
+    describe('getAvailable(settings)', function() {
+        it('should not return full teams', function(){
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = 1;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(2);
+            cc.forEach(function(c){
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(1);
+        });
+        it('should return teams with space', function(){
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = 3;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(3);
+            cc.forEach(function(c){
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(3);
+        });
+        it('should return teams with unlimited space', function(){
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = constants.UNLIMITED;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(3);
+            cc.forEach(function(c){
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(3);
+        });
+    });
 });
