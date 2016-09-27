@@ -173,6 +173,19 @@ describe('Session', function() {
             });
     });
     describe('#addContestant(contestant)', function() {
+        it('should not allow a contestant username with bad words', function(){
+                settings.maxContestants = 2;
+                
+                var s = new Session(id, settings, host);
+
+                var c = new Contestant();
+                c.username = 'Penis #YOLO';
+
+                var response = s.addContestant(c);
+                response.should.not.be.null();
+                response.wasSuccessful.should.be.false();
+                response.errorMessage.should.equal(constants.messages.USERNAME_CONTAINS_PROFANITY);
+        });
         describe('when in individual mode', function() {
             it('should add contestant when session is not full', function() {
                 settings.maxContestants = 2;
