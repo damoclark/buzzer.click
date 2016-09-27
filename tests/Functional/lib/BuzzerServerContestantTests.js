@@ -671,6 +671,167 @@ describe('Buzzer server', function() {
                 });
             });
         });
+        describe('rejoin', function() {
+            it('should allow when request is valid and subscribe contestant to the observer room', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    helper.contestantJoin(cc, 'test user', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        cc.disconnect();
+                        cc = helper.createClient();
+
+                        // listen for observer update
+                        cc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            // Hack: this event may fire twice
+                            helper.closeClients();
+                            var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                            om.should.not.be.null();
+                            done();
+                        });
+
+                        // Rejoin
+                        var rqm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rqm.sessionId = sessionId;
+                        rqm.participantId = contestantId;
+                        rqm.rejoinAs = constants.rejoinAs.CONTESTANT;
+
+                        cc.emit(messageConstants.REJOIN_SESSION, rqm, function(rm) {
+                            var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                            sm.should.not.be.null();
+                        });
+                    });
+                });
+            });
+            it('should not allow when session does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    helper.contestantJoin(cc, 'test user', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        cc.disconnect();
+                        cc = helper.createClient();
+
+                        // Rejoin
+                        var rqm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rqm.sessionId = idUtility.generateSessionId();
+                        rqm.participantId = contestantId;
+                        rqm.rejoinAs = constants.rejoinAs.CONTESTANT;
+
+                        cc.emit(messageConstants.REJOIN_SESSION, rqm, function(rm) {
+                            var em = messageFactory.restore(rm, messageConstants.ERROR);
+                            em.should.not.be.null();
+                            em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should not allow when session is completed', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    helper.contestantJoin(cc, 'test user', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        cc.disconnect();
+                        cc = helper.createClient();
+
+                        // Rejoin
+                        var rqm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rqm.sessionId = sessionId;
+                        rqm.participantId = contestantId;
+                        rqm.rejoinAs = constants.rejoinAs.CONTESTANT;
+
+                        var session = helper.getLatestSession();
+                        session.complete();
+
+                        cc.emit(messageConstants.REJOIN_SESSION, rqm, function(rm) {
+                            var em = messageFactory.restore(rm, messageConstants.ERROR);
+                            em.should.not.be.null();
+                            em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                            done();
+                        });
+                    });
+                });
+            });
+            it('should flag host as not disconnected', function(done) {
+                var s = new Settings();
+                s.maxContestants = 1;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    helper.contestantJoin(cc, 'test user', sessionId, function(rm) {
+                        var contestantId = rm.contestantId;
+
+                        cc.disconnect();
+                        cc = helper.createClient();
+
+                        // Rejoin
+                        var rqm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rqm.sessionId = sessionId;
+                        rqm.participantId = contestantId;
+                        rqm.rejoinAs = constants.rejoinAs.CONTESTANT;
+
+                        cc.emit(messageConstants.REJOIN_SESSION, rqm, function(rm) {
+                            var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                            sm.should.not.be.null();
+
+                            var session = helper.getLatestSession();
+                            var c = session.contestants.find(function(c) {
+                                return c.id === contestantId;
+                            });
+                            c.isDisconnected.should.be.false();
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+        describe('on disconnect', function() {
+            it('should update observers', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+
+                    // listen for observer update
+                    hc.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                        var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                        if (om.gameState.contestants.length > 0 && om.gameState.contestants[0].disconnected) {
+                            done();
+                        }
+                    });
+
+                    var cc = helper.createClient();
+                    helper.contestantJoin(cc, 'test user', sessionId, function() {
+                        cc.disconnect();
+                    });
+                });
+            });
+        });
         describe('team leader inquiry response', function() {
             it('should set team leader', function(done) {
                 var s = new Settings();

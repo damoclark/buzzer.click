@@ -209,6 +209,31 @@ describe('Buzzer server', function() {
                         });
                     });
                 });
+                it('should flag host as not disconnected', function(done) {
+                    var s = new Settings();
+                    s.maxContestants = 5;
+
+                    var c = helper.createClient();
+                    helper.createSession(c, s, function(rm) {
+                        c.disconnect();
+                        c = helper.createClient();
+
+                        // rejoin
+                        var rjm = messageFactory.create(messageConstants.REJOIN_SESSION);
+                        rjm.sessionId = rm.sessionId;
+                        rjm.participantId = rm.hostId;
+                        rjm.rejoinAs = constants.rejoinAs.HOST;
+
+                        c.emit(messageConstants.REJOIN_SESSION, rjm, function(data) {
+                            data.type.should.equal(messageConstants.SUCCESS);
+
+                            var session = helper.getLatestSession();
+                            session.host.isDisconnected.should.be.false();
+
+                            done();
+                        });
+                    });
+                });
             });
         });
         describe('complete', function() {
@@ -1985,6 +2010,35 @@ describe('Buzzer server', function() {
                         var irm = messageFactory.restore(rm, messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
                         irm.should.not.be.null();
                         done();
+                    });
+                });
+            });
+        });
+        describe('on disconnect', function() {
+            it('should update observers', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+
+                    var c = helper.createClient();
+                    helper.contestantJoin(c, 'test user', sessionId, function(rm) {
+
+                        // listen for observer update
+                        c.on(messageConstants.OBSERVER_UPDATE, function(m) {
+                            var om = messageFactory.restore(m, messageConstants.OBSERVER_UPDATE);
+                            if (om.gameState.host.disconnected) {
+                                done();
+                                c.discount();
+                            }
+                        });
+
+                        helper.clients = [];
+
+                        // disconnect host
+                        hc.disconnect();
                     });
                 });
             });

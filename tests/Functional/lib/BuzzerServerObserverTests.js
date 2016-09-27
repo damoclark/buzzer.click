@@ -172,6 +172,6 @@ describe('Buzzer server', function() {
                     });
                 });
             });
-        });        
+        });
     });
 });
