@@ -102,6 +102,14 @@
                 </div>
                 <div class="row row-buffer">
                     <div class="col-xs-5 text-right">
+                        Team selection mode:
+                    </div>
+                    <div id="session-team-selection" class="col-xs-7">
+                        PLACEHOLDER
+                    </div>
+                </div>
+                <div class="row row-buffer">
+                    <div class="col-xs-5 text-right">
                         Team leader selection:
                     </div>
                     <div id="session-leader-selection" class="col-xs-7">
@@ -326,7 +334,7 @@
                 $('#session-max-team-players').text(values.gameState.settings.teamSize);
                 $('#session-leader-selection').text(Object.keys(buzzapi.constants.teamLeaderSelectionMethod)[values.gameState.settings.teamLeaderSelectionMethod]);
                 $('#session-name-edit').text(Object.keys(buzzapi.constants.teamNameEdit)[values.gameState.settings.teamNameEdit]);
-
+                $('#session-team-selection').text(Object.keys(buzzapi.constants.teamSelectionMethod)[values.gameState.settings.teamSelectionMethod]);
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
 					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');

@@ -8,6 +8,7 @@
 	<title>Contestant</title>
 	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link href="content/style.css" rel="stylesheet">
+	<link href="content/buzzer-button.css" rel="stylesheet">
 </head>
 
 <body>
@@ -35,7 +36,7 @@
 					<div class="row">
 						<div class="jumbotron">
 							<h2 class="hidden-xs" >Buzzer</h2>
-							<div id="buzzer" class="circle">
+							<div id="buzzer" class="buzzer">
 							</div>
 						</div>
 					</div>
@@ -104,7 +105,7 @@
             $('#error-alert').remove();
 			
 			if(values.gameState.currentState === 'pending'){
-				$('#buzzer').addClass("circle-disabled");
+				$('#buzzer').addClass("buzzer-disabled");
 
 				if(values.gameState.pendingWinner){
 					$('#round-winner-header').text("Buzzed in");
@@ -112,9 +113,9 @@
 					$('#round-winner').text(values.gameState.pendingWinner);
 				}
 			}else if(values.gameState.currentState === 'ready'){
-				$('#buzzer').removeClass("circle-disabled");
+				$('#buzzer').removeClass("buzzer-disabled");
 			}else if(values.gameState.currentState === 'buzzerLock'){
-				$('#buzzer').addClass("circle-disabled");
+				$('#buzzer').addClass("buzzer-disabled");
 			}
 
 			$('#session-name').text(values.gameState.settings.sessionName);
@@ -184,6 +185,7 @@
 			$('#buzzer').click(function(){
 				
 				pressBuzzer(sessionCookie,participantCookie);
+				playBuzzerSound();
 			});
 		});
 	</script>

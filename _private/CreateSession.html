@@ -73,6 +73,15 @@
 								</select>
                             </div>
                         </div>
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label" for="team-name-selection">Team name selection</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="team-selection-mode">
+									<option value="SmallestTeam">Smallest team</option>
+                                    <option value="PlayerChoice">Player choice</option>
+								</select>
+                            </div>
+                        </div>
                         <!--Usually hidden unless Manual is chosen from the team name selection -->
                         <div id="options-manual-name-selection" style="display:none">
 
@@ -111,7 +120,6 @@
             </div>
         </div>
     </div>
-    
 
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
