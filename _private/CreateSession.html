@@ -22,11 +22,11 @@
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label" for="session-name">Session Name</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="text" id="session-name" name="session-name" />
+                            <input class="form-control" type="text" id="session-name" name="session-name" required />
                         </div>
                     </div>
                     <div class="form-group row">
-                        <div class="col-xs-4 col-xs-offset-2 pull-right">
+                        <div class="col-xs-9 col-xs-offset-3">
                             <input id="option-teams" type="checkbox" value="false" name="option-teams" />
                             <label for="Teams">Teams</label>
                         </div>
@@ -45,7 +45,7 @@
                         <div class="form-group row">
                             <label class="col-sm-3 col-form-label" for="num-teams">Teams</label>
                             <div class="col-sm-9">
-                                <input class="form-control" type="number" min="1" id="num-teams" placeholder="e.g. 3" name="num-teams" />
+                                <input class="form-control" type="number" min="0" id="num-teams" placeholder="For unlimited please set to 0" name="num-teams" />
                             </div>
                         </div>
                         <div class="form-group row">
@@ -90,9 +90,9 @@
 
                     <!--Submit and cancel buttons -->
                     <div class="form-group row">
-                        <div class="col-xs-9 col-xs-offset-4">
+                        <div class="col-sm-9 col-sm-offset-3">
                             <button id="create-game" type="submit" class="btn btn-primary">Create</button>
-                            <a href="index.html"><button type="button" class="btn">Cancel</button></a>
+                            <a href="index.html"><button type="button" class="btn btn-default">Cancel</button></a>
                         </div>
                     </div>
                 </form>

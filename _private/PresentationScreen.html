@@ -142,7 +142,7 @@
 			}
 
 			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
-				(!firstLoad && lastPlayed !=='success') ? lastPlayed = playSuccessSound() : null ;
+				(!firstLoad && lastPlayed !== 'success') ? lastPlayed = playSuccessSound() : null ;
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);

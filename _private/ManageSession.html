@@ -312,8 +312,8 @@
                 $('.hide-if-teams').hide();
 
                 $('#participant-info-header').text('Teams');
-                $('#session-max-teams').text(values.gameState.settings.maxTeams);
-                $('#session-max-team-players').text(values.gameState.settings.teamSize);
+                $('#session-max-teams').text((values.gameState.settings.maxTeams === 999) ? 'Unlimited' : values.gameState.settings.maxTeams);
+                $('#session-max-team-players').text((values.gameState.settings.teamSize === 999) ? 'Unlimited' : values.gameState.settings.teamSize);
                 $('#session-leader-selection').text(Object.keys(buzzapi.constants.teamLeaderSelectionMethod)[values.gameState.settings.teamLeaderSelectionMethod]);
                 $('#session-team-name-edit').text(Object.keys(buzzapi.constants.teamNameEdit)[values.gameState.settings.teamNameEdit]);
                 $('#session-team-selection').text(Object.keys(buzzapi.constants.teamSelectionMethod)[values.gameState.settings.teamSelectionMethod]);
@@ -336,7 +336,7 @@
 				});
 			}else{ //non-teams game so list all players
                 $('#session-teams').text('No');
-                $('#session-max-players').text(values.gameState.settings.maxContestants);
+                $('#session-max-players').text((values.gameState.settings.maxContestants === 999) ? 'Unlimited' : values.gameState.settings.maxContestants);
 
                 //Hide the teams
                 $('.hide-if-not-teams').hide();

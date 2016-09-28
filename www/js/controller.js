@@ -26,10 +26,16 @@ function createSession(values) {
             if (validateNumber(values['max-players-teams']) && parseInt(values['max-players-teams']) !== 0) {
                 settings.teamSize = parseInt(values['max-players-teams']);
             } else { //set to max
-                settings.teamSize = 9999;
+                settings.teamSize = buzzapi.constants.UNLIMITED;
             }
             if (validateNumber(values['num-teams'])) {
-                settings.maxTeams = parseInt(values['num-teams']);
+                var teamInt = parseInt(values['num-teams']);
+                if (teamInt === 0) {
+                    settings.maxTeams = buzzapi.constants.UNLIMITED;
+                } else {
+                    settings.maxTeams = teamInt;
+                }
+               
             }
             //Set teamleader selection setting
             if (values['team-leader-selection'] === 'Random') {
@@ -61,7 +67,7 @@ function createSession(values) {
             if (validateNumber(values['max-players']) && parseInt(values['max-players']) !== 0) {
                 settings.maxContestants = parseInt(values['max-players']);
             } else { //set to max
-                settings.maxContestants = 9999;
+                settings.maxContestants = buzzapi.constants.UNLIMITED;
             }
         }
 
@@ -69,28 +75,33 @@ function createSession(values) {
         createSessionMessage.settings = settings;
 
         client.emit(messageConstants.CREATE_SESSION, createSessionMessage, function (message) {
-            var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE);
 
-            buzzapi.Cookie.set(
-                'sessionId',
-                response.data._sessionId,
-                {
-                    live: 1 //Live for 1 day
-                }
-            );
-            buzzapi.Cookie.set(
-                'hostId',
-                response.data._hostId,
-                {
-                    live: 1 //Live for 1 day
-                }
-            );
-            if (console) {
-                console.log('Connected to server', response);
+            if (message.type === messageConstants.ERROR) {
+                var error = buzzapi.messageFactory.restore(message, messageConstants.ERROR);
+                alertBootstrap(error.error, 'danger', true);
             } else {
-                alter('Connected to server.');
+                var response = buzzapi.messageFactory.restore(message, messageConstants.CREATE_SESSION_RESPONSE);
+                buzzapi.Cookie.set(
+                    'sessionId',
+                    response.data._sessionId,
+                    {
+                        live: 1 //Live for 1 day
+                    }
+                );
+                buzzapi.Cookie.set(
+                    'hostId',
+                    response.data._hostId,
+                    {
+                        live: 1 //Live for 1 day
+                    }
+                );
+                if (console) {
+                    console.log('Connected to server', response);
+                } else {
+                    alter('Connected to server.');
+                }
+                redirectHost();
             }
-            redirectHost();
         });
     }
 
@@ -208,7 +219,7 @@ function joinSession(values) {
     });
 }
 
-function sendTeamLeaderResponse(sessionId,contestantId,response) {
+function sendTeamLeaderResponse(sessionId, contestantId, response) {
     rqm = buzzapi.messageFactory.create(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE);
     rqm.sessionId = sessionId;
     rqm.contestantId = contestantId;
@@ -233,7 +244,7 @@ function setTeamName(sessionId, contestantId, name) {
         function (m) {
             if (m.type === messageConstants.ERROR) {
                 var sm = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
-                alertBootstrap(sm.error, 'warning',false,'#modal-team-name .modal-body');
+                alertBootstrap(sm.error, 'warning', false, '#modal-team-name .modal-body');
             } else {
                 redirectContestant();
             }
@@ -280,7 +291,7 @@ function rejoinSession(sessionId, participantId, type) {
     }
 
     // listen for observer update
-    client.on(messageConstants.OBSERVER_UPDATE, function(message) {
+    client.on(messageConstants.OBSERVER_UPDATE, function (message) {
         var ob = buzzapi.messageFactory.restore(message, messageConstants.OBSERVER_UPDATE);
         //console.clear();
         console.log(ob);
@@ -296,7 +307,7 @@ function rejoinSession(sessionId, participantId, type) {
         }
     });
 
-    client.emit(messageConstants.REJOIN_SESSION, rjm, function(m) {
+    client.emit(messageConstants.REJOIN_SESSION, rjm, function (m) {
         if (m.type === messageConstants.ERROR) {
             var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
             alertBootstrap(err.error, 'danger');
@@ -313,12 +324,12 @@ function pressBuzzer(sessionId, contestantId) {
     bpm.sessionId = sessionId;
     bpm.contestantId = contestantId;
 
-    client.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function(m) {
+    client.emit(messageConstants.CONTESTANT_BUZZER_PRESS, bpm, function (m) {
         if (m.type === messageConstants.SUCCESS) {
             handleBuzzSuccess();
         } else {
             var err = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
-            alertBootstrap(err.error,'warning');
+            alertBootstrap(err.error, 'warning');
         }
     });
 }
@@ -342,21 +353,21 @@ function buzzerManageCommand(sessionId, hostId, action) {
     bac.hostId = hostId;
     bac.action = action;
 
-    client.emit(messageConstants.BUZZER_ACTION_COMMAND,bac,function(rm) {
-            if (rm.type === messageConstants.ERROR) {
-                var err = buzzapi.messageFactory.restore(rm, messageConstants.ERROR);
-                alertBootstrap(err.error, 'danger');
-            }
-        });
+    client.emit(messageConstants.BUZZER_ACTION_COMMAND, bac, function (rm) {
+        if (rm.type === messageConstants.ERROR) {
+            var err = buzzapi.messageFactory.restore(rm, messageConstants.ERROR);
+            alertBootstrap(err.error, 'danger');
+        }
+    });
 }
 
 /* eslint-disable no-unused-vars */
 function handleDisconnect() {
     /* eslint-enable no-unused-vars */
     //client = buzzapi.io(API_URL);
-    client.on('connect',function(){
-        client.on('disconnect',function(){
-            alertBootstrap('Server disconnected, please refresh to try again.','danger',true);
+    client.on('connect', function () {
+        client.on('disconnect', function () {
+            alertBootstrap('Server disconnected, please refresh to try again.', 'danger', true);
             $('.container > .row  div:not(:first)').hide();
         });
     });
@@ -379,12 +390,12 @@ function validateNumber(val) {
  * More information: http://getbootstrap.com/components/#alerts
  */
 /* eslint-disable no-unused-vars */
-function alertBootstrap(message, type,nodismiss,target) {
+function alertBootstrap(message, type, nodismiss, target) {
     /* eslint-enable no-unused-vars */
     $('#error-alert').remove();
     var targetDOM = $('body .container .row');
     if (target) {
-         targetDOM = $(target);
+        targetDOM = $(target);
     }
     if (nodismiss) {
         targetDOM.first().prepend('<div class="alert alert-' + type + '" id="error-alert">' +
@@ -419,19 +430,19 @@ function getParameterByName(name, url) {
 }
 
 function playSuccessSound() {
-        var audio = new Audio('media/success.wav');
-        audio.play();
-        return 'success';
+    var audio = new Audio('media/success.mp3');
+    audio.play();
+    return 'success';
 }
 
 function playRejectSound() {
-        var audio = new Audio('media/reject.wav');
-        audio.play();
-        return 'reject';
+    var audio = new Audio('media/reject.mp3');
+    audio.play();
+    return 'reject';
 }
 
 function playBuzzerSound() {
-        var audio = new Audio('media/buzzer.wav');
-        audio.play();
-        return 'buzzer';
+    var audio = new Audio('media/buzzer.mp3');
+    audio.play();
+    return 'buzzer';
 }

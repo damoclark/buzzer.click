@@ -666,7 +666,31 @@ function Constants() {
          * @public
          * @constant
          */
-        CONTESTANT_MUST_CHOOSE_TEAM: 'The contestant must choose a team.'
+        CONTESTANT_MUST_CHOOSE_TEAM: 'The contestant must choose a team.',
+        /**
+         * Message: Max contestants must be greater than the amount already connected.
+         * @public
+         * @constant
+         */
+        MAX_CONTESTANTS_MUST_BE_GREATER_THAN_ALREADY_CONNECTED: 'Max contestants must be greater than the amount already connected.',
+        /**
+         * Message: Team size must be greater than the already set size.
+         * @public
+         * @constant
+         */
+        TEAM_SIZE_MUST_BE_GREATER_THAN_ALREADY_SET: 'Team size must be greater than the already set size.',
+        /**
+         * Message: Max teams must be greater than the already set size.
+         * @public
+         * @constant
+         */
+        MAX_TEAMS_MUST_BE_GREATER_THAN_ALREADY_SET: 'Max teams must be greater than the already set size.',
+        /**
+         * Message: Cannot be changed when team selection is player choice.
+         * @public
+         * @constant
+         */
+        MAX_TEAMS_CANNOT_BE_CHANGED_WHEN_PLAYER_CHOICE: 'Cannot be changed when team selection is player choice.',
     };
 }
 
@@ -2039,6 +2063,99 @@ Session.prototype.tryBuzzerAction = function(action) {
     return false;
 };
 
+/**
+ * Defines a method which updates the session's name.
+ * @public
+ * @param  {String} session name.
+ * @throw when param name is required and equates to false or is an incorrect type.
+ */
+Session.prototype.updateSessionName = function(name) {
+    if (!new ParamCheck().isInstanceAndTypeOf(name, 'String') || !name) {
+        throw new Error('Name is required and must of type String');
+    }
+
+    this.settings.sessionName = name;
+};
+
+/**
+ * Defines a method which updates the max contestants for this session.
+ * @public
+ * @param  {Number} maxContestants.
+ * @throw when param maxContestants is required and equates to false or is an incorrect type.
+ * @return {[Boolean, String]} the result.
+ */
+Session.prototype.updateMaxContestants = function(maxContestants) {
+    if (!new ParamCheck().isInstanceAndTypeOf(maxContestants, 'Number') || !maxContestants) {
+        throw new Error('Max contestants is required and must of type Number');
+    }
+    if (this.settings.hasTeams) {
+        throw new Error('This method can only be called in individual mode.');
+    }
+
+    if (maxContestants < this.contestants.length) {
+        return [false, constants.messages.MAX_CONTESTANTS_MUST_BE_GREATER_THAN_ALREADY_CONNECTED];
+    }
+
+    this.settings.maxContestants = maxContestants;
+    return [true];
+};
+
+/**
+ * Defines a method which updates the team size for this session.
+ * @public
+ * @param  {Number} teamSize.
+ * @throw when param teamSize is required and equates to false or is an incorrect type.
+ * @return {[Boolean, String]} the result.
+ */
+Session.prototype.updateTeamSize = function(teamSize) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamSize, 'Number') || !teamSize) {
+        throw new Error('Team size is required and must of type Number');
+    }
+    if (!this.settings.hasTeams) {
+        throw new Error('This method can only be called in team mode.');
+    }
+
+    if (teamSize < this.settings.teamSize) {
+        return [false, constants.messages.TEAM_SIZE_MUST_BE_GREATER_THAN_ALREADY_SET];
+    }
+
+    this.settings.teamSize = teamSize;
+    return [true];
+};
+
+/**
+ * Defines a method which updates the max teams for this session.
+ * @public
+ * @param  {Number} maxTeams.
+ * @throw when param maxTeams is required and equates to false or is an incorrect type.
+ * @return {[Boolean, String]} the result.
+ */
+Session.prototype.updateMaxTeams = function(maxTeams) {
+    if (!new ParamCheck().isInstanceAndTypeOf(maxTeams, 'Number') || !maxTeams) {
+        throw new Error('Max teams is required and must of type Number');
+    }
+    if (!this.settings.hasTeams) {
+        throw new Error('This method can only be called in team mode.');
+    }
+
+    if (maxTeams < this.settings.maxTeams) {
+        return [false, constants.messages.MAX_TEAMS_MUST_BE_GREATER_THAN_ALREADY_SET];
+    }
+
+    if (this.settings.teamSelectionMethod === constants.teamSelectionMethod.PLAYER_CHOICE) {
+        return [false, constants.messages.MAX_TEAMS_CANNOT_BE_CHANGED_WHEN_PLAYER_CHOICE];
+    }
+
+    var increase = maxTeams - this.settings.maxTeams;
+    this.settings.maxTeams = maxTeams;
+
+    for (var i = 0; i < increase; i++) {
+        teamFactory.add(this.teams, this.settings);
+    }
+
+    return [true];
+};
+
 //Export the class
 module.exports = Session;
 
@@ -2673,7 +2790,7 @@ TeamFactory.prototype.create = function(teams, settings) {
         throw new Error('Argument `settings` is invalid. It is required and must be of the correct type.');
     }
     if (settings.maxTeams < 1) {
-        throw new Error('Settings must have a team size of greater than 0.');
+        throw new Error('Settings must have a max teams of greater than 0.');
     }
     var [r, e] = settings.validate();
     if (!r) {
@@ -2922,7 +3039,7 @@ Teams.prototype.removeByTeamName = function(teamName) {
  * @throw when param inquireTeamLeaderCallback equates to false or is an incorrect type.
  * @throw when param teamName is required and equates to false or is an incorrect type.
  * @throw when @see {@link Settings.hasTeams} is false.
- * @return {AddContestantResponse} an add contestant result.
+ * @return {[Boolean, String]} the result.
  */
 Teams.prototype.addContestant = function(contestant, settings, inquireTeamLeaderCallback, teamName) {
     if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
