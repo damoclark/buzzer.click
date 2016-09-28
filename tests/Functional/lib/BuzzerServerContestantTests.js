@@ -1268,6 +1268,44 @@ describe('Buzzer server', function() {
                     });
                 });
             });
+            it('should not allow it when team name is empty', function(done) {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = 1;
+                s.teamSize = 1;
+                s.teamNameEdit = constants.teamNameEdit.ALLOW;
+                s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var cc = helper.createClient();
+                    var sessionId = rm.sessionId;
+
+                    // Join
+                    var rqm = messageFactory.create(messageConstants.CONTESTANT_JOIN_REQUEST);
+                    rqm.sessionId = sessionId;
+                    rqm.username = 'Test Person';
+
+                    cc.emit(messageConstants.CONTESTANT_JOIN_REQUEST, rqm, function(m) {
+                        var rm = messageFactory.restore(m, messageConstants.CONTESTANT_JOIN_RESPONSE);
+                        var session = helper.getLatestSession();
+                        var contestant = session.contestants[0];
+                        var team = session.teams.getByContestant(contestant);
+
+                        var req = messageFactory.create(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+                        req.sessionId = sessionId;
+                        req.contestantId = rm.contestantId;
+                        req.teamName = ' ';
+
+                        cc.emit(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, req, function(m) {
+                            var em = messageFactory.restore(m, messageConstants.ERROR);
+                            em.should.not.be.null();
+                            em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_AS_TEAM_NAME_EMPTY);
+                            done();
+                        });
+                    });
+                });
+            });            
             it('should allow it when team name does not change', function(done) {
                 var s = new Settings();
                 s.hasTeams = true;
