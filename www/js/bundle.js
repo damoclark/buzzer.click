@@ -541,6 +541,12 @@ function Constants() {
          */
         USERNAME_CONTAINS_PROFANITY: 'Username contains profanity!',
         /**
+         * Message: Username is required.
+         * @public
+         * @constant
+         */
+        USERNAME_IS_REQUIRED: 'Username is required.',
+        /**
          * Message: Could not accept team leader response, as you are not a contestant!
          * @public
          * @constant
@@ -565,6 +571,13 @@ function Constants() {
          * @constant
          */
         COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER: 'Could not accept team name request, as you are not a contestant or either do not belong to a team or are not the team leader!',
+        /**
+         * Message: Could not accept team name request, as you are not a contestant or either do not belong to a team or
+         * are not the team leader!
+         * @public
+         * @constant
+         */
+        COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_AS_TEAM_NAME_EMPTY: 'Could not accept team name request, as the team name was empty.',
         /**
          * Message: Could not accept team name change as it contains profanity!
          * @public
@@ -607,6 +620,12 @@ function Constants() {
          * @constant
          */
         TEAM_SIZE_MUST_BE_GREATER_THAN_ZERO: 'Team size must be greater than 0 when using teams.',
+        /**
+         * Message: A session name is required.
+         * @public
+         * @constant
+         */
+        SESSION_NAME_REQUIRED: 'A session name is required.',
         /**
          * Message: Max teams must be greater than 0 when using teams.
          * @public
@@ -1915,6 +1934,13 @@ Session.prototype.addContestant = function(contestant, teamName) {
 
     var response = new AddContestantResponse();
 
+    if (!contestant.username || contestant.username.trim().length === 0) {
+        response.setNotSuccessful(constants.messages.USERNAME_IS_REQUIRED);
+        return response;
+    }
+
+    contestant.username = contestant.username.trim();
+
     filter = new Filter();
     if (filter.isProfane(contestant.username)) {
         response.setNotSuccessful(constants.messages.USERNAME_CONTAINS_PROFANITY);
@@ -1929,9 +1955,15 @@ Session.prototype.addContestant = function(contestant, teamName) {
     }
 
     if (this.settings.hasTeams) {
-        var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
-            response.enquireForTeamLeaderPosition = true;
-        }, teamName);
+         var result = this.teams.addContestant(contestant, this.settings, function() {
+             response.enquireForTeamLeaderPosition = true;
+         }, teamName);
+        // Hack - IE does not array destructuring
+        // var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
+        //     response.enquireForTeamLeaderPosition = true;
+        // }, teamName);
+        var success = result[0];
+        var message = result[1];
 
         if (success) {
             this._participants.add(contestant);
@@ -2395,6 +2427,10 @@ Object.defineProperty(Settings.prototype, 'teamNames', {
  * @return {[Boolean|String]} true when settings are valid; else false and the fail reason.
  */
 Settings.prototype.validate = function() {
+    if (!this._sessionName) {
+        return [false, constants.messages.SESSION_NAME_REQUIRED];
+    }
+
     if (this._hasTeams) {
         if (this._teamSize < 1) {
             return [false, constants.messages.TEAM_SIZE_MUST_BE_GREATER_THAN_ZERO];
@@ -2792,7 +2828,12 @@ TeamFactory.prototype.create = function(teams, settings) {
     if (settings.maxTeams < 1) {
         throw new Error('Settings must have a max teams of greater than 0.');
     }
-    var [r, e] = settings.validate();
+    // Hack - IE does not array destructuring
+    //var [r, e] = settings.validate();
+    var result = settings.validate();
+    var r = result[0];
+    var e = result[1];
+
     if (!r) {
         throw new Error('Settings must be valid. Error was: ' + e);
     }
