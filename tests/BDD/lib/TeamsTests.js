@@ -154,6 +154,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 1;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -174,6 +175,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 1;
                 s.teamSize = 1;
+                s.sessionName = 's';
 
                 var t = new Team();
                 t.teamName = 't1';
@@ -201,6 +203,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 1;
                 s.teamSize = 1;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
                 var tc = new Teams();
@@ -222,6 +225,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 1;
                 s.teamSize = 2;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
                 var t = new Team();
@@ -253,6 +257,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 1;
                 s.teamSize = 1;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.PLAYER_CHOICE;
 
                 var t = new Team();
@@ -276,6 +281,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 1;
                 s.teamSize = 2;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 
                 var t = new Team();
@@ -301,6 +307,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 2;
                 s.teamSize = 2;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 
                 var tc = new Teams();
@@ -322,6 +329,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = 2;
                 s.teamSize = 3;
+                s.sessionName = 's';
                 s.teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
 
                 var tc = new Teams();
@@ -345,6 +353,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.maxTeams = constants.UNLIMITED;
                 s.teamSize = 1;
+                s.sessionName = 's';
 
                 var t = new Team();
                 t.teamName = 't1';
@@ -376,6 +385,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.teamSize = 1;
                 s.maxTeams = 3;
+                s.sessionName = 's';
                 s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
 
                 var tc = new Teams();
@@ -393,6 +403,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.teamSize = 1;
                 s.maxTeams = 3;
+                s.sessionName = 's';
                 s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
 
                 var tc = new Teams();
@@ -415,6 +426,7 @@ describe('Teams', function() {
                 s.hasTeams = true;
                 s.teamSize = 1;
                 s.maxTeams = 3;
+                s.sessionName = 's';
                 s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
 
                 var tc = new Teams();
@@ -446,6 +458,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 5;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -466,6 +479,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 5;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -483,6 +497,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 5;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -496,6 +511,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 5;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -510,6 +526,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 3;
             s.teamSize = 1;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -527,6 +544,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 3;
             s.teamSize = 3;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);
@@ -544,6 +562,7 @@ describe('Teams', function() {
             s.hasTeams = true;
             s.maxTeams = 3;
             s.teamSize = constants.UNLIMITED;
+            s.sessionName = 's';
 
             var tc = new Teams();
             teamFactory.create(tc, s);

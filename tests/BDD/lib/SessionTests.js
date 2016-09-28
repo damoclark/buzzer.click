@@ -15,8 +15,9 @@ var settings = new Settings();
 var host = new Host();
 
 describe('Session', function() {
-    afterEach(function() {
+    beforeEach(function() {
         settings = new Settings();
+        settings.sessionName = 's';
         host = new Host();
     });
     describe('#constructor', function() {
@@ -185,6 +186,32 @@ describe('Session', function() {
             response.should.not.be.null();
             response.wasSuccessful.should.be.false();
             response.errorMessage.should.equal(constants.messages.USERNAME_CONTAINS_PROFANITY);
+        });
+        it('should not allow when username is empty', function(){
+            settings.maxContestants = 2;
+
+            var s = new Session(id, settings, host);
+
+            var c = new Contestant();
+            c.username = ' ';
+
+            var response = s.addContestant(c);
+            response.should.not.be.null();
+            response.wasSuccessful.should.be.false();
+            response.errorMessage.should.equal(constants.messages.USERNAME_IS_REQUIRED);
+        });
+        it('should trim username', function(){
+            settings.maxContestants = 2;
+
+            var s = new Session(id, settings, host);
+
+            var c = new Contestant();
+            c.username = 'Wade  ';
+
+            var response = s.addContestant(c);
+            response.should.not.be.null();
+            response.wasSuccessful.should.be.true();
+            c.username.should.equal('Wade');
         });
         describe('when in individual mode', function() {
             it('should add contestant when session is not full', function() {
