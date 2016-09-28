@@ -3024,7 +3024,7 @@ Teams.prototype.getByContestant = function(contestant) {
  * @see{@link Contestant}.
  * @public
  * @param  {Settings} settings
- * @return {Array[Team]} the teams a contestant may join.
+ * @return {Team[]} the teams a contestant may join.
  */
 Teams.prototype.getAvailable = function(settings) {
     if (!new ParamCheck().isInstanceAndTypeOf(settings, Settings) || !settings) {
@@ -3586,8 +3586,8 @@ Object.defineProperty(ContestantJoinResponseMessage.prototype, 'mustChooseTeam',
  * Sets or gets the array of teams a contestant can choose from.
  * @public
  * @throw on set val when param equates to false or is an incorrect type.
- * @param {Array[String]} the teams a contestant can choose from.
- * @return {Array[String]} the teams a contestant can choose from.
+ * @param {String[]} the teams a contestant can choose from.
+ * @return {String[]} the teams a contestant can choose from.
  */
 Object.defineProperty(ContestantJoinResponseMessage.prototype, 'teams', {
     get: function() {
