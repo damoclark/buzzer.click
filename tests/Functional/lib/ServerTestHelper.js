@@ -79,6 +79,10 @@ ServerTestHelper.prototype.createSession = function(hc, settings, callback) {
     var csm = messageFactory.create(messageConstants.CREATE_SESSION);
     csm.settings = settings;
 
+    if (!settings.sessionName) {
+        settings.sessionName = 'Test session';
+    }
+
     hc.emit(messageConstants.CREATE_SESSION, csm, function(data) {
         var response = messageFactory.restore(data, messageConstants.CREATE_SESSION_RESPONSE);
         callback(response);

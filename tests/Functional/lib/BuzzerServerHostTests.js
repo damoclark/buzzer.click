@@ -30,6 +30,7 @@ describe('Buzzer server', function() {
                 it('should allow when request is valid and create a session', function(done) {
                     var s = new Settings();
                     s.maxContestants = 5;
+                    s.sessionName = 'Test Session';
 
                     var csm = messageFactory.create(messageConstants.CREATE_SESSION);
                     csm.settings = s;

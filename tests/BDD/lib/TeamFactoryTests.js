@@ -25,6 +25,7 @@ describe('TeamFactory', function() {
                 s.hasTeams = true;
                 s.maxTeams = 5;
                 s.teamSize = 5;
+                s.sessionName = 's';
                 var tc = new Teams();
                 tc.length.should.equal(0);
                 teamFactory.create(tc, s);
@@ -36,6 +37,7 @@ describe('TeamFactory', function() {
                 s.hasTeams = true;
                 s.maxTeams = 500;
                 s.teamSize = 5;
+                s.sessionName = 's';
                 var tc = new Teams();
                 teamFactory.create(tc, s);
                 tc.length.should.equal(500);
@@ -56,6 +58,7 @@ describe('TeamFactory', function() {
             s.maxTeams = 10;
             s.teamSize = 5;
             s.teamNames = ['t1', 't2', 't3', 't4', 't5'];
+            s.sessionName = 's';
             var tc = new Teams();
             teamFactory.create(tc, s);
             tc.all[0].teamName.should.equal('t1');
@@ -75,6 +78,7 @@ describe('TeamFactory', function() {
             s.hasTeams = true;
             s.maxTeams = constants.UNLIMITED;
             s.teamSize = 5;
+            s.sessionName = 's';
             var tc = new Teams();
             teamFactory.create(tc, s);
             tc.all.length.should.equal(1);
@@ -86,6 +90,7 @@ describe('TeamFactory', function() {
             s.hasTeams = true;
             s.maxTeams = constants.UNLIMITED;
             s.teamSize = 5;
+            s.sessionName = 's';
             var tc = new Teams();
             teamFactory.create(tc, s);
             tc.all.length.should.equal(1);
@@ -98,6 +103,7 @@ describe('TeamFactory', function() {
             s.maxTeams = constants.UNLIMITED;
             s.teamSize = 5;
             s.teamNames = ['t1', 't2'];
+            s.sessionName = 's';
             var tc = new Teams();
             teamFactory.create(tc, s);
             teamFactory.add(tc, s);
@@ -110,6 +116,7 @@ describe('TeamFactory', function() {
             s.maxTeams = constants.UNLIMITED;
             s.teamSize = 5;
             s.teamNames = ['t1', 't2'];
+            s.sessionName = 's';
             var tc = new Teams();
             teamFactory.create(tc, s);
             for (var i = 0; i < 1000; i++) {
