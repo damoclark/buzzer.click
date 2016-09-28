@@ -936,5 +936,18 @@ describe('Session', function() {
             r.should.be.false();
             e.should.equal(constants.messages.MAX_TEAMS_MUST_BE_GREATER_THAN_ALREADY_SET);
         });
+        it('should not allow if teams are PLAYER_CHOICE', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 5;
+            settings.maxTeams = 5;
+            settings.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateMaxTeams(6);
+            r.should.be.false();
+            e.should.equal(constants.messages.MAX_TEAMS_CANNOT_BE_CHANGED_WHEN_PLAYER_CHOICE);
+        });
+
     });
 });

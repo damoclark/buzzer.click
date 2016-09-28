@@ -1920,6 +1920,242 @@ describe('Buzzer server', function() {
                 });
             });
         });
+        describe('settings update', function() {
+            it('should not allow it when session is completed', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+
+                    var session = helper.getLatestSession();
+                    session.complete();
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var em = messageFactory.restore(rm, messageConstants.ERROR);
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it when not the host', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = idUtility.generateParticipantId();
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var em = messageFactory.restore(rm, messageConstants.ERROR);
+                        em.error.should.equal(constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST);
+                        done();
+                    });
+                });
+            });
+            it('should not allow it when session does not exist', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = idUtility.generateSessionId();
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+
+                    var session = helper.getLatestSession();
+                    session.complete();
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var em = messageFactory.restore(rm, messageConstants.ERROR);
+                        em.error.should.equal(constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED);
+                        done();
+                    });
+                });
+            });
+            it('should update the session name', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.sessionName.should.be.equal('Test session X');
+                        done();
+                    });
+                });
+            });
+            it('should update the max contestants', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.maxContestants = 6;
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.maxContestants.should.equal(6);
+                        done();
+                    });
+                });
+            });
+            it('should update the max teams', function(done) {
+                var s = new Settings();
+                s.maxTeams = 5;
+                s.teamSize = 5;
+                s.hasTeams = true;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.maxTeams = 6;
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.maxTeams.should.equal(6);
+                        done();
+                    });
+                });
+            });
+            it('should update the team size', function(done) {
+                var s = new Settings();
+                s.maxTeams = 5;
+                s.teamSize = 5;
+                s.hasTeams = true;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.teamSize = 6;
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.teamSize.should.equal(6);
+                        done();
+                    });
+                });
+            });
+            it('should update the session name, max teams and team size', function(done) {
+                var s = new Settings();
+                s.maxTeams = 5;
+                s.teamSize = 5;
+                s.hasTeams = true;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+                    req.teamSize = 6;
+                    req.maxTeams = 6;
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.sessionName.should.be.equal('Test session X');
+                        session.settings.teamSize.should.equal(6);
+                        session.settings.maxTeams.should.equal(6);
+                        done();
+                    });
+                });
+            });
+            it('should update the session name and max contestants', function(done) {
+                var s = new Settings();
+                s.maxContestants = 5;
+                s.sessionName = 'Test session';
+
+                var hc = helper.createClient();
+                helper.createSession(hc, s, function(rm) {
+                    var sessionId = rm.sessionId;
+                    var hostId = rm.hostId;
+
+                    var req = messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+                    req.sessionId = sessionId;
+                    req.hostId = hostId;
+                    req.sessionName = 'Test session X';
+                    req.maxContestants = 6;
+
+                    hc.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, req, function(rm) {
+                        var sm = messageFactory.restore(rm, messageConstants.SUCCESS);
+                        sm.should.not.be.null();
+
+                        var session = helper.getLatestSession();
+                        session.settings.sessionName.should.be.equal('Test session X');
+                        session.settings.maxContestants.should.equal(6);
+                        done();
+                    });
+                });
+            });
+        });
         describe('info request', function() {
             it('should return in a valid state for individuals contestant', function(done) {
                 var s = new Settings();
