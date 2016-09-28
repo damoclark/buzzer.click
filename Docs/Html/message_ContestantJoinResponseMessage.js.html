@@ -26,24 +26,17 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>var AbstractMessage = require('../AbstractMessage');
+            <pre class="prettyprint source linenums"><code>var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
 
 /**
- * This message is from server to client and provides the contestant join response message
- * or if not set, can be set using the various set methods:
- *  setWasSuccessful(result) : void
- *  setErrorMessage(errorMessage) : void
- *  setParticipantId(participantId) : void
- *
- * @param {Object} args The data for this message object
- *
+ * Represent a message which to response to a @see {@link ContestantJoinRequestMessage}.
  * @extends AbstractMessage
- *
- * @returns {ContestantJoinResponseMessage} An instance
+ * @returns {ContestantJoinResponseMessage}
  */
 var ContestantJoinResponseMessage = function(args) {
     AbstractMessage.call(this, args);
-    this.set(args);
+    this.data._teams = [];
 };
 
 /**
@@ -52,99 +45,166 @@ var ContestantJoinResponseMessage = function(args) {
 ContestantJoinResponseMessage.prototype = Object.create(AbstractMessage.prototype);
 
 /**
- * Set the was successful status for this message object
- *
- * @param {Boolean} response The 'was successful' response flag
- *
- * @public
- */
-Object.defineProperty(ContestantJoinResponseMessage.prototype, 'successful', {
-    get: function () {
-        return this.data._successful;
-    },
-    set: function (response) {
-        if (typeof (response) === 'boolean') {
-            this.data._successful = response;
-        }
-        return this;
-    }
-});
-
-/**
- * Set the Error Message for this message object
- *
- * @param {String} errorMessage The username string
- *
- * @public
- */
-Object.defineProperty(ContestantJoinResponseMessage.prototype, 'errorMessage', {
-    get: function () {
-        return this.data._errormessage;
-    },
-    set: function (errorMessage) {
-        if (errorMessage) {
-            this.data._errormessage = errorMessage;
-        }
-        return this;
-    }
-});
-
-/**
- * Set the participant ID for this message object
- *
- * @param {String} participantId The participant ID string
- *
- * @public
- */
-Object.defineProperty(ContestantJoinResponseMessage.prototype, 'participantId', {
-    get: function () {
-        return this.data._participantid;
-    },
-    set: function (participantId) {
-        if (participantId) {
-            this.data._participantid = participantId;
-        }
-        return this;
-    }
-});
-
-/**
  * The type of this class
  * @public
  */
 ContestantJoinResponseMessage.prototype.type = 'ContestantJoinResponseMessage';
 
 /**
- * Data structure for this message
- * @private
+ * Sets or gets the contestant id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the contestant id.
+ * @return {String} the contestant id.
  */
-ContestantJoinResponseMessage.prototype.data = {};
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'contestantId', {
+    get: function() {
+        return this.data._contestantId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._contestantId = val;
+    }
+});
+
+/**
+ * Sets or gets the was successful flag.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the was successful flag.
+ * @return {Boolean} the was successful flag.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'wasSuccessful', {
+    get: function() {
+        return this.data._wasSuccessful;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._wasSuccessful = val;
+    }
+});
+
+/**
+ * Sets or gets the was enquire for team leader position flag.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the enquire for team leader position flag.
+ * @return {Boolean} the enquire for team leader position flag.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'enquireForTeamLeaderPosition', {
+    get: function() {
+        return this.data._enquireForTeamLeaderPosition;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._enquireForTeamLeaderPosition = val;
+    }
+});
+
+/**
+ * Sets or gets the failed request reason.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the failed request reason.
+ * @return {String} the failed request reason.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'failedRequestReason', {
+    get: function() {
+        return this.data._failedRequestReason;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._failedRequestReason = val;
+    }
+});
+
+/**
+ * Sets or gets the flag which states whether a contestant must choose their team.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the must choose team flag.
+ * @return {Boolean} the must choose team flag.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'mustChooseTeam', {
+    get: function() {
+        return this.data._mustChooseTeam;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._mustChooseTeam = val;
+    }
+});
+
+/**
+ * Sets or gets the array of teams a contestant can choose from.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Array[String]} the teams a contestant can choose from.
+ * @return {Array[String]} the teams a contestant can choose from.
+ */
+Object.defineProperty(ContestantJoinResponseMessage.prototype, 'teams', {
+    get: function() {
+        return this.data._teams;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Array')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._teams = val;
+    }
+});
 
 /**
  * Data structure for json validation of message data property
  * @private
  */
-ContestantJoinResponseMessage.prototype.schema = {
-    'id': 'http://jsonschema.net/data',
+ContestantJoinResponseMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
     'type': 'object',
     'properties': {
-        '_successful': {
-            'id': 'http://jsonschema.net/data/_successful',
+        '_contestantId': {
+            'type': 'string'
+        },
+        '_wasSuccessful': {
             'type': 'boolean'
         },
-        '_errormessage': {
-            'id': 'http://jsonschema.net/data/_errormessage',
+        '_failedRequestReason': {
             'type': 'string'
         },
-        '_participantid': {
-            'id': 'http://jsonschema.net/data/_participantid',
-            'type': 'string'
+        '_enquireForTeamLeaderPosition': {
+            'type': 'boolean'
+        },
+        '_mustChooseTeam': {
+            'type': 'boolean'
+        },
+        '_teams': {
+            'type': 'array'
         }
     },
     'required': [
-        '_sessionid',
-        '_errormessage',
-        '_participantid'
+        '_wasSuccessful'
     ]
 };
 
@@ -159,13 +219,13 @@ module.exports = ContestantJoinResponseMessage;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:15:00 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 13:54:44 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>

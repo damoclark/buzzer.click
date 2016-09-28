@@ -26,132 +26,93 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>var validate = require('jsonschema').validate;
+            <pre class="prettyprint source linenums"><code>var Validator = require('jsonschema').Validator;
 
 /**
- * Abstract message class from which all socket.io message objects should derive
- * 
+ * Abstract message class from which all socket.io message objects should derive.
+ * @abstract
+ * @protected
  */
 var AbstractMessage = function() {
+
     /**
-     * Data structure for json validation of message
-     * @private
+     * Holds the message payload.
      */
-    var schema = {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "id": "http://jsonschema.net",
-        "type": "object",
-        "properties": {
-            "protocol": {
-                "id": "http://jsonschema.net/protocol",
-                "type": "string"
+    this.data = {};
+
+    /**
+     * Pulls definition from prototype.
+     */
+    this.protocol = this.protocol;
+
+    /**
+     * Pulls definition from prototype.
+     */
+    this.type = this.type;
+
+    /**
+     * Define the abstract message schema
+     */
+    this.schema = {
+        'id': '/Message',
+        'type': 'object',
+        'properties': {
+            'protocol': {
+                'id': 'http://jsonschema.net/protocol',
+                'type': 'string'
             },
-            "type": {
-                "id": "http://jsonschema.net/type",
-                "type": "string",
-                "pattern": "^" + this.type + "$"
+            'type': {
+                'id': 'http://jsonschema.net/type',
+                'type': 'string',
+                'pattern': '^' + this.type + '$'
             },
-            "data": {
-                "id": "http://jsonschema.net/data",
-                "type": "object",
-                "properties": {},
-                "required": []
+            'data': {
+                '$ref': '/MessagePayload'
             }
         },
-        "required": [
-            "protocol",
-            "type",
-            "data"
+        //'additionalProperties': false,
+        'required': [
+            'protocol',
+            'type',
+            'data'
         ]
     };
-
-    //Append what is provided in the subclasses schema property to the
-    //complete schema object
-    schema.data = this.schema;
-
-    //Copy prototype into this instance &amp; disconnect from prototype
-    this.data = this.data;
-    this.schema = schema;
-
-    //Add the protocol property to all message json schemas
-    this.schema.properties.protocol = {
-        "id": "http://jsonschema.net/protocol",
-        "type": "string"
-    };
-    //Yes it must be provided
-    this.schema.required.push('protocol');
 };
 
 /**
- * Validate the data datastructure for the instance or if provided
+ * @private
+ */
+AbstractMessage.prototype.data = null;
+
+/**
+ * Data structure for json validation of message
+ * @private
+ */
+AbstractMessage.prototype.schema = null;
+
+/**
+ * Validate the data data structure for the instance or if provided
  * the data object that is passed to this method
- * 
- * @public 
- * @returns {Boolean} True if valid, otherwise false
+ *
+ * @public
+ * @returns {ValidatorResult}
  */
 AbstractMessage.prototype.validate = function() {
-    return validate(this.getJSON(), this.schema);
+    var v = new Validator();
+    v.addSchema(this.messagePayloadSchema, '/MessagePayload');
+    var result = v.validate(this, this.schema);
+    return result;
 };
 
 /**
- * Set the data for the message object to args, replacing the same values that
- * existed before
- * 
- * @param   {Object} args data to replace what is in this instance
- * @public
- * @returns {AbstractMessage} Returns itself
- */
-AbstractMessage.prototype.set = function(args) {
-    //console.log('inside set method, args=');
-    //console.log(JSON.stringify(args));
-    if (args != undefined) {
-        for (var p in args) {
-            this.data[p] = args[p];
-        }
-        //console.log('end of set method, args=');
-        //console.log(JSON.stringify(this.data));
-        return this.validate();
-    }
-    return true;
-};
-
-/**
- * Get the raw data from the message object
- * 
- * @returns {Object} Raw data object from message
- * @public
- */
-AbstractMessage.prototype.get = function() {
-    return this.data;
-};
-
-/**
- * Get the JSON data structure as sent over the network for this object
+ * Validate the data data structure for the instance or if provided
+ * the data object that is passed to this method
  *
  * @public
- * 
- * @returns {Object} JSON data structure to be sent over network
+ * @returns {Boolean} true if valid, otherwise false
  */
-AbstractMessage.prototype.getJSON = function() {
-    //console.log('this.data=' + JSON.stringify(this.data));
-    var j = {
-        "protocol": this.protocol,
-        "type": this.type,
-        "data": this.data
-    };
-    //console.log('getJSON=');
-    //console.log(JSON.stringify(j));
-    return j;
-};
-
-/**
- * Get the type of this message as a string
- *
- * @public
- * @returns {String} The type of this object as a string
- */
-AbstractMessage.prototype.getType = function() {
-    return this.type;
+AbstractMessage.prototype.isValid = function() {
+    return this.validate().errors.length === 0;
 };
 
 AbstractMessage.prototype.protocol = '0.0.1';
@@ -168,13 +129,13 @@ module.exports = AbstractMessage;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:15:00 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 13:54:44 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>

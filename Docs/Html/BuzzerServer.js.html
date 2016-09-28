@@ -30,197 +30,571 @@
  * This is the server for buzzer.click
  */
 
-var socketio = require('socket.io');
-var MessageFactory = require('./MessageFactory');
+var socketIo = require('socket.io');
 var console = require('console');
-var BuzzerError = require('./BuzzerError');
-
-var Games = require('./Games');
-var Game = require('./Game');
-//@todo add other state related objects here as written
-
-//Declare the socket.io object globally within the module
+var Sessions = require('./Sessions');
+var Contestant = require('./Contestant');
+var Host = require('./Host');
+var idUtility = require('./IdentifierUtility');
+var constants = require('./Constants');
+var messageFactory = require('./MessageFactory');
+var roomNameFactory = require('./RoomNameFactory');
 var io;
+var sessions;
+var isDebug = true;
+var messageConstants = constants.socketMessageNames;
+var connectedParticipantsMap = [];
 
-//Create our global state object games here so accessible to rest of module
-var games = new Games();
-
-// maps socket.id to user's nickname
-var nicknames = {};
-// list of socket ids
-var clients = [];
-var namesUsed = [];
 exports.listen = function(server) {
-    //An event has occurred on the listening socket
-    io = socketio.listen(server);
+    sessions = new Sessions();
+    exports.sessions = sessions;
 
-    //We have a new connection, so let's handle it
-    io.on('connection', function(socket) {
-        console.log('Connection made');
-
-        //Add the emitMessage and onMessage methods to our socket
-        MessageFactory.updateSocket(socket);
-
-        //Moved game create into a handler function
-        handleCreateGame(socket)
-
-        //
-        //Testing for send/receive messages
-        //
-        socket.onMessage(MessageFactory.JOINGAMEMESSAGE, function(
-            message) {
-            console.log('Received ' + message.getType() +
-                ' message with object:' + JSON.stringify(
-                    message));
-
-            socket.emitMessage(MessageFactory.create(
-                MessageFactory.JOINGAMEMESSAGE, {
-                    'gamecode': '123456'
-                }));
-        });
-
-        //Log errors to console
-        socket.on('error',function(er){
-            console.log("socket error="+er);
-        });
-        
-        //    initializeConnection(socket) ;
-        handleChoosingNicknames(socket) ;
-        //    handleClientDisconnections(socket) ;
-        //    handleMessageBroadcasting(socket) ;
-        //    handlePrivateMessaging(socket) ;
-    });
-}
-
-function handleCreateGame(socket)
-{ 
-    socket.onMessage(MessageFactory.CREATEGAMEMESSAGE, function(
-            message) {
-            console.log('Received ' + message.getType() +
-                ' message with object:' + JSON.stringify(
-                    message));
-            //Create game object and pass in settings provided by client
-            try {
-                var game = new Game(message.get());
-                var e = new BuzzerError(BuzzerError.INVALID_CODE,
-                    "Bla bla bla!");
-                
-                //Add the game to the system
-                games.add(game);
-
-                throw e;
-            } catch (err) {
-                if (err instanceof BuzzerError) {
-                    console.log(
-                        'Inside catch for BuzzerError');
-                    var r = MessageFactory.create(
-                        MessageFactory.CREATEGAMECONFIRMMESSAGE
-                    );
-                    r.setBuzzerError(err);
-                    socket.emitMessage(r);
-                }
-                //@todo return ConfirmMessage with code = error
-                console.log('error=' + err.message);
-                console.log('name=' + err.name);
-                if (err instanceof ReferenceError) {
-                    console.log('Syntax error!!');
-                }
-                //@todo UP TO HERE USE BuzzerError here
-            }
-            //@todo return ConfirmCreateGameMessage (subclass of ConfirmMessage) with gameCode &amp; hostCode
-            //var confirm = MessageFactory.create(MessageFactory.CONFIRMMESSAGE,{confirm:{code:0,message:""}}) ;
-            var confirm = MessageFactory.create(
-                MessageFactory.CONFIRMMESSAGE);
-            confirm.setCode(0).setMessage("");
-            socket.emitMessage(confirm);
-        });
-}
-function initializeConnection(socket) {
-    //This isn't right.  This should be done when the attempt
-    //to create or join a game
-    var game = new Game();
-    games.add(game);
-    socket.clientId
-    showActiveUsers(socket);
-    showOldMsgs(socket);
-}
-
-function showActiveUsers(socket) {
-    var activeNames = [];
-    var usersInRoom = io.sockets.clients();
-    for (var index in usersInRoom) {
-        var userSocketId = usersInRoom[index].id;
-        if (userSocketId !== socket.id &amp;&amp; nicknames[userSocketId]) {
-            var name = nicknames[userSocketId];
-            activeNames.push({
-                id: namesUsed.indexOf(name),
-                nick: name
-            });
-        }
+    io = socketIo.listen(server);
+    if (isDebug) {
+        var socketIoWildcard = require('socketio-wildcard')();
+        io.use(socketIoWildcard);
     }
-    socket.emit('names', activeNames);
-}
 
-function showOldMsgs(socket) {
-    db.getOldMsgs(5, function(err, docs) {
-        socket.emit('load old msgs', docs);
-    });
-}
-
-function handleChoosingNicknames(socket) {
-    socket.on('choose nickname', function(nick, cb) {
-        if (namesUsed.indexOf(nick) !== -1) {
-            cb(
-                'That name is already taken!  Please choose another one.'
-            );
-            return;
+    io.on('connection', function(socket) {
+        if (isDebug) {
+            console.log('A new client with id `' + socket.id + '` has connected');
         }
-        var ind = namesUsed.push(nick) - 1;
-        clients[ind] = socket;
-        nicknames[socket.id] = nick;
-        cb(null);
-        io.sockets.emit('new user', {
-            id: ind,
-            nick: nick
+
+        // Only active when isDebug is true
+        socket.on('*', function(message) {
+            console.log('Inbound `' + message.data[0] +
+                '` from client. Message `' + JSON.stringify(message.data[1]) +
+                '`');
         });
+
+        socket.on(messageConstants.DISCONNECT, socketDisconnectHandler);
+        socket.on(messageConstants.CREATE_SESSION, createSessionHandler);
+        socket.on(messageConstants.REJOIN_SESSION, rejoinSessionHandler);
+        socket.on(messageConstants.CONTESTANT_JOIN_REQUEST, contestantJoinRequestHandler);
+        socket.on(messageConstants.SESSION_COMPLETE, sessionCompleteHandler);
+        socket.on(messageConstants.CONTESTANT_BUZZER_PRESS, contestantBuzzerPressHandler);
+        socket.on(messageConstants.BUZZER_ACTION_COMMAND, buzzerActionCommandHandler);
+        socket.on(messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE, inquireTeamLeaderResponseHandler);
+        socket.on(messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE, setTeamNameRequestHandler);
+        socket.on(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, hostSettingsUpdateMessageHandler);
+        socket.on(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, hostTeamLeaderSetRequestHandler);
+        socket.on(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, hostTeamNameUpdateRequestHandler);
+        socket.on(messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE, SessionInformationRequestHandler);
     });
+};
+
+function socketDisconnectHandler() {
+    var self = this;
+    var index = connectedParticipantsMap.findIndex(function(rc) {
+        return rc.socket === self;
+    });
+    if (index >= 0) {
+        // flag disconnected
+        var rc = connectedParticipantsMap[index];
+        rc.participant.disconnect();
+
+        // update observers
+        updateObservers(rc.session);
+
+        // remove tracking element
+        connectedParticipantsMap.splice(index, 1);
+    }
 }
 
-function handleMessageBroadcasting(socket) {
-    socket.on('message', function(msg) {
-        var nick = nicknames[socket.id];
-        db.saveMsg({
-            nick: nick,
-            msg: msg
-        }, function(err) {
-            if (err) throw err;
-            io.sockets.emit('message', {
-                nick: nick,
-                msg: msg
-            });
+function updateObservers(session) {
+    var message = messageFactory.create(messageConstants.OBSERVER_UPDATE);
+    message.populate(session);
+    io.sockets.in(roomNameFactory.observers(session.id)).emit(messageConstants.OBSERVER_UPDATE, message);
+}
+exports.updateObservers = updateObservers;
+
+function sendMessageToContestants(session, messageName, message) {
+    io.sockets.in(roomNameFactory.contestants(session.id)).emit(messageName, message);
+}
+exports.sendMessageToContestants = sendMessageToContestants;
+
+function contestantJoinRequestHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.CONTESTANT_JOIN_REQUEST);
+    var session = sessions.getById(requestMessage.sessionId);
+    var responseMessage = messageFactory.create(messageConstants.CONTESTANT_JOIN_RESPONSE);
+    responseMessage.wasSuccessful = false;
+
+    if (!session || session.isSessionCompleted) {
+        responseMessage.failedRequestReason = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(responseMessage);
+        return;
+    }
+
+    if (session.settings.teamSelectionMethod === constants.teamSelectionMethod.PLAYER_CHOICE &amp;&amp; !requestMessage.teamName) {
+        responseMessage.failedRequestReason = constants.messages.CONTESTANT_MUST_CHOOSE_TEAM;
+        responseMessage.mustChooseTeam = true;
+        session.teams.getAvailable(session.settings).forEach(function(t) {
+            responseMessage.teams.push(t.teamName);
         });
-    });
+        response(responseMessage);
+        return;
+    }
+
+    var contestant = new Contestant();
+    contestant.username = requestMessage.username;
+
+    var addResponse = session.addContestant(contestant, requestMessage.teamName);
+
+    if (addResponse.wasSuccessful) {
+        this.join(roomNameFactory.contestants(session.id));
+        this.join(roomNameFactory.observers(session.id));
+        responseMessage.contestantId = contestant.id;
+        responseMessage.wasSuccessful = true;
+        responseMessage.enquireForTeamLeaderPosition = addResponse.enquireForTeamLeaderPosition;
+        response(responseMessage);
+
+        // register the socket connection
+        connectedParticipantsMap.push({
+            socket: this,
+            participant: contestant,
+            session: session
+        });
+
+        // Update the observers
+        updateObservers(session);
+    } else {
+        responseMessage.failedRequestReason = addResponse.errorMessage;
+        response(responseMessage);
+    }
 }
 
-function handlePrivateMessaging(socket) {
-    socket.on('private message', function(data) {
-        var from = nicknames[socket.id];
-        clients[data.userToPM].emit('private message', {
-            from: from,
-            msg: data.msg
-        });
+function createSessionHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var requestMessage = messageFactory.restore(message, messageConstants.CREATE_SESSION);
+
+    var [result, error] = requestMessage.settings.validate();
+    if (!result) {
+        errorMessage.error = error;
+        response(errorMessage);
+        return;
+    }
+
+    var host = new Host();
+    host.id = idUtility.generateParticipantId();
+
+    var session = sessions.add(host, requestMessage.settings);
+
+    session.subscribeForStateChange('onenterstate', onSessionStateChangeHandler);
+
+    var responseMessage = messageFactory.create(messageConstants.CREATE_SESSION_RESPONSE);
+    responseMessage.sessionId = session.id;
+    responseMessage.hostId = session.host.id;
+
+    this.join(roomNameFactory.host(session.id));
+    this.join(roomNameFactory.observers(session.id));
+
+    // register the socket connection
+    connectedParticipantsMap.push({
+        socket: this,
+        participant: host,
+        session: session
     });
+
+    response(responseMessage);
 }
 
-function handleClientDisconnections(socket) {
-    socket.on('disconnect', function() {
-        var ind = namesUsed.indexOf(nicknames[socket.id]);
-        delete namesUsed[ind];
-        delete clients[ind];
-        delete nicknames[socket.id];
-        io.sockets.emit('user disconnect', ind);
+function onSessionStateChangeHandler(session, event, from, to) {
+    // Update the observers
+    updateObservers(session);
+}
+
+function rejoinSessionHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.REJOIN_SESSION);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    var participant = null;
+
+    switch (requestMessage.rejoinAs) {
+        case constants.rejoinAs.HOST:
+            if (session.host.id !== requestMessage.participantId) {
+                errorMessage.error = constants.messages.COULD_NOT_REJOIN_NOT_HOST;
+                response(errorMessage);
+                return;
+            }
+            this.join(roomNameFactory.host(session.id));
+            this.join(roomNameFactory.observers(session.id));
+            participant = session.host;
+            break;
+        case constants.rejoinAs.CONTESTANT:
+            participant = session.contestants.find(function(c) {
+                    return c.id === requestMessage.participantId;
+                });
+            if (!participant) {
+                errorMessage.error = constants.messages.COULD_NOT_REJOIN_NOT_CONTESTANT;
+                response(errorMessage);
+                return;
+            }
+            this.join(roomNameFactory.contestants(session.id));
+            this.join(roomNameFactory.observers(session.id));
+            break;
+        case constants.rejoinAs.OBSERVER:
+            this.join(roomNameFactory.observers(session.id));
+            break;
+        default:
+            errorMessage.error = constants.messages.COULD_NOT_REJOIN_UNKNOWN;
+            response(errorMessage);
+            break;
+    }
+
+    response(successMessage);
+
+    if (participant) {
+        participant.reconnect();
+        // register the socket connection
+        connectedParticipantsMap.push({
+            socket: this,
+            participant: participant,
+            session: session
+        });
+    }
+
+    // Update the observers (helps rejoin populate UI)
+    updateObservers(session);
+}
+
+function sessionCompleteHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.SESSION_COMPLETE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.host.id !== requestMessage.hostId) {
+        errorMessage.error = constants.messages.COULD_NOT_COMPLETE_SESSION_NOT_HOST;
+        response(errorMessage);
+        return;
+    }
+
+    session.complete();
+    response(successMessage);
+}
+
+function contestantBuzzerPressHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.CONTESTANT_BUZZER_PRESS);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (!session.contestants.find(function(c) {
+            return c.id === requestMessage.contestantId;
+        })) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_BUZZER_PRESS_NOT_CONTESTANT;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.tryBuzzerPressRegister(requestMessage.contestantId)) {
+        response(successMessage);
+    } else {
+        errorMessage.error = constants.messages.BUZZER_PRESS_NOT_ACCEPTED;
+        response(errorMessage);
+    }
+}
+
+function buzzerActionCommandHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.BUZZER_ACTION_COMMAND);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.host.id !== requestMessage.hostId) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.tryBuzzerAction(requestMessage.action)) {
+        response(successMessage);
+    } else {
+        errorMessage.error = constants.messages.COULD_NOT_PROCESS_REQUEST_GAME_STATE_WILL_NOT_ALLOW;
+        response(errorMessage);
+    }
+}
+
+function inquireTeamLeaderResponseHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.INQUIRE_TEAM_LEADER_RESPONSE_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    var contestant = session.contestants.find(function(c) {
+        return c.id === requestMessage.contestantId;
     });
-}</code></pre>
+
+    if (!contestant) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_TEAM_LEADER_RESPONSE_NOT_CONTESTANT;
+        response(errorMessage);
+        return;
+    }
+
+    if (!requestMessage.decision) {
+        response(successMessage);
+        return;
+    }
+
+    var team = session.teams.getByContestant(contestant);
+    var [success, error] = team.tryAssignTeamLeader(contestant, false);
+
+    if (success) {
+        response(successMessage);
+        updateObservers(session);
+    } else {
+        errorMessage.error = error;
+        response(errorMessage);
+    }
+}
+
+function setTeamNameRequestHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.SET_TEAM_NAME_REQUEST_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    var contestant = session.contestants.find(function(c) {
+        return c.id === requestMessage.contestantId;
+    });
+
+    if (!contestant) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER;
+        response(errorMessage);
+        return;
+    }
+
+    var team = session.teams.getByContestant(contestant);
+
+    if (!team.teamLeader || team.teamLeader.id !== contestant.id) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_REQUEST_NOT_CONTESTANT_TEAM_OR_TEAM_LEADER;
+        response(errorMessage);
+        return;
+    }
+
+    var otherTeam = session.teams.getByTeamName(requestMessage.teamName);
+
+    if (otherTeam &amp;&amp; team === otherTeam) {
+        // no update
+        response(successMessage);
+        return;
+    } else if (otherTeam) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_IN_USE;
+        response(errorMessage);
+        return;
+    }
+
+    var [success, error] = team.tryChangeName(requestMessage.teamName, session.settings, false);
+
+    if (success) {
+        response(successMessage);
+        updateObservers(session);
+    } else {
+        errorMessage.error = error;
+        response(errorMessage);
+    }
+}
+
+function hostSettingsUpdateMessageHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.host.id !== requestMessage.hostId) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST;
+        response(errorMessage);
+        return;
+    }
+
+    var success = true;
+
+    if (success) {
+        response(successMessage);
+        updateObservers(session);
+    } else {
+        errorMessage.error = error;
+        response(errorMessage);
+    }
+}
+
+function hostTeamLeaderSetRequestHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.host.id !== requestMessage.hostId) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST;
+        response(errorMessage);
+        return;
+    }
+
+    var team = session.teams.getByTeamName(requestMessage.teamName);
+
+    if (!team) {
+        errorMessage.error = constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND;
+        response(errorMessage);
+        return;
+    }
+
+    var contestant = team.getContestantByUsername(requestMessage.teamLeaderUsername);
+
+    if (!contestant) {
+        errorMessage.error = constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_NOT_FOUND;
+        response(errorMessage);
+        return;
+    }
+
+    var [success, error] = team.tryAssignTeamLeader(contestant, true);
+
+    if (success) {
+        response(successMessage);
+        updateObservers(session);
+    } else {
+        errorMessage.error = error;
+        response(errorMessage);
+    }
+}
+
+function hostTeamNameUpdateRequestHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var successMessage = messageFactory.create(messageConstants.SUCCESS);
+
+    if (!session || session.isSessionCompleted) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND_OR_IS_COMPLETED;
+        response(errorMessage);
+        return;
+    }
+
+    if (session.host.id !== requestMessage.hostId) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_REQUEST_NOT_HOST;
+        response(errorMessage);
+        return;
+    }
+
+    var team = session.teams.getByTeamName(requestMessage.teamNameFrom);
+
+    if (!team) {
+        errorMessage.error = constants.messages.COULD_NOT_PROCESS_REQUEST_TEAM_NOT_FOUND;
+        response(errorMessage);
+        return;
+    }
+
+    var otherTeam = session.teams.getByTeamName(requestMessage.teamNameTo);
+
+    if (otherTeam &amp;&amp; team === otherTeam) {
+        // no update
+        response(successMessage);
+        return;
+    } else if (otherTeam) {
+        errorMessage.error = constants.messages.COULD_NOT_ACCEPT_TEAM_NAME_IN_USE;
+        response(errorMessage);
+        return;
+    }
+
+    var [success, error] = team.tryChangeName(requestMessage.teamNameTo, session.settings, true);
+
+    if (success) {
+        response(successMessage);
+        updateObservers(session);
+    } else {
+        errorMessage.error = error;
+        response(errorMessage);
+    }
+}
+
+function SessionInformationRequestHandler(message, response) {
+    response = (typeof response !== 'undefined') ? response : function() {};
+    var requestMessage = messageFactory.restore(message, messageConstants.SESSION_INFORMATION_REQUEST_MESSAGE);
+    var session = sessions.getById(requestMessage.sessionId);
+    var errorMessage = messageFactory.create(messageConstants.ERROR);
+    var responseMessage = messageFactory.create(messageConstants.SESSION_INFORMATION_RESPONSE_MESSAGE);
+
+    if (!session) {
+        errorMessage.error = constants.messages.SESSION_COULD_NOT_BE_FOUND;
+        response(errorMessage);
+        return;
+    }
+
+    var host = session.host.id === requestMessage.participantId ? session.host : null;
+    var contestant = session.contestants.find(function(c) {
+        return c.id === requestMessage.participantId;
+    });
+
+    if (requestMessage.participantId &amp;&amp; !host &amp;&amp; !contestant) {
+        errorMessage.error = constants.messages.COULD_NOT_PROCESS_REQUEST_CONTESTANT_OR_HOST_NOT_FOUND;
+        response(errorMessage);
+        return;
+    }
+
+    responseMessage.populate(host, contestant, session);
+    response(responseMessage);
+}
+</code></pre>
         </article>
     </section>
 
@@ -230,13 +604,13 @@ function handleClientDisconnections(socket) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:15:00 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 13:54:44 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>
