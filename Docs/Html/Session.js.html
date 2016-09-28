@@ -33,6 +33,12 @@ var Observer = require('./Observer');
 var Contestant = require('./Contestant');
 var Settings = require('./Settings');
 var AddContestantResponse = require('./AddContestantResponse');
+var StateMachine = require('javascript-state-machine');
+var Teams = require('./Teams');
+var Filter = require('bad-words');
+var idUtility = require('./IdentifierUtility');
+var constants = require('./Constants');
+var teamFactory = require('./TeamFactory');
 
 /**
  * Session module.
@@ -63,6 +69,29 @@ function Session(id, settings, host) {
     this._settings = settings;
     this._host = host;
     this._participants = new Participants();
+    this._previousWinners = [];
+    this._roundWinner = null;
+    this._pendingWinContestant = null;
+    if (this._settings.hasTeams) {
+        this._teams = new Teams();
+        teamFactory.create(this._teams, this._settings);
+    }
+    /* beautify ignore:start */
+    /* eslint-disable */
+    this._state = StateMachine.create({
+        initial: 'ready',
+        events: [
+            { name: 'buzzerPressed', from: 'ready', to: 'pending' }, 
+            { name: 'disableBuzzers', from: ['ready', 'pending'], to: 'buzzerLock' }, 
+            { name: 'enableBuzzers', from: 'buzzerLock', to: 'ready' },
+            { name: 'acceptBuzz', from: 'pending', to: 'ready' },
+            { name: 'rejectBuzz', from: 'pending', to: 'ready' },
+            { name: 'resetBuzz', from: ['pending', 'ready'], to: 'ready' },
+            { name: 'complete', from: ['ready', 'pending', 'buzzerLock'], to: 'completed' },
+        ]
+    });
+    /* eslint-enable */
+    /* beautify ignore:end */
 }
 
 /**
@@ -100,6 +129,21 @@ Session.prototype._host = null;
 Session.prototype._state = null;
 
 /**
+ * @private
+ */
+Session.prototype._pendingWinContestant = null;
+
+/**
+ * @private
+ */
+Session.prototype._roundWinner = null;
+
+/**
+ * @private
+ */
+Session.prototype._previousWinners = [];
+
+/**
  * Defines a property to get the @see {@link _id} field.
  * @public
  * @throws on set value.
@@ -134,6 +178,57 @@ Object.defineProperty(Session.prototype, 'roundsPlayed', {
 });
 
 /**
+ * Defines a property to get the @see {@link _winners} field.
+ * @public
+ * @throws on set value.
+ * @return {Array{String}} the round winner collection.
+ */
+Object.defineProperty(Session.prototype, 'previousWinners', {
+    get: function() {
+        return this._previousWinners;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _roundWinner} field.
+ * @public
+ * @throws on set value.
+ * @return {String} the round winner.
+ */
+Object.defineProperty(Session.prototype, 'roundWinner', {
+    get: function() {
+        return this._roundWinner;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to get the @see {@link _pendingWinContestant.username} field.
+ * @public
+ * @throws on set value.
+ * @return {String} the pending winner.
+ */
+Object.defineProperty(Session.prototype, 'pendingWinner', {
+    get: function() {
+        return this._pendingWinContestant ? this._pendingWinContestant.username : null;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a property to get the @see {@link _settings} field.
  * @public
  * @throws on set value.
@@ -158,8 +253,7 @@ Object.defineProperty(Session.prototype, 'settings', {
  */
 Object.defineProperty(Session.prototype, 'isSessionCompleted', {
     get: function() {
-        //TODO: Implement this function. Requires FSM
-        throw new Error('Not implemented');
+        return this._state.current === 'completed';
     },
     /* eslint-disable no-unused-vars */
     set: function(val) {
@@ -207,6 +301,23 @@ Object.defineProperty(Session.prototype, 'contestants', {
 });
 
 /**
+ * Defines a property to the @see {@link _teams} field.
+ * @public
+ * @throws on set value.
+ * @return {Teams} instance.
+ */
+Object.defineProperty(Session.prototype, 'teams', {
+    get: function() {
+        return this._teams;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
  * Defines a property to get the host of the session.
  * @public
  * @throws on set value.
@@ -215,6 +326,23 @@ Object.defineProperty(Session.prototype, 'contestants', {
 Object.defineProperty(Session.prototype, 'host', {
     get: function() {
         return this._host;
+    },
+    /* eslint-disable no-unused-vars */
+    set: function(val) {
+        /* eslint-enable no-unused-vars */
+        throw new Error('Property is readonly.');
+    }
+});
+
+/**
+ * Defines a property to current session state.
+ * @public
+ * @throws on set value.
+ * @return {String} the current session state.
+ */
+Object.defineProperty(Session.prototype, 'currentState', {
+    get: function() {
+        return this._state.current;
     },
     /* eslint-disable no-unused-vars */
     set: function(val) {
@@ -235,21 +363,172 @@ Session.prototype.incrementRoundsPlayed = function() {
 /**
  * Defines a method to add a contestant to the session.
  * @public
- * @param  {contestant} Contestant
+ * @param  {Contestant} contestant
+ * @param  {String} teamName optional|required when settings.teamSelectionMethod = PLAYER_CHOICE.
  * @throw when param contestant equates to false or is an incorrect type.
+ * @throw when param teamName is required and equates to false or is an incorrect type.
  * @return {AddContestantResponse} a complex response of success or not.
  */
-Session.prototype.addContestant = function(contestant) {
+Session.prototype.addContestant = function(contestant, teamName) {
     if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
         throw new Error(
             'Argument `contestant` is invalid. It is required and must be of the correct type.'
         );
     }
+    if (!teamName &amp;&amp; this.settings.teamSelectionMethod === constants.teamSelectionMethod.PLAYER_CHOICE) {
+        throw new Error(
+            'Argument `teamName` is invalid. It is required and must be of the correct type.'
+        );
+    }
 
     var response = new AddContestantResponse();
 
-    //TODO implement this method
-    throw new Error('Not implemented');
+    filter = new Filter();
+    if (filter.isProfane(contestant.username)) {
+        response.setNotSuccessful(constants.messages.USERNAME_CONTAINS_PROFANITY);
+        return response;
+    }
+
+    if (this.contestants.find(function(c) {
+            return c.username.toUpperCase() === contestant.username.toUpperCase();
+        }) != null) {
+        response.setNotSuccessful(constants.messages.USERNAME_TAKEN);
+        return response;
+    }
+
+    if (this.settings.hasTeams) {
+        var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
+            response.enquireForTeamLeaderPosition = true;
+        }, teamName);
+
+        if (success) {
+            this._participants.add(contestant);
+            response.setSuccessful();
+        } else {
+            response.setNotSuccessful(message);
+        }
+    } else {
+        if (this.settings.maxContestants !== constants.UNLIMITED &amp;&amp;
+            this.contestants.length >= this.settings.maxContestants) {
+            response.setNotSuccessful(constants.messages.MAXIMUM_SESSION_SIZED_REACHED);
+            return response;
+        }
+
+        contestant.id = idUtility.generateParticipantId();
+        this._participants.add(contestant);
+        response.setSuccessful();
+    }
+
+    return response;
+};
+
+/**
+ * Defines a method to complete the session.
+ * @public
+ * @throw when session state cannot transition to complete.
+ * @return {AddContestantResponse} a complex response of success or not.
+ */
+Session.prototype.complete = function() {
+    this._state.complete();
+};
+
+/**
+ * Defines a method to subscribe for state change events.
+ * @public
+ * @param  {String} event
+ * @param  {Function} callback
+ * @throw when session state cannot transition to complete.
+ * @return {AddContestantResponse} a complex response of success or not.
+ */
+Session.prototype.subscribeForStateChange = function(event, callback) {
+    var $this = this;
+    this._state[event] = function(event, from, to) {
+        callback($this, event, from, to);
+    };
+};
+
+/**
+ * Defines a method which tries to register a buzzer press for the given
+ * contestant id.
+ * @public
+ * @param  {Number} contestantId
+ * @return {Boolean} true when the buzzer press was accepted; else false.
+ */
+Session.prototype.tryBuzzerPressRegister = function(contestantId) {
+    var contestant = this.contestants.find(function(c) {
+        return c.id === contestantId;
+    });
+
+    if (contestant == null) {
+        return false;
+    }
+
+    if (this._state.can('buzzerPressed')) {
+        this._pendingWinContestant = contestant;
+        this._state.buzzerPressed();
+        return true;
+    }
+
+    return false;
+};
+
+/**
+ * Defines a method which tries the buzzer action.
+ * @public
+ * @param  {Number} action @see {@link constants.buzzerActionCommands}.
+ * @return {Boolean} true if the buzzer action was accepted; else false.
+ */
+Session.prototype.tryBuzzerAction = function(action) {
+    if (constants.buzzerActionCommands.all.indexOf(action) &lt; 0) {
+        return false;
+    }
+
+    if (this.roundWinner) {
+        this.previousWinners.push(this.roundWinner);
+    }
+    this._roundWinner = null;
+
+    switch (action) {
+        case constants.buzzerActionCommands.ACCEPT:
+            if (this._state.can('acceptBuzz')) {
+                this._pendingWinContestant.incrementScore();
+                this._roundWinner = this._pendingWinContestant.username;
+                this._pendingWinContestant = null;
+                this._state.acceptBuzz();
+                return true;
+            }
+            break;
+        case constants.buzzerActionCommands.REJECT:
+            if (this._state.can('rejectBuzz')) {
+                this._pendingWinContestant = null;
+                this._state.rejectBuzz();
+                return true;
+            }
+            break;
+        case constants.buzzerActionCommands.RESET:
+            if (this._state.can('resetBuzz')) {
+                this._pendingWinContestant = null;
+                this._state.resetBuzz();
+                return true;
+            }
+            break;
+        case constants.buzzerActionCommands.DISABLE:
+            if (this._state.can('disableBuzzers')) {
+                this._pendingWinContestant = null;
+                this._state.disableBuzzers();
+                return true;
+            }
+            break;
+        case constants.buzzerActionCommands.ENABLE:
+            if (this._state.can('enableBuzzers')) {
+                this._pendingWinContestant = null;
+                this._state.enableBuzzers();
+                return true;
+            }
+            break;
+    }
+
+    return false;
 };
 
 //Export the class
@@ -264,13 +543,13 @@ module.exports = Session;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:15:00 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 14:21:44 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>

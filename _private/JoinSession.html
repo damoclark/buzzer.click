@@ -1,20 +1,20 @@
-<!DOCTYPE hml>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Join Session</title>
-	<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="content/style.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Join Session</title>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="content/style.css" rel="stylesheet">
 </head>
 
 <body>
-	<nav class="navbar navbar-inverse">
-		<div class="navbar-brand">Buzzer</div>
-	</nav>
-	<div class="container">
+    <nav class="navbar navbar-inverse">
+        <div class="navbar-brand">Buzzer</div>
+    </nav>
+    <div class="container">
         <div class="row">
             <div class="col-sm-6 col-sm-offset-3">
                 <h2>Join Session</h2>
@@ -31,9 +31,9 @@
                 </form>
             </div>
         </div>
-	</div>
+    </div>
 
-    
+
     <!-- MODALS - modal-teamleader and modal-team-name, these will be called via JS depending on the session 
     options returned from the ajax request -->
     <div class="modal fade" id="modal-teamleader">
@@ -62,11 +62,11 @@
                         <h4 class="modal-title">Update your team name</h4>
                     </div>
                     <div class="modal-body">
-                        
-                            <div class="form-group">
-                                <label for="team-name">Team name</label>
-                                <input type="text" class="form-control" id="session-team-name" name="session-team-name" />
-                            </div>
+
+                        <div class="form-group">
+                            <label for="team-name">Team name</label>
+                            <input type="text" class="form-control" id="session-team-name" name="session-team-name" />
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary" id="update-team-name">Update</button>
@@ -75,10 +75,32 @@
             </div>
         </div>
     </div>
-    
-    
-	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
-	<script src="bootstrap/js/bootstrap.min.js"></script>
+
+
+    <div class="modal fade" id="modal-choose-team">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Team selection</h4>
+                </div>
+                <form id="choose-team-form">
+                    <div class="modal-body">
+                        <label for="choose-team-choice">Team:</label>
+                        <select id="choose-team-choice" name="choose-team-choice">
+                    </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Go</button>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/bundle.js"></script>
     <script src="js/controller.js"></script>
     <script type="text/javascript">
@@ -97,6 +119,14 @@
             }else{
                 redirectContestant();
             }
+        }
+        
+        var handleChooseTeam = function(values){
+            $.each(values,function(key,item){
+                $('#choose-team-choice').append('<option val="'+item+'">'+item+'</option>');
+            });
+            $('#modal-choose-team').modal();
+
         }
 
         $(function(){
@@ -161,6 +191,12 @@
                 if(sessionCookie != undefined && participantCookie != undefined){
                     setTeamName(sessionCookie,participantCookie,teamName);
                 }
+            });
+            $('#modal-choose-team').submit(function(event){
+                event.preventDefault();
+                $(this).modal("hide");
+                values['choose-team-choice'] = $('#choose-team-choice').val();
+                joinSession(values);
             });
         });
     </script>

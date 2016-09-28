@@ -148,7 +148,7 @@ describe('Teams', function() {
             tc.length.should.equal(1);
         });
     });
-    describe('addContestant(contestant, settings, inquireTeamLeaderCallback, inquireTeamNameCallback)', function() {
+    describe('addContestant(contestant, settings, inquireTeamLeaderCallback, teamName)', function() {
         it('should give contestant an id', function() {
             var s = new Settings();
             s.hasTeams = true;
@@ -339,6 +339,106 @@ describe('Teams', function() {
                 });
             });
         });
+        describe('when set to use unlimited teams', function() {
+            it('should add team when teams are full', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.maxTeams = constants.UNLIMITED;
+                s.teamSize = 1;
+
+                var t = new Team();
+                t.teamName = 't1';
+
+                var tc = new Teams();
+                tc.add(t);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c1';
+
+                var [r, em] = tc.addContestant(c1, s, function() {});
+                r.should.be.true();
+                should.not.exist(em);
+
+                tc.all.length.should.equal(1);
+
+                [r, em] = tc.addContestant(c1, s, function() {});
+                r.should.be.true();
+                should.not.exist(em);
+
+                tc.all.length.should.equal(2);
+            });
+        });
+        describe('when team selection method is PLAYER_CHOICE', function() {
+            it('should throw when no team name is given', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamSize = 1;
+                s.maxTeams = 3;
+                s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
+
+                var tc = new Teams();
+                teamFactory.create(tc, s);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+
+                (function() {
+                    tc.addContestant(c1, s, function() {});
+                }).should.throw();
+            });
+            it('should add contestant to correct team', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamSize = 1;
+                s.maxTeams = 3;
+                s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
+
+                var tc = new Teams();
+                teamFactory.create(tc, s);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+
+                var teamName = tc.all[1].teamName;
+
+                var [r, em] = tc.addContestant(c1, s, function() {}, teamName);
+                r.should.be.true();
+                should.not.exist(em);
+
+                var t = tc.getByTeamName(teamName);
+                t.contestants.length.should.equal(1);
+            });
+            it('should not add to full team', function() {
+                var s = new Settings();
+                s.hasTeams = true;
+                s.teamSize = 1;
+                s.maxTeams = 3;
+                s.teamSelectionMethod = constants.teamSelectionMethod.PLAYER_CHOICE;
+
+                var tc = new Teams();
+                teamFactory.create(tc, s);
+
+                var c1 = new Contestant();
+                c1.username = 'c1';
+                var c2 = new Contestant();
+                c2.username = 'c2';
+
+                var teamName = tc.all[1].teamName;
+
+                var [r, em] = tc.addContestant(c1, s, function() {}, teamName);
+                r.should.be.true();
+                should.not.exist(em);
+
+                [r, em] = tc.addContestant(c2, s, function() {}, teamName);
+                r.should.be.false();
+                em.should.equal(constants.messages.TEAMS_ARE_FULL);
+
+                var t = tc.getByTeamName(teamName);
+                t.contestants.length.should.equal(1);
+            });
+        });
     });
     describe('getByContestant(contestant)', function() {
         it('should get team of contestant', function() {
@@ -402,6 +502,59 @@ describe('Teams', function() {
 
             var t = tc.getByTeamName('Not a team name that exists');
             should(t).be.null();
+        });
+    });
+    describe('getAvailable(settings)', function() {
+        it('should not return full teams', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = 1;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(2);
+            cc.forEach(function(c) {
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(1);
+        });
+        it('should return teams with space', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = 3;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(3);
+            cc.forEach(function(c) {
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(3);
+        });
+        it('should return teams with unlimited space', function() {
+            var s = new Settings();
+            s.hasTeams = true;
+            s.maxTeams = 3;
+            s.teamSize = constants.UNLIMITED;
+
+            var tc = new Teams();
+            teamFactory.create(tc, s);
+
+            var cc = generateContestants(3);
+            cc.forEach(function(c) {
+                tc.addContestant(c, s, function() {});
+            });
+
+            var teams = tc.getAvailable(s);
+            teams.length.should.equal(3);
         });
     });
 });

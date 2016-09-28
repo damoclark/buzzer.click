@@ -28,6 +28,8 @@
         <article>
             <pre class="prettyprint source linenums"><code>var ParamCheck = require('./ParamCheck');
 var constants = require('./Constants');
+var unique = require('array-unique');
+require('./Pollyfills');
 
 /**
  * Settings module.
@@ -39,20 +41,49 @@ var constants = require('./Constants');
  * @constructor
  */
 function Settings() {
-
+    this._teamNames = [];
 }
 
 /**
  * Prototype name
  */
 Settings.prototype.type = 'Settings';
-
+/**
+ * @private
+ */
 Settings.prototype._hasTeams = false;
+/**
+ * @private
+ */
 Settings.prototype._teamSize = 0;
+/**
+ * @private
+ */
 Settings.prototype._maxTeams = 0;
-Settings.prototype._teamSelectionMethod = constants.teamSelectionMethod.AUTO;
+/**
+ * @private
+ */
+Settings.prototype._teamLeaderSelectionMethod = constants.teamLeaderSelectionMethod.RANDOM;
+/**
+ * @private
+ */
 Settings.prototype._teamNameEdit = constants.teamNameEdit.ALLOW;
+/**
+ * @private
+ */
+Settings.prototype._teamSelectionMethod = constants.teamSelectionMethod.SMALLEST_TEAM;
+/**
+ * @private
+ */
 Settings.prototype._maxContestants = 0;
+/**
+ * @private
+ */
+Settings.prototype._sessionName = null;
+/**
+ * @private
+ */
+Settings.prototype._teamNames = [];
 
 /**
  * Defines a property to get and set the @see {@link _hasTeams} field.
@@ -107,6 +138,30 @@ Object.defineProperty(Settings.prototype, 'maxTeams', {
 
 /**
  * Defines a property to get and set the @see {@link _teamSelectionMethod} field.
+ * @throw when val not in @see {@link constants.teamLeaderSelectionMethod.all}.
+ */
+Object.defineProperty(Settings.prototype, 'teamLeaderSelectionMethod', {
+    get: function() {
+        return this._teamLeaderSelectionMethod;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Number')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        if (constants.teamLeaderSelectionMethod.all.indexOf(val) &lt; 0) {
+            throw new Error(
+                'Argument `val` is an invalid constant value.'
+            );
+        }
+        this._teamLeaderSelectionMethod = val;
+    }
+});
+
+/**
+ * Defines a property to get and set the @see {@link _teamSelectionMethod} field.
+ * @throw when val not in @see {@link constants.teamSelectionMethod.all}.
  */
 Object.defineProperty(Settings.prototype, 'teamSelectionMethod', {
     get: function() {
@@ -166,6 +221,93 @@ Object.defineProperty(Settings.prototype, 'maxContestants', {
     }
 });
 
+/**
+ * Defines a property to get and set the @see {@link _sessionName} field.
+ */
+Object.defineProperty(Settings.prototype, 'sessionName', {
+    get: function() {
+        return this._sessionName;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this._sessionName = val;
+    }
+});
+
+/**
+ * Defines a property to get and set the @see {@link _teamNames} field.
+ */
+Object.defineProperty(Settings.prototype, 'teamNames', {
+    get: function() {
+        return this._teamNames;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Array')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this._teamNames = val;
+    }
+});
+
+/**
+ * Defines a method to validate whether the settings, in their current state, are valid for use to create a session.
+ * @public
+ * @return {[Boolean|String]} true when settings are valid; else false and the fail reason.
+ */
+Settings.prototype.validate = function() {
+    if (this._hasTeams) {
+        if (this._teamSize &lt; 1) {
+            return [false, constants.messages.TEAM_SIZE_MUST_BE_GREATER_THAN_ZERO];
+        }
+        if (this._maxTeams &lt; 1) {
+            return [false, constants.messages.MAX_TEAMS_MUST_BE_GREATER_THAN_ZERO];
+        }
+        if (this._teamNames.length > 0) {
+            var namesLowered = this._teamNames.map(function(n) {
+                return n.toLowerCase();
+            });
+            var uniqueNames = unique(namesLowered);
+            if (this._teamNames.length !== uniqueNames.length) {
+                return [false, constants.messages.TEAM_NAMES_MUST_BE_UNIQUE];
+            }
+        }
+        if (this._maxTeams === constants.UNLIMITED &amp;&amp; this._teamSize === constants.UNLIMITED) {
+            return [false, constants.messages.TEAMS_OR_TEAM_SIZE_UNLIMITED_NOT_BOTH];
+        }
+        if (this._teamSelectionMethod === constants.teamSelectionMethod.PLAYER_CHOICE &amp;&amp; this._maxTeams === constants.UNLIMITED) {
+            return [false, constants.messages.PLAYER_CANNOT_CHOICE_OWN_TEAM_WHEN_USING_UNLIMITED_TEAMS];
+        }
+    } else {
+        if (this._teamSize > 0) {
+            return [false, constants.messages.TEAM_SIZE_MUST_BE_ZERO_WHEN_NOT_USING_TEAMS];
+        }
+        if (this._maxTeams > 0) {
+            return [false, constants.messages.MAX_TEAMS_MUST_BE_ZERO_WHEN_NOT_USING_TEAMS];
+        }
+        if (this._teamNames.length > 0) {
+            return [false, constants.messages.TEAM_NAMES_MUST_NOT_BE_USED_WHEN_NOT_USING_TEAMS];
+        }
+    }
+
+    if (!this._hasTeams) {
+        if (this._maxContestants &lt; 1) {
+            return [false, constants.messages.MAX_CONTESTANTS_MUST_BE_ZERO_WHEN_USING_TEAMS];
+        }
+    } else {
+        if (this._maxContestants > 0) {
+            return [false, constants.messages.MAX_CONTESTANTS_MUST_BE_GREATER_THAN_ZERO];
+        }
+    }
+
+    return [true];
+};
+
 //Export the class
 module.exports = Settings;
 </code></pre>
@@ -178,13 +320,13 @@ module.exports = Settings;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractContainer">AbstractContainer</a></li><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerError">BuzzerError</a></li><li><a href="global.html#BuzzerStateMessage">BuzzerStateMessage</a></li><li><a href="global.html#Clients">Clients</a></li><li><a href="global.html#ConfirmMessage">ConfirmMessage</a></li><li><a href="global.html#ContestantBuzzerPress">ContestantBuzzerPress</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#CreateGameConfirmMessage">CreateGameConfirmMessage</a></li><li><a href="global.html#CreateGameMessage">CreateGameMessage</a></li><li><a href="global.html#Game">Game</a></li><li><a href="global.html#Games">Games</a></li><li><a href="global.html#HostBuzzerResetMessage">HostBuzzerResetMessage</a></li><li><a href="global.html#Hosts">Hosts</a></li><li><a href="global.html#HostSessionCreateResponse">HostSessionCreateResponse</a></li><li><a href="global.html#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></li><li><a href="global.html#JoinGameMessage">JoinGameMessage</a></li><li><a href="global.html#methods">methods</a></li><li><a href="global.html#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></li><li><a href="global.html#ProtocolErrorMessage">ProtocolErrorMessage</a></li><li><a href="global.html#RegisterNameMessage">RegisterNameMessage</a></li><li><a href="global.html#RequestTeamNameMessage">RequestTeamNameMessage</a></li><li><a href="global.html#restore">restore</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#Settings">Settings</a></li><li><a href="global.html#socketio">socketio</a></li><li><a href="global.html#State">State</a></li><li><a href="global.html#Team">Team</a></li><li><a href="global.html#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></li><li><a href="global.html#Teams">Teams</a></li><li><a href="global.html#updateSocket">updateSocket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Sep 08 2016 15:15:00 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 14:21:44 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -4,11 +4,11 @@
   "description": "Online realtime electronic buzzer for games",
   "main": "app.js",
   "engines": {
-      "node": "6.5.0"
+    "node": "6.5.0"
   },
   "scripts": {
-    "tests-bdd": "Mocha --reporter spec tests/BDD/**/*.js",
-    "tests-functional": "Mocha --reporter spec tests/Functional/**/*.js",
+    "tests-bdd": "Mocha tests/BDD/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-BDD",
+    "tests-functional": "Mocha tests/Functional/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-Functional",
     "build": "browserify browser.js --standalone buzzapi -o www/js/bundle.js",
     "watch": "watchify browser.js --standalone buzzapi -o www/js/bundle.js -verbose",
     "beautify-solution": "node beautify-solution.js",
@@ -18,6 +18,8 @@
   "license": "GPL-3.0",
   "private": true,
   "dependencies": {
+    "arr-union": "^3.1.0",
+    "array-unique": "^0.3.2",
     "bad-words": "^1.4.2",
     "chance": "^0.7.*",
     "compression": "^1.4.*",
@@ -40,6 +42,7 @@
     "jsdoc-to-markdown": "^1.3.7",
     "jshint": "2.9.*",
     "mocha": "^3.0.0",
+    "mochawesome": "^1.5.2",
     "require-globify": "^1.2.1",
     "should": "^10.0.0",
     "watchify": "^3.3.0"

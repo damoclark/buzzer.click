@@ -1,8 +1,25 @@
+## Modules
+
+<dl>
+<dt><a href="#module_GenericObjectFactory">GenericObjectFactory</a></dt>
+<dd><p>Generic object factory</p>
+</dd>
+</dl>
+
 ## Members
 
 <dl>
-<dt><a href="#methods">methods</a></dt>
-<dd><p>Methods to add to the socket object</p>
+<dt><a href="#data">data</a></dt>
+<dd><p>Holds the message payload.</p>
+</dd>
+<dt><a href="#protocol">protocol</a></dt>
+<dd><p>Pulls definition from prototype.</p>
+</dd>
+<dt><a href="#type">type</a></dt>
+<dd><p>Pulls definition from prototype.</p>
+</dd>
+<dt><a href="#schema">schema</a></dt>
+<dd><p>Define the abstract message schema</p>
 </dd>
 </dl>
 
@@ -10,315 +27,212 @@
 
 <dl>
 <dt><a href="#AbstractMessage">AbstractMessage()</a></dt>
-<dd><p>Abstract message class from which all socket.io message objects should derive</p>
+<dd><p>Abstract message class from which all socket.io message objects should derive.</p>
 </dd>
-<dt><a href="#BuzzerStateMessage">BuzzerStateMessage(args)</a> ⇒ <code><a href="#BuzzerStateMessage">BuzzerStateMessage</a></code></dt>
-<dd><p>This message is from server to client and provides the buzzer state message
-or if not set, can be set using the setEnabled method.</p>
+<dt><a href="#BuzzerActionCommandMessage">BuzzerActionCommandMessage()</a> ⇒ <code><a href="#ErrorMessage">ErrorMessage</a></code></dt>
+<dd><p>Represents message which is used to convey a buzzer related action command.</p>
 </dd>
-<dt><a href="#ConfirmMessage">ConfirmMessage(code, message, args)</a> ⇒ <code><a href="#ConfirmMessage">ConfirmMessage</a></code></dt>
-<dd><p>This message is a generic confirmation from the last request
-You can set a confirmation code where 0 is OK, and other numbers represent
-different error states.  There is also a string message field which can be
-used to present an error message to the user.</p>
+<dt><a href="#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage()</a> ⇒ <code><a href="#SuccessMessage">SuccessMessage</a></code></dt>
+<dd><p>Represents a message to convey a contestant buzzer press.</p>
 </dd>
-<dt><a href="#ContestantBuzzerPress">ContestantBuzzerPress(args)</a> ⇒ <code><a href="#ContestantBuzzerPress">ContestantBuzzerPress</a></code></dt>
-<dd><p>This message is from server to client and provides the contestant buzzer press event
-No getter or setter, this message is only a trigger</p>
+<dt><a href="#ContestantJoinRequestMessage">ContestantJoinRequestMessage()</a> ⇒ <code><a href="#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></code></dt>
+<dd><p>Represent a message which is used to request the joining of a session by a contestant.</p>
 </dd>
-<dt><a href="#ContestantJoinResponseMessage">ContestantJoinResponseMessage(args)</a> ⇒ <code><a href="#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></code></dt>
-<dd><p>This message is from server to client and provides the contestant join response message
-or if not set, can be set using the various set methods:
- setWasSuccessful(result) : void
- setErrorMessage(errorMessage) : void
- setParticipantId(participantId) : void</p>
+<dt><a href="#ContestantJoinResponseMessage">ContestantJoinResponseMessage()</a> ⇒ <code><a href="#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></code></dt>
+<dd><p>Represent a message which to response to a @see <a href="#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a>.</p>
 </dd>
-<dt><a href="#CreateGameConfirmMessage">CreateGameConfirmMessage(code, message, args)</a> ⇒ <code><a href="#CreateGameConfirmMessage">CreateGameConfirmMessage</a></code></dt>
-<dd><p>This message is a confirmation response for a CreateGameMessage
-You can set a confirmation code where 0 is OK, and other numbers represent
-different error states.  There is also a string message field which can be
-used to present an error message to the user.</p>
+<dt><a href="#CreateSessionMessage">CreateSessionMessage()</a> ⇒ <code><a href="#CreateSessionMessage">CreateSessionMessage</a></code></dt>
+<dd><p>Represents a message which is used to create a new session.</p>
 </dd>
-<dt><a href="#CreateGameMessage">CreateGameMessage(settings)</a> ⇒ <code><a href="#CreateGameMessage">CreateGameMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the settings for a new
-Game</p>
+<dt><a href="#CreateSessionResponseMessage">CreateSessionResponseMessage()</a> ⇒ <code><a href="#CreateSessionResponseMessage">CreateSessionResponseMessage</a></code></dt>
+<dd><p>Represents a message which is used to response to a @see <a href="#CreateSessionMessage">CreateSessionMessage</a> request.</p>
 </dd>
-<dt><a href="#HostBuzzerResetMessage">HostBuzzerResetMessage(args)</a> ⇒ <code><a href="#HostBuzzerResetMessage">HostBuzzerResetMessage</a></code></dt>
-<dd><p>This message is from server to client and provides the host buzzer reset response
-or if not set, can be set using the setState method</p>
+<dt><a href="#ErrorMessage">ErrorMessage()</a> ⇒ <code><a href="#ErrorMessage">ErrorMessage</a></code></dt>
+<dd><p>Represents message which is use to convey an error state.</p>
 </dd>
-<dt><a href="#HostSessionCreateResponse">HostSessionCreateResponse(args)</a> ⇒ <code><a href="#HostSessionCreateResponse">HostSessionCreateResponse</a></code></dt>
-<dd><p>This message is from server to client and provides the host create response
-or if not set, can be set using the setSession method</p>
+<dt><a href="#HostSettingsUpdateMessage">HostSettingsUpdateMessage()</a> ⇒ <code><a href="#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></code></dt>
+<dd><p>Represents a message to set the team name.</p>
 </dd>
-<dt><a href="#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage(args)</a> ⇒ <code><a href="#InquireTeamLeaderPositionMessage">InquireTeamLeaderPositionMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the team leader status of the client
-or if not set, can be set using the setResponse method</p>
+<dt><a href="#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage()</a> ⇒ <code><a href="#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></code></dt>
+<dd><p>Represents a message to set the team leader.</p>
 </dd>
-<dt><a href="#JoinGameMessage">JoinGameMessage(args)</a> ⇒ <code><a href="#JoinGameMessage">JoinGameMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the gamecode of the client
-or if not set, can be set using the setGameCode method</p>
+<dt><a href="#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage()</a> ⇒ <code><a href="#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></code></dt>
+<dd><p>Represents a message to set the team name.</p>
 </dd>
-<dt><a href="#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage(args)</a> ⇒ <code><a href="#ParticipantJoinRequestMessage">ParticipantJoinRequestMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the participant join request message
-or if not set, can be set using the various set methods:
- sessionId(sessionId) : void
- participantId(participantId) : void
- username(username) : void
- isObserver(value) : void</p>
+<dt><a href="#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage()</a> ⇒ <code><a href="#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></code></dt>
+<dd><p>Represents a message to response to an inquiry about being a team leader.</p>
 </dd>
-<dt><a href="#ProtocolErrorMessage">ProtocolErrorMessage(message, args)</a> ⇒ <code><a href="#ProtocolErrorMessage">ProtocolErrorMessage</a></code></dt>
-<dd><p>This message is sent in response to an invalid message received, typically
-if it fails the jsonschema validation.
-The code is set to 255, and message is empty string</p>
+<dt><a href="#ObserverUpdateMessage">ObserverUpdateMessage()</a> ⇒ <code><a href="#ObserverUpdateMessage">ObserverUpdateMessage</a></code></dt>
+<dd><p>Represents a message which is use to convey game state update to registered observers.</p>
 </dd>
-<dt><a href="#RegisterNameMessage">RegisterNameMessage(args)</a> ⇒ <code><a href="#RegisterNameMessage">RegisterNameMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the name of the client
-or if not set, can be set using the setName method</p>
+<dt><a href="#RejoinSessionMessage">RejoinSessionMessage()</a> ⇒ <code><a href="#RejoinSessionMessage">RejoinSessionMessage</a></code></dt>
+<dd><p>Represents a message which is used to request the rejoining of an existing session.</p>
 </dd>
-<dt><a href="#RequestTeamNameMessage">RequestTeamNameMessage(args)</a> ⇒ <code><a href="#RequestTeamNameMessage">RequestTeamNameMessage</a></code></dt>
-<dd><p>This message is from client to server and provides the team name of the client
-or if not set, can be set using the seTeamName method if client is a team leader or host</p>
+<dt><a href="#RoundWonMessage">RoundWonMessage()</a> ⇒ <code><a href="#ErrorMessage">ErrorMessage</a></code></dt>
+<dd><p>Represents message which is use to convey winner information for when a session round is won.</p>
 </dd>
-<dt><a href="#RoundWonMessage">RoundWonMessage(args)</a> ⇒ <code><a href="#RoundWonMessage">RoundWonMessage</a></code></dt>
-<dd><p>This message is from server to client and provides the winner information message
-or if not set, can be set using the various set methods:
- username(userName) : void
- userId(userId) : void
- teamName(teamName) : void
- teamId(teamId) : void</p>
+<dt><a href="#SessionComplete">SessionComplete()</a> ⇒ <code><a href="#SessionComplete">SessionComplete</a></code></dt>
+<dd><p>Represents a message to convey the session is now complete.</p>
 </dd>
-<dt><a href="#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage(args)</a> ⇒ <code><a href="#TeamLeaderPositionInquiryResponseMessage">TeamLeaderPositionInquiryResponseMessage</a></code></dt>
-<dd><p>This message is from server to client and provides the team leader status of the client
-or if not set, can be set using the response method</p>
+<dt><a href="#SessionCompleted">SessionCompleted()</a> ⇒ <code><a href="#SessionCompleted">SessionCompleted</a></code></dt>
+<dd><p>Represents a message to convey the session is completed.</p>
 </dd>
-<dt><a href="#AbstractContainer">AbstractContainer()</a></dt>
-<dd><p>An abstract container object prototype for state information for the server</p>
+<dt><a href="#SessionInformationRequestMessage">SessionInformationRequestMessage()</a> ⇒ <code><a href="#SessionInformationRequestMessage">SessionInformationRequestMessage</a></code></dt>
+<dd><p>Represents a request message to send session information.</p>
 </dd>
-<dt><a href="#BuzzerError">BuzzerError(code, message, fileName, lineNumber)</a> ⇒ <code><a href="#BuzzerError">BuzzerError</a></code></dt>
-<dd><p>Exception handler class for Buzzer.click</p>
+<dt><a href="#SessionInformationResponseMessage">SessionInformationResponseMessage()</a> ⇒ <code><a href="#SessionInformationResponseMessage">SessionInformationResponseMessage</a></code></dt>
+<dd><p>Represents a message which is use to convey the callers session information</p>
 </dd>
-<dt><a href="#Clients">Clients()</a> ⇒ <code><a href="#Clients">Clients</a></code></dt>
-<dd><p>Object that contains a list of all clients connections and their socket</p>
+<dt><a href="#SetTeamNameRequestMessage">SetTeamNameRequestMessage()</a> ⇒ <code><a href="#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></code></dt>
+<dd><p>Represents a message to set the team name.</p>
 </dd>
-<dt><a href="#Game">Game(settings)</a> ⇒ <code><a href="#Game">Game</a></code></dt>
-<dd><p>Game object contains the data for this game, including other objects</p>
-</dd>
-<dt><a href="#Games">Games()</a> ⇒ <code><a href="#Games">Games</a></code></dt>
-<dd><p>Games Class provides overarching state store for entire system where
-games are added or removed</p>
-</dd>
-<dt><a href="#Hosts">Hosts()</a> ⇒ <code><a href="#Hosts">Hosts</a></code></dt>
-<dd><p>Hosts object contains a list of all the Host sockets</p>
-</dd>
-<dt><a href="#restore">restore(msg)</a> ⇒ <code><a href="#AbstractMessage">AbstractMessage</a></code></dt>
-<dd><p>Given json object received from remote endpoint, return a subclass of
-AbstractMessage representing this message.  Null if there is an validation
-error</p>
-</dd>
-<dt><a href="#create">create(name, args)</a> ⇒ <code><a href="#AbstractMessage">AbstractMessage</a></code></dt>
-<dd><p>Create a new message object by the given name, and optionally initialised
-with the values in the Object args, and return it.  Null if there was an
-error</p>
-</dd>
-<dt><a href="#updateSocket">updateSocket(socket)</a></dt>
-<dd><p>Add emitMessage and onMessage methods to object</p>
-</dd>
-<dt><a href="#Settings">Settings()</a> ⇒ <code><a href="#Settings">Settings</a></code></dt>
-<dd><p>Settings object contains configuration options for this game</p>
-</dd>
-<dt><a href="#State">State()</a> ⇒ <code><a href="#State">State</a></code></dt>
-<dd><p>State object contains the running state of this game</p>
-</dd>
-<dt><a href="#Team">Team()</a> ⇒ <code><a href="#Team">Team</a></code></dt>
-<dd><p>Team object contains setting information for this team in a game</p>
-</dd>
-<dt><a href="#Teams">Teams()</a> ⇒ <code><a href="#Teams">Teams</a></code></dt>
-<dd><p>Teams object contains a list of all the Team objects</p>
+<dt><a href="#SuccessMessage">SuccessMessage()</a> ⇒ <code><a href="#SuccessMessage">SuccessMessage</a></code></dt>
+<dd><p>Represents a message to convey a successful operation or request.</p>
 </dd>
 </dl>
 
-<a name="methods"></a>
+<a name="module_GenericObjectFactory"></a>
 
-## methods
-Methods to add to the socket object
+## GenericObjectFactory
+Generic object factory
+
+
+* [GenericObjectFactory](#module_GenericObjectFactory)
+    * [~GenericObjectFactory](#module_GenericObjectFactory..GenericObjectFactory)
+        * [new GenericObjectFactory()](#new_module_GenericObjectFactory..GenericObjectFactory_new)
+        * [.type](#module_GenericObjectFactory..GenericObjectFactory+type)
+        * [.create()](#module_GenericObjectFactory..GenericObjectFactory+create)
+
+<a name="module_GenericObjectFactory..GenericObjectFactory"></a>
+
+### GenericObjectFactory~GenericObjectFactory
+**Kind**: inner class of <code>[GenericObjectFactory](#module_GenericObjectFactory)</code>  
+**Access:** public  
+
+* [~GenericObjectFactory](#module_GenericObjectFactory..GenericObjectFactory)
+    * [new GenericObjectFactory()](#new_module_GenericObjectFactory..GenericObjectFactory_new)
+    * [.type](#module_GenericObjectFactory..GenericObjectFactory+type)
+    * [.create()](#module_GenericObjectFactory..GenericObjectFactory+create)
+
+<a name="new_module_GenericObjectFactory..GenericObjectFactory_new"></a>
+
+#### new GenericObjectFactory()
+Represents a generic object factory
+
+<a name="module_GenericObjectFactory..GenericObjectFactory+type"></a>
+
+#### genericObjectFactory.type
+Prototype name
+
+**Kind**: instance property of <code>[GenericObjectFactory](#module_GenericObjectFactory..GenericObjectFactory)</code>  
+<a name="module_GenericObjectFactory..GenericObjectFactory+create"></a>
+
+#### genericObjectFactory.create()
+Represents a method which converts a given obj to a generic representation
+
+**Kind**: instance method of <code>[GenericObjectFactory](#module_GenericObjectFactory..GenericObjectFactory)</code>  
+<a name="data"></a>
+
+## data
+Holds the message payload.
 
 **Kind**: global variable  
+<a name="protocol"></a>
 
-* [methods](#methods)
-    * [.onMessage(event, fn)](#methods.onMessage)
-    * [.emitMessage(message, fn)](#methods.emitMessage)
+## protocol
+Pulls definition from prototype.
 
-<a name="methods.onMessage"></a>
+**Kind**: global variable  
+<a name="type"></a>
 
-### methods.onMessage(event, fn)
-Establish event handler for receiving an AbstractMessage message - overriden
-method from Socket class
+## type
+Pulls definition from prototype.
 
-**Kind**: static method of <code>[methods](#methods)</code>  
+**Kind**: global variable  
+<a name="schema"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| event | <code>String</code> | Name of event to wait for |
-| fn | <code>function</code> | Function to call on message |
+## schema
+Define the abstract message schema
 
-<a name="methods.emitMessage"></a>
-
-### methods.emitMessage(message, fn)
-Emit an AbstractMessage message - overidden method from Socket class
-
-**Kind**: static method of <code>[methods](#methods)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>[AbstractMessage](#AbstractMessage)</code> | A subclass of AbstractMessage to be sent |
-| fn | <code>function</code> | An optional callack to execute to send a reply |
-
+**Kind**: global variable  
 <a name="AbstractMessage"></a>
 
-## AbstractMessage()
-Abstract message class from which all socket.io message objects should derive
+## *AbstractMessage()*
+Abstract message class from which all socket.io message objects should derive.
 
-**Kind**: global function  
+**Kind**: global abstract function  
+**Access:** protected  
 
-* [AbstractMessage()](#AbstractMessage)
-    * [.validate()](#AbstractMessage+validate) ⇒ <code>Boolean</code>
-    * [.set(args)](#AbstractMessage+set) ⇒ <code>[AbstractMessage](#AbstractMessage)</code>
-    * [.get()](#AbstractMessage+get) ⇒ <code>Object</code>
-    * [.getJSON()](#AbstractMessage+getJSON) ⇒ <code>Object</code>
-    * [.getType()](#AbstractMessage+getType) ⇒ <code>String</code>
+* *[AbstractMessage()](#AbstractMessage)*
+    * *[.validate()](#AbstractMessage+validate) ⇒ <code>ValidatorResult</code>*
+    * *[.isValid()](#AbstractMessage+isValid) ⇒ <code>Boolean</code>*
 
 <a name="AbstractMessage+validate"></a>
 
-### abstractMessage.validate() ⇒ <code>Boolean</code>
-Validate the data datastructure for the instance or if provided
+### *abstractMessage.validate() ⇒ <code>ValidatorResult</code>*
+Validate the data data structure for the instance or if provided
 the data object that is passed to this method
 
 **Kind**: instance method of <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>Boolean</code> - True if valid, otherwise false  
 **Access:** public  
-<a name="AbstractMessage+set"></a>
+<a name="AbstractMessage+isValid"></a>
 
-### abstractMessage.set(args) ⇒ <code>[AbstractMessage](#AbstractMessage)</code>
-Set the data for the message object to args, replacing the same values that
-existed before
+### *abstractMessage.isValid() ⇒ <code>Boolean</code>*
+Validate the data data structure for the instance or if provided
+the data object that is passed to this method
 
 **Kind**: instance method of <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[AbstractMessage](#AbstractMessage)</code> - Returns itself  
+**Returns**: <code>Boolean</code> - true if valid, otherwise false  
 **Access:** public  
+<a name="BuzzerActionCommandMessage"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | data to replace what is in this instance |
-
-<a name="AbstractMessage+get"></a>
-
-### abstractMessage.get() ⇒ <code>Object</code>
-Get the raw data from the message object
-
-**Kind**: instance method of <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>Object</code> - Raw data object from message  
-**Access:** public  
-<a name="AbstractMessage+getJSON"></a>
-
-### abstractMessage.getJSON() ⇒ <code>Object</code>
-Get the JSON data structure as sent over the network for this object
-
-**Kind**: instance method of <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>Object</code> - JSON data structure to be sent over network  
-**Access:** public  
-<a name="AbstractMessage+getType"></a>
-
-### abstractMessage.getType() ⇒ <code>String</code>
-Get the type of this message as a string
-
-**Kind**: instance method of <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>String</code> - The type of this object as a string  
-**Access:** public  
-<a name="BuzzerStateMessage"></a>
-
-## BuzzerStateMessage(args) ⇒ <code>[BuzzerStateMessage](#BuzzerStateMessage)</code>
-This message is from server to client and provides the buzzer state message
-or if not set, can be set using the setEnabled method.
+## BuzzerActionCommandMessage() ⇒ <code>[ErrorMessage](#ErrorMessage)</code>
+Represents message which is used to convey a buzzer related action command.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[BuzzerStateMessage](#BuzzerStateMessage)</code> - An instance  
+<a name="BuzzerActionCommandMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### buzzerActionCommandMessage.type
+The type of this class.
 
-<a name="BuzzerStateMessage+type"></a>
-
-### buzzerStateMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[BuzzerStateMessage](#BuzzerStateMessage)</code>  
+**Kind**: instance property of <code>[BuzzerActionCommandMessage](#BuzzerActionCommandMessage)</code>  
 **Access:** public  
-<a name="ConfirmMessage"></a>
+<a name="ContestantBuzzerPressMessage"></a>
 
-## ConfirmMessage(code, message, args) ⇒ <code>[ConfirmMessage](#ConfirmMessage)</code>
-This message is a generic confirmation from the last request
-You can set a confirmation code where 0 is OK, and other numbers represent
-different error states.  There is also a string message field which can be
-used to present an error message to the user.
+## ContestantBuzzerPressMessage() ⇒ <code>[SuccessMessage](#SuccessMessage)</code>
+Represents a message to convey a contestant buzzer press.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[ConfirmMessage](#ConfirmMessage)</code> - An instance  
+<a name="ContestantBuzzerPressMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| code | <code>Integer</code> | The confirmation code (if undefined, then 0 - OK) |
-| message | <code>String</code> | The confirmation message string (if undefined, then '') |
-| args | <code>Object</code> | The data for this message object |
+### contestantBuzzerPressMessage.type
+The type of this class.
 
-<a name="ConfirmMessage+type"></a>
-
-### confirmMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[ConfirmMessage](#ConfirmMessage)</code>  
+**Kind**: instance property of <code>[ContestantBuzzerPressMessage](#ContestantBuzzerPressMessage)</code>  
 **Access:** public  
-<a name="ContestantBuzzerPress"></a>
+<a name="ContestantJoinRequestMessage"></a>
 
-## ContestantBuzzerPress(args) ⇒ <code>[ContestantBuzzerPress](#ContestantBuzzerPress)</code>
-This message is from server to client and provides the contestant buzzer press event
-No getter or setter, this message is only a trigger
+## ContestantJoinRequestMessage() ⇒ <code>[ContestantJoinRequestMessage](#ContestantJoinRequestMessage)</code>
+Represent a message which is used to request the joining of a session by a contestant.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[ContestantBuzzerPress](#ContestantBuzzerPress)</code> - An instance  
+<a name="ContestantJoinRequestMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
-
-<a name="ContestantBuzzerPress+type"></a>
-
-### contestantBuzzerPress.type
+### contestantJoinRequestMessage.type
 The type of this class
 
-**Kind**: instance property of <code>[ContestantBuzzerPress](#ContestantBuzzerPress)</code>  
+**Kind**: instance property of <code>[ContestantJoinRequestMessage](#ContestantJoinRequestMessage)</code>  
 **Access:** public  
 <a name="ContestantJoinResponseMessage"></a>
 
-## ContestantJoinResponseMessage(args) ⇒ <code>[ContestantJoinResponseMessage](#ContestantJoinResponseMessage)</code>
-This message is from server to client and provides the contestant join response message
-or if not set, can be set using the various set methods:
- setWasSuccessful(result) : void
- setErrorMessage(errorMessage) : void
- setParticipantId(participantId) : void
+## ContestantJoinResponseMessage() ⇒ <code>[ContestantJoinResponseMessage](#ContestantJoinResponseMessage)</code>
+Represent a message which to response to a @see [ContestantJoinRequestMessage](#ContestantJoinRequestMessage).
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[ContestantJoinResponseMessage](#ContestantJoinResponseMessage)</code> - An instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
-
 <a name="ContestantJoinResponseMessage+type"></a>
 
 ### contestantJoinResponseMessage.type
@@ -326,792 +240,278 @@ The type of this class
 
 **Kind**: instance property of <code>[ContestantJoinResponseMessage](#ContestantJoinResponseMessage)</code>  
 **Access:** public  
-<a name="CreateGameConfirmMessage"></a>
+<a name="CreateSessionMessage"></a>
 
-## CreateGameConfirmMessage(code, message, args) ⇒ <code>[CreateGameConfirmMessage](#CreateGameConfirmMessage)</code>
-This message is a confirmation response for a CreateGameMessage
-You can set a confirmation code where 0 is OK, and other numbers represent
-different error states.  There is also a string message field which can be
-used to present an error message to the user.
-
-**Kind**: global function  
-**Extends:** <code>[ConfirmMessage](#ConfirmMessage)</code>  
-**Returns**: <code>[CreateGameConfirmMessage](#CreateGameConfirmMessage)</code> - An instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| code | <code>Integer</code> | The confirmation code (if undefined, then 0 - OK) |
-| message | <code>String</code> | The confirmation message string (if undefined, then "") |
-| args | <code>Object</code> | The data for this message object |
-
-<a name="CreateGameConfirmMessage+type"></a>
-
-### createGameConfirmMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[CreateGameConfirmMessage](#CreateGameConfirmMessage)</code>  
-**Access:** public  
-<a name="CreateGameMessage"></a>
-
-## CreateGameMessage(settings) ⇒ <code>[CreateGameMessage](#CreateGameMessage)</code>
-This message is from client to server and provides the settings for a new
-Game
+## CreateSessionMessage() ⇒ <code>[CreateSessionMessage](#CreateSessionMessage)</code>
+Represents a message which is used to create a new session.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[CreateGameMessage](#CreateGameMessage)</code> - An instance  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| settings | <code>[Settings](#Settings)</code> | The settings instance for this message object |
+* [CreateSessionMessage()](#CreateSessionMessage) ⇒ <code>[CreateSessionMessage](#CreateSessionMessage)</code>
+    * [.type](#CreateSessionMessage+type)
+    * [.restore()](#CreateSessionMessage+restore)
 
-<a name="CreateGameMessage+type"></a>
+<a name="CreateSessionMessage+type"></a>
 
-### createGameMessage.type
-The type of this class
+### createSessionMessage.type
+The type of this class.
 
-**Kind**: instance property of <code>[CreateGameMessage](#CreateGameMessage)</code>  
+**Kind**: instance property of <code>[CreateSessionMessage](#CreateSessionMessage)</code>  
 **Access:** public  
-<a name="HostBuzzerResetMessage"></a>
+<a name="CreateSessionMessage+restore"></a>
 
-## HostBuzzerResetMessage(args) ⇒ <code>[HostBuzzerResetMessage](#HostBuzzerResetMessage)</code>
-This message is from server to client and provides the host buzzer reset response
-or if not set, can be set using the setState method
+### createSessionMessage.restore()
+Defines a custom restore routine that @see [MessageFactory](MessageFactory) will
+call, when present, when restoring a message.
+
+**Kind**: instance method of <code>[CreateSessionMessage](#CreateSessionMessage)</code>  
+**Access:** public  
+<a name="CreateSessionResponseMessage"></a>
+
+## CreateSessionResponseMessage() ⇒ <code>[CreateSessionResponseMessage](#CreateSessionResponseMessage)</code>
+Represents a message which is used to response to a @see [CreateSessionMessage](#CreateSessionMessage) request.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[HostBuzzerResetMessage](#HostBuzzerResetMessage)</code> - An instance  
+<a name="CreateSessionResponseMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### createSessionResponseMessage.type
+The type of this class.
 
-<a name="HostBuzzerResetMessage+type"></a>
-
-### hostBuzzerResetMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[HostBuzzerResetMessage](#HostBuzzerResetMessage)</code>  
+**Kind**: instance property of <code>[CreateSessionResponseMessage](#CreateSessionResponseMessage)</code>  
 **Access:** public  
-<a name="HostSessionCreateResponse"></a>
+<a name="ErrorMessage"></a>
 
-## HostSessionCreateResponse(args) ⇒ <code>[HostSessionCreateResponse](#HostSessionCreateResponse)</code>
-This message is from server to client and provides the host create response
-or if not set, can be set using the setSession method
+## ErrorMessage() ⇒ <code>[ErrorMessage](#ErrorMessage)</code>
+Represents message which is use to convey an error state.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[HostSessionCreateResponse](#HostSessionCreateResponse)</code> - An instance  
+<a name="ErrorMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### errorMessage.type
+The type of this class.
 
-<a name="HostSessionCreateResponse+type"></a>
-
-### hostSessionCreateResponse.type
-The type of this class
-
-**Kind**: instance property of <code>[HostSessionCreateResponse](#HostSessionCreateResponse)</code>  
+**Kind**: instance property of <code>[ErrorMessage](#ErrorMessage)</code>  
 **Access:** public  
-<a name="InquireTeamLeaderPositionMessage"></a>
+<a name="HostSettingsUpdateMessage"></a>
 
-## InquireTeamLeaderPositionMessage(args) ⇒ <code>[InquireTeamLeaderPositionMessage](#InquireTeamLeaderPositionMessage)</code>
-This message is from client to server and provides the team leader status of the client
-or if not set, can be set using the setResponse method
+## HostSettingsUpdateMessage() ⇒ <code>[HostSettingsUpdateMessage](#HostSettingsUpdateMessage)</code>
+Represents a message to set the team name.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[InquireTeamLeaderPositionMessage](#InquireTeamLeaderPositionMessage)</code> - An instance  
+<a name="HostSettingsUpdateMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### hostSettingsUpdateMessage.type
+The type of this class.
 
-<a name="InquireTeamLeaderPositionMessage+type"></a>
-
-### inquireTeamLeaderPositionMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[InquireTeamLeaderPositionMessage](#InquireTeamLeaderPositionMessage)</code>  
+**Kind**: instance property of <code>[HostSettingsUpdateMessage](#HostSettingsUpdateMessage)</code>  
 **Access:** public  
-<a name="JoinGameMessage"></a>
+<a name="HostTeamLeaderSetRequestMessage"></a>
 
-## JoinGameMessage(args) ⇒ <code>[JoinGameMessage](#JoinGameMessage)</code>
-This message is from client to server and provides the gamecode of the client
-or if not set, can be set using the setGameCode method
+## HostTeamLeaderSetRequestMessage() ⇒ <code>[HostTeamLeaderSetRequestMessage](#HostTeamLeaderSetRequestMessage)</code>
+Represents a message to set the team leader.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[JoinGameMessage](#JoinGameMessage)</code> - An instance  
+<a name="HostTeamLeaderSetRequestMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### hostTeamLeaderSetRequestMessage.type
+The type of this class.
 
-<a name="JoinGameMessage+type"></a>
-
-### joinGameMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[JoinGameMessage](#JoinGameMessage)</code>  
+**Kind**: instance property of <code>[HostTeamLeaderSetRequestMessage](#HostTeamLeaderSetRequestMessage)</code>  
 **Access:** public  
-<a name="ParticipantJoinRequestMessage"></a>
+<a name="HostTeamNameUpdateRequestMessage"></a>
 
-## ParticipantJoinRequestMessage(args) ⇒ <code>[ParticipantJoinRequestMessage](#ParticipantJoinRequestMessage)</code>
-This message is from client to server and provides the participant join request message
-or if not set, can be set using the various set methods:
- sessionId(sessionId) : void
- participantId(participantId) : void
- username(username) : void
- isObserver(value) : void
+## HostTeamNameUpdateRequestMessage() ⇒ <code>[HostTeamNameUpdateRequestMessage](#HostTeamNameUpdateRequestMessage)</code>
+Represents a message to set the team name.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[ParticipantJoinRequestMessage](#ParticipantJoinRequestMessage)</code> - An instance  
+<a name="HostTeamNameUpdateRequestMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### hostTeamNameUpdateRequestMessage.type
+The type of this class.
 
-<a name="ParticipantJoinRequestMessage+type"></a>
-
-### participantJoinRequestMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[ParticipantJoinRequestMessage](#ParticipantJoinRequestMessage)</code>  
+**Kind**: instance property of <code>[HostTeamNameUpdateRequestMessage](#HostTeamNameUpdateRequestMessage)</code>  
 **Access:** public  
-<a name="ProtocolErrorMessage"></a>
+<a name="InquireTeamLeaderResponseMessage"></a>
 
-## ProtocolErrorMessage(message, args) ⇒ <code>[ProtocolErrorMessage](#ProtocolErrorMessage)</code>
-This message is sent in response to an invalid message received, typically
-if it fails the jsonschema validation.
-The code is set to 255, and message is empty string
-
-**Kind**: global function  
-**Extends:** <code>[ConfirmMessage](#ConfirmMessage)</code>  
-**Returns**: <code>[ProtocolErrorMessage](#ProtocolErrorMessage)</code> - An instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>String</code> | The confirmation message string (if undefined, then '') |
-| args | <code>Object</code> | The data for this message object |
-
-<a name="ProtocolErrorMessage+type"></a>
-
-### protocolErrorMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[ProtocolErrorMessage](#ProtocolErrorMessage)</code>  
-**Access:** public  
-<a name="RegisterNameMessage"></a>
-
-## RegisterNameMessage(args) ⇒ <code>[RegisterNameMessage](#RegisterNameMessage)</code>
-This message is from client to server and provides the name of the client
-or if not set, can be set using the setName method
+## InquireTeamLeaderResponseMessage() ⇒ <code>[InquireTeamLeaderResponseMessage](#InquireTeamLeaderResponseMessage)</code>
+Represents a message to response to an inquiry about being a team leader.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[RegisterNameMessage](#RegisterNameMessage)</code> - An instance  
+<a name="InquireTeamLeaderResponseMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### inquireTeamLeaderResponseMessage.type
+The type of this class.
 
-<a name="RegisterNameMessage+type"></a>
-
-### registerNameMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[RegisterNameMessage](#RegisterNameMessage)</code>  
+**Kind**: instance property of <code>[InquireTeamLeaderResponseMessage](#InquireTeamLeaderResponseMessage)</code>  
 **Access:** public  
-<a name="RequestTeamNameMessage"></a>
+<a name="ObserverUpdateMessage"></a>
 
-## RequestTeamNameMessage(args) ⇒ <code>[RequestTeamNameMessage](#RequestTeamNameMessage)</code>
-This message is from client to server and provides the team name of the client
-or if not set, can be set using the seTeamName method if client is a team leader or host
+## ObserverUpdateMessage() ⇒ <code>[ObserverUpdateMessage](#ObserverUpdateMessage)</code>
+Represents a message which is use to convey game state update to registered observers.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[RequestTeamNameMessage](#RequestTeamNameMessage)</code> - An instance  
+
+* [ObserverUpdateMessage()](#ObserverUpdateMessage) ⇒ <code>[ObserverUpdateMessage](#ObserverUpdateMessage)</code>
+    * [.type](#ObserverUpdateMessage+type)
+    * [.populate(the)](#ObserverUpdateMessage+populate)
+
+<a name="ObserverUpdateMessage+type"></a>
+
+### observerUpdateMessage.type
+The type of this class.
+
+**Kind**: instance property of <code>[ObserverUpdateMessage](#ObserverUpdateMessage)</code>  
+**Access:** public  
+<a name="ObserverUpdateMessage+populate"></a>
+
+### observerUpdateMessage.populate(the)
+Defines a method which prepares the session for sending. This involves converting the
+session to a generic object representation and the removal of sensitive data.
+
+**Kind**: instance method of <code>[ObserverUpdateMessage](#ObserverUpdateMessage)</code>  
+**Access:** public  
+**Throw**: when param session equates to false or is an incorrect type.  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+| the | <code>Session</code> | session. |
 
-<a name="RequestTeamNameMessage+type"></a>
+<a name="RejoinSessionMessage"></a>
 
-### requestTeamNameMessage.type
-The type of this class
+## RejoinSessionMessage() ⇒ <code>[RejoinSessionMessage](#RejoinSessionMessage)</code>
+Represents a message which is used to request the rejoining of an existing session.
 
-**Kind**: instance property of <code>[RequestTeamNameMessage](#RequestTeamNameMessage)</code>  
+**Kind**: global function  
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
+**Note**: Can be used to initiate the connecting of observers.  
+<a name="RejoinSessionMessage+type"></a>
+
+### rejoinSessionMessage.type
+The type of this class.
+
+**Kind**: instance property of <code>[RejoinSessionMessage](#RejoinSessionMessage)</code>  
 **Access:** public  
 <a name="RoundWonMessage"></a>
 
-## RoundWonMessage(args) ⇒ <code>[RoundWonMessage](#RoundWonMessage)</code>
-This message is from server to client and provides the winner information message
-or if not set, can be set using the various set methods:
- username(userName) : void
- userId(userId) : void
- teamName(teamName) : void
- teamId(teamId) : void
+## RoundWonMessage() ⇒ <code>[ErrorMessage](#ErrorMessage)</code>
+Represents message which is use to convey winner information for when a session round is won.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[RoundWonMessage](#RoundWonMessage)</code> - An instance  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
-
 <a name="RoundWonMessage+type"></a>
 
 ### roundWonMessage.type
-The type of this class
+The type of this class.
 
 **Kind**: instance property of <code>[RoundWonMessage](#RoundWonMessage)</code>  
 **Access:** public  
-<a name="TeamLeaderPositionInquiryResponseMessage"></a>
+<a name="SessionComplete"></a>
 
-## TeamLeaderPositionInquiryResponseMessage(args) ⇒ <code>[TeamLeaderPositionInquiryResponseMessage](#TeamLeaderPositionInquiryResponseMessage)</code>
-This message is from server to client and provides the team leader status of the client
-or if not set, can be set using the response method
+## SessionComplete() ⇒ <code>[SessionComplete](#SessionComplete)</code>
+Represents a message to convey the session is now complete.
 
 **Kind**: global function  
 **Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
-**Returns**: <code>[TeamLeaderPositionInquiryResponseMessage](#TeamLeaderPositionInquiryResponseMessage)</code> - An instance  
+<a name="SessionComplete+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| args | <code>Object</code> | The data for this message object |
+### sessionComplete.type
+The type of this class.
 
-<a name="TeamLeaderPositionInquiryResponseMessage+type"></a>
-
-### teamLeaderPositionInquiryResponseMessage.type
-The type of this class
-
-**Kind**: instance property of <code>[TeamLeaderPositionInquiryResponseMessage](#TeamLeaderPositionInquiryResponseMessage)</code>  
+**Kind**: instance property of <code>[SessionComplete](#SessionComplete)</code>  
 **Access:** public  
-<a name="AbstractContainer"></a>
+<a name="SessionCompleted"></a>
 
-## AbstractContainer()
-An abstract container object prototype for state information for the server
+## SessionCompleted() ⇒ <code>[SessionCompleted](#SessionCompleted)</code>
+Represents a message to convey the session is completed.
 
 **Kind**: global function  
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
+<a name="SessionCompleted+type"></a>
 
-* [AbstractContainer()](#AbstractContainer)
-    * [.hasId(id)](#AbstractContainer+hasId) ⇒ <code>Boolean</code>
-    * [.add(o)](#AbstractContainer+add) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-    * [.remove(o)](#AbstractContainer+remove) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-    * [.get(id)](#AbstractContainer+get) ⇒ <code>[Game](#Game)</code>
+### sessionCompleted.type
+The type of this class.
 
-<a name="AbstractContainer+hasId"></a>
-
-### abstractContainer.hasId(id) ⇒ <code>Boolean</code>
-Does System already have the given id
-
-**Kind**: instance method of <code>[AbstractContainer](#AbstractContainer)</code>  
+**Kind**: instance property of <code>[SessionCompleted](#SessionCompleted)</code>  
 **Access:** public  
+<a name="SessionInformationRequestMessage"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| id | <code>String</code> | id to lookup |
-
-<a name="AbstractContainer+add"></a>
-
-### abstractContainer.add(o) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-Add an object to the system
-
-**Kind**: instance method of <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[AbstractContainer](#AbstractContainer)</code> - Returns a copy of itself  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| o | <code>Object</code> | A new object added to the system |
-
-<a name="AbstractContainer+remove"></a>
-
-### abstractContainer.remove(o) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-Remove an object from the system
-
-**Kind**: instance method of <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[AbstractContainer](#AbstractContainer)</code> - Returns a copy of itself  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| o | <code>Object</code> | An object to be removed from the system |
-
-<a name="AbstractContainer+get"></a>
-
-### abstractContainer.get(id) ⇒ <code>[Game](#Game)</code>
-Returns an object with given id
-
-**Kind**: instance method of <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[Game](#Game)</code> - Returns an object represented by id  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| id | <code>String</code> | String representing the game |
-
-<a name="BuzzerError"></a>
-
-## BuzzerError(code, message, fileName, lineNumber) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-Exception handler class for Buzzer.click
+## SessionInformationRequestMessage() ⇒ <code>[SessionInformationRequestMessage](#SessionInformationRequestMessage)</code>
+Represents a request message to send session information.
 
 **Kind**: global function  
-**Extends:** <code>Error</code>  
-**Returns**: <code>[BuzzerError](#BuzzerError)</code> - An instance of BuzzerError  
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
+<a name="SessionInformationRequestMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| code | <code>Integer</code> | Error code number |
-| message | <code>String</code> | Error message for the user |
-| fileName | <code>String</code> | The filename where the error occurred (default to filename where called constructor) |
-| lineNumber | <code>Integer</code> | The line number where the error occurred (default to line number where called constructor) |
+### sessionInformationRequestMessage.type
+The type of this class.
 
-
-* [BuzzerError(code, message, fileName, lineNumber)](#BuzzerError) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-    * [.setCode(code)](#BuzzerError+setCode) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-    * [.getCode()](#BuzzerError+getCode) ⇒ <code>Integer</code>
-    * [.setMessage(message)](#BuzzerError+setMessage) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-    * [.getMessage()](#BuzzerError+getMessage) ⇒ <code>String</code>
-    * [.setName(BuzzerError)](#BuzzerError+setName) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-    * [.getName()](#BuzzerError+getName) ⇒ <code>String</code>
-
-<a name="BuzzerError+setCode"></a>
-
-### buzzerError.setCode(code) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-Set the error code for this error object
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>[BuzzerError](#BuzzerError)</code> - A reference to this  
+**Kind**: instance property of <code>[SessionInformationRequestMessage](#SessionInformationRequestMessage)</code>  
 **Access:** public  
+<a name="SessionInformationResponseMessage"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| code | <code>Integer</code> | The error code number (see codes in BuzzerError) |
-
-<a name="BuzzerError+getCode"></a>
-
-### buzzerError.getCode() ⇒ <code>Integer</code>
-Get the error code for this error object
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>Integer</code> - Error code set for this object  
-**Access:** public  
-<a name="BuzzerError+setMessage"></a>
-
-### buzzerError.setMessage(message) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-Set the error message for this error object
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>[BuzzerError](#BuzzerError)</code> - A reference to this  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| message | <code>String</code> | Error message string |
-
-<a name="BuzzerError+getMessage"></a>
-
-### buzzerError.getMessage() ⇒ <code>String</code>
-Get the error message for this error object
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>String</code> - Error message for this error object for user  
-**Access:** public  
-<a name="BuzzerError+setName"></a>
-
-### buzzerError.setName(BuzzerError) ⇒ <code>[BuzzerError](#BuzzerError)</code>
-Set the name of this error (default to BuzzerError)
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>[BuzzerError](#BuzzerError)</code> - A reference to this  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| BuzzerError | <code>String</code> | The name to set for this error |
-
-<a name="BuzzerError+getName"></a>
-
-### buzzerError.getName() ⇒ <code>String</code>
-Get the name of this error object
-
-**Kind**: instance method of <code>[BuzzerError](#BuzzerError)</code>  
-**Returns**: <code>String</code> - The name of this error message (default to BuzzerError)  
-**Access:** public  
-<a name="Clients"></a>
-
-## Clients() ⇒ <code>[Clients](#Clients)</code>
-Object that contains a list of all clients connections and their socket
+## SessionInformationResponseMessage() ⇒ <code>[SessionInformationResponseMessage](#SessionInformationResponseMessage)</code>
+Represents a message which is use to convey the callers session information
 
 **Kind**: global function  
-**Extends:** <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[Clients](#Clients)</code> - Object instance  
-<a name="Clients+type"></a>
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
 
-### clients.type
-Prototype name
+* [SessionInformationResponseMessage()](#SessionInformationResponseMessage) ⇒ <code>[SessionInformationResponseMessage](#SessionInformationResponseMessage)</code>
+    * [.type](#SessionInformationResponseMessage+type)
+    * [.populate(the)](#SessionInformationResponseMessage+populate)
 
-**Kind**: instance property of <code>[Clients](#Clients)</code>  
-<a name="Game"></a>
+<a name="SessionInformationResponseMessage+type"></a>
 
-## Game(settings) ⇒ <code>[Game](#Game)</code>
-Game object contains the data for this game, including other objects
+### sessionInformationResponseMessage.type
+The type of this class.
+
+**Kind**: instance property of <code>[SessionInformationResponseMessage](#SessionInformationResponseMessage)</code>  
+**Access:** public  
+<a name="SessionInformationResponseMessage+populate"></a>
+
+### sessionInformationResponseMessage.populate(the)
+Defines a method which prepares and populates the info object.
+
+**Kind**: instance method of <code>[SessionInformationResponseMessage](#SessionInformationResponseMessage)</code>  
+**Access:** public  
+**Throw**: when param session equates to false or is an incorrect type.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| the | <code>Session</code> | session. |
+
+<a name="SetTeamNameRequestMessage"></a>
+
+## SetTeamNameRequestMessage() ⇒ <code>[SetTeamNameRequestMessage](#SetTeamNameRequestMessage)</code>
+Represents a message to set the team name.
 
 **Kind**: global function  
-**Returns**: <code>[Game](#Game)</code> - Instance of Game data  
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
+<a name="SetTeamNameRequestMessage+type"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| settings | <code>[Settings](#Settings)</code> | An instance of settings with config for this game |
+### setTeamNameRequestMessage.type
+The type of this class.
 
-
-* [Game(settings)](#Game) ⇒ <code>[Game](#Game)</code>
-    * [.type](#Game+type)
-    * [.setSettings(settings)](#Game+setSettings) ⇒ <code>[Game](#Game)</code>
-
-<a name="Game+type"></a>
-
-### game.type
-Prototype name
-
-**Kind**: instance property of <code>[Game](#Game)</code>  
-<a name="Game+setSettings"></a>
-
-### game.setSettings(settings) ⇒ <code>[Game](#Game)</code>
-Set the Game objects settings
-
-**Kind**: instance method of <code>[Game](#Game)</code>  
-**Returns**: <code>[Game](#Game)</code> - An instance of itself  
+**Kind**: instance property of <code>[SetTeamNameRequestMessage](#SetTeamNameRequestMessage)</code>  
 **Access:** public  
+<a name="SuccessMessage"></a>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| settings | <code>[Settings](#Settings)</code> | an instance of Settings for this game |
-
-<a name="Games"></a>
-
-## Games() ⇒ <code>[Games](#Games)</code>
-Games Class provides overarching state store for entire system where
-games are added or removed
+## SuccessMessage() ⇒ <code>[SuccessMessage](#SuccessMessage)</code>
+Represents a message to convey a successful operation or request.
 
 **Kind**: global function  
-**Extends:** <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[Games](#Games)</code> - Object instance  
+**Extends:** <code>[AbstractMessage](#AbstractMessage)</code>  
+<a name="SuccessMessage+type"></a>
 
-* [Games()](#Games) ⇒ <code>[Games](#Games)</code>
-    * [.hostCodes](#Games+hostCodes) : <code>Object</code>
-    * [.gameCodes](#Games+gameCodes)
-    * [.type](#Games+type)
-    * [.hasHostCode(hostCode)](#Games+hasHostCode) ⇒ <code>Boolean</code>
-    * [.hasGameCode(hostCode)](#Games+hasGameCode) ⇒ <code>Boolean</code>
-    * [.add(game)](#Games+add) ⇒ <code>[Games](#Games)</code>
-    * [.remove(o)](#Games+remove) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-    * [.getByHostCode(hostCode)](#Games+getByHostCode) ⇒ <code>[Game](#Game)</code>
-    * [.getByGameCode(gameCode)](#Games+getByGameCode) ⇒ <code>[Game](#Game)</code>
+### successMessage.type
+The type of this class.
 
-<a name="Games+hostCodes"></a>
-
-### games.hostCodes : <code>Object</code>
-Holds hash of string-based codes used by hosts to host their games
-
-**Kind**: instance property of <code>[Games](#Games)</code>  
-<a name="Games+gameCodes"></a>
-
-### games.gameCodes
-Hold hash of string-based codes used by the participants to access the game
-
-**Kind**: instance property of <code>[Games](#Games)</code>  
-<a name="Games+type"></a>
-
-### games.type
-Prototype name
-
-**Kind**: instance property of <code>[Games](#Games)</code>  
-<a name="Games+hasHostCode"></a>
-
-### games.hasHostCode(hostCode) ⇒ <code>Boolean</code>
-Does Games already have the given host id
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
+**Kind**: instance property of <code>[SuccessMessage](#SuccessMessage)</code>  
 **Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| hostCode | <code>String</code> | id to lookup |
-
-<a name="Games+hasGameCode"></a>
-
-### games.hasGameCode(hostCode) ⇒ <code>Boolean</code>
-Does Games already have the given host id
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| hostCode | <code>String</code> | id to lookup |
-
-<a name="Games+add"></a>
-
-### games.add(game) ⇒ <code>[Games](#Games)</code>
-Add a game object to the games object
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
-**Returns**: <code>[Games](#Games)</code> - Returns a copy of itself  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| game | <code>[Game](#Game)</code> | A new game added to the system |
-
-<a name="Games+remove"></a>
-
-### games.remove(o) ⇒ <code>[AbstractContainer](#AbstractContainer)</code>
-Remove an object from the system
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
-**Returns**: <code>[AbstractContainer](#AbstractContainer)</code> - Returns a copy of itself  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| o | <code>[Game](#Game)</code> | A game object to be removed from the system |
-
-<a name="Games+getByHostCode"></a>
-
-### games.getByHostCode(hostCode) ⇒ <code>[Game](#Game)</code>
-Returns a game object with given hostCode
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
-**Returns**: <code>[Game](#Game)</code> - Returns a game object represented by hostCode  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| hostCode | <code>String</code> | host code string representing the game |
-
-<a name="Games+getByGameCode"></a>
-
-### games.getByGameCode(gameCode) ⇒ <code>[Game](#Game)</code>
-Returns a game object with given gameCode for participants
-
-**Kind**: instance method of <code>[Games](#Games)</code>  
-**Returns**: <code>[Game](#Game)</code> - Returns a game object represented by gameCode  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| gameCode | <code>String</code> | game code string representing the game |
-
-<a name="Hosts"></a>
-
-## Hosts() ⇒ <code>[Hosts](#Hosts)</code>
-Hosts object contains a list of all the Host sockets
-
-**Kind**: global function  
-**Extends:** <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[Hosts](#Hosts)</code> - Instance  
-<a name="Hosts+type"></a>
-
-### hosts.type
-Prototype name
-
-**Kind**: instance property of <code>[Hosts](#Hosts)</code>  
-<a name="restore"></a>
-
-## restore(msg) ⇒ <code>[AbstractMessage](#AbstractMessage)</code>
-Given json object received from remote endpoint, return a subclass of
-AbstractMessage representing this message.  Null if there is an validation
-error
-
-**Kind**: global function  
-**Returns**: <code>[AbstractMessage](#AbstractMessage)</code> - message object from json data  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| msg | <code>Object</code> &#124; <code>String</code> | JSON from client/server |
-
-<a name="create"></a>
-
-## create(name, args) ⇒ <code>[AbstractMessage](#AbstractMessage)</code>
-Create a new message object by the given name, and optionally initialised
-with the values in the Object args, and return it.  Null if there was an
-error
-
-**Kind**: global function  
-**Returns**: <code>[AbstractMessage](#AbstractMessage)</code> - The message  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | <code>String</code> | Name of the message object to create |
-| args | <code>Object</code> | Optional initial values to set for this instance |
-
-<a name="updateSocket"></a>
-
-## updateSocket(socket)
-Add emitMessage and onMessage methods to object
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| socket | <code>Socket</code> | The socket object to add the methods to |
-
-<a name="Settings"></a>
-
-## Settings() ⇒ <code>[Settings](#Settings)</code>
-Settings object contains configuration options for this game
-
-**Kind**: global function  
-**Returns**: <code>[Settings](#Settings)</code> - Instance of Settings  
-
-* [Settings()](#Settings) ⇒ <code>[Settings](#Settings)</code>
-    * [.data](#Settings+data)
-    * [.type](#Settings+type)
-    * [.setName(name)](#Settings+setName)
-    * [.getName()](#Settings+getName)
-    * [.setTeams(teams)](#Settings+setTeams)
-    * [.hasTeams()](#Settings+hasTeams) ⇒ <code>Boolean</code>
-    * [.setTimeLimit(time)](#Settings+setTimeLimit)
-    * [.getTimeLimit()](#Settings+getTimeLimit) ⇒ <code>Integer</code>
-    * [.setNameChange(nameChange)](#Settings+setNameChange)
-    * [.getNameChange()](#Settings+getNameChange) ⇒ <code>Boolean</code>
-
-<a name="Settings+data"></a>
-
-### settings.data
-Set default options for Settings
-
-**Kind**: instance property of <code>[Settings](#Settings)</code>  
-<a name="Settings+type"></a>
-
-### settings.type
-Prototype name
-
-**Kind**: instance property of <code>[Settings](#Settings)</code>  
-<a name="Settings+setName"></a>
-
-### settings.setName(name)
-Set the name for this game
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | <code>String</code> | The name of the game |
-
-<a name="Settings+getName"></a>
-
-### settings.getName()
-Get the name for this game
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Access:** public  
-<a name="Settings+setTeams"></a>
-
-### settings.setTeams(teams)
-Set whether to use teams
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| teams | <code>Boolean</code> | Whether to use teams in this game |
-
-<a name="Settings+hasTeams"></a>
-
-### settings.hasTeams() ⇒ <code>Boolean</code>
-Does this game have teams
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Returns**: <code>Boolean</code> - True if has teams, otherwise false  
-**Access:** public  
-<a name="Settings+setTimeLimit"></a>
-
-### settings.setTimeLimit(time)
-Set whether game has a time limit to answer question
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| time | <code>Integer</code> | If null or 0, then no time limit, otherwise specify time in seconds to answer question |
-
-<a name="Settings+getTimeLimit"></a>
-
-### settings.getTimeLimit() ⇒ <code>Integer</code>
-Does this game have a time limit to answer question
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Returns**: <code>Integer</code> - 0 If no time limit, otherwise number of
-seconds per question  
-**Access:** public  
-<a name="Settings+setNameChange"></a>
-
-### settings.setNameChange(nameChange)
-Set whether teams or contestants can chnage thier name
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Access:** public  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| nameChange | <code>Boolean</code> | Whether team or contentant can change thier name |
-
-<a name="Settings+getNameChange"></a>
-
-### settings.getNameChange() ⇒ <code>Boolean</code>
-Does this allow teams or contestants to change their name
-
-**Kind**: instance method of <code>[Settings](#Settings)</code>  
-**Returns**: <code>Boolean</code> - True if name changing is allowed, otherwise false  
-**Access:** public  
-<a name="State"></a>
-
-## State() ⇒ <code>[State](#State)</code>
-State object contains the running state of this game
-
-**Kind**: global function  
-**Returns**: <code>[State](#State)</code> - Instance of Settings  
-<a name="State+type"></a>
-
-### state.type
-Prototype name
-
-**Kind**: instance property of <code>[State](#State)</code>  
-<a name="Team"></a>
-
-## Team() ⇒ <code>[Team](#Team)</code>
-Team object contains setting information for this team in a game
-
-**Kind**: global function  
-**Returns**: <code>[Team](#Team)</code> - Instance of Settings  
-<a name="Team+type"></a>
-
-### team.type
-Prototype name
-
-**Kind**: instance property of <code>[Team](#Team)</code>  
-<a name="Teams"></a>
-
-## Teams() ⇒ <code>[Teams](#Teams)</code>
-Teams object contains a list of all the Team objects
-
-**Kind**: global function  
-**Extends:** <code>[AbstractContainer](#AbstractContainer)</code>  
-**Returns**: <code>[Teams](#Teams)</code> - Instance of Teams  
-<a name="Teams+type"></a>
-
-### teams.type
-Prototype name
-
-**Kind**: instance property of <code>[Teams](#Teams)</code>  

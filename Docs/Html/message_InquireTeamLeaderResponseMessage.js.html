@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: message/InquireTeamLeaderResponseMessage.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: message/InquireTeamLeaderResponseMessage.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>var AbstractMessage = require('./AbstractMessage');
+var ParamCheck = require('../ParamCheck');
+
+/**
+ * Represents a message to response to an inquiry about being a team leader.
+ * @extends AbstractMessage
+ * @returns {InquireTeamLeaderResponseMessage}
+ */
+var InquireTeamLeaderResponseMessage = function(args) {
+    AbstractMessage.call(this, args);
+};
+
+/**
+ * InquireTeamLeaderResponseMessage is a subclass of AbstractMessage.
+ */
+InquireTeamLeaderResponseMessage.prototype = Object.create(AbstractMessage.prototype);
+
+/**
+ * The type of this class.
+ * @public
+ */
+InquireTeamLeaderResponseMessage.prototype.type = 'InquireTeamLeaderResponseMessage';
+
+/**
+ * Sets or gets the decision.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {Boolean} the decision.
+ * @return {Boolean} the decision.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'decision', {
+    get: function() {
+        return this.data._decision;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'Boolean')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._decision = val;
+    }
+});
+
+/**
+ * Sets or gets the contestant id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the contestant id.
+ * @return {String} the contestant id.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'contestantId', {
+    get: function() {
+        return this.data._contestantId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._contestantId = val;
+    }
+});
+
+/**
+ * Sets or gets the session id.
+ * @public
+ * @throw on set val when param equates to false or is an incorrect type.
+ * @param {String} the session id.
+ * @return {String} the session id.
+ */
+Object.defineProperty(InquireTeamLeaderResponseMessage.prototype, 'sessionId', {
+    get: function() {
+        return this.data._sessionId;
+    },
+    set: function(val) {
+        if (!new ParamCheck().isInstanceAndTypeOf(val, 'String')) {
+            throw new Error(
+                'Argument `val` is invalid. It is required and must be of the correct type.'
+            );
+        }
+        this.data._sessionId = val;
+    }
+});
+
+/**
+ * Data structure for json validation of message data property
+ * @private
+ */
+InquireTeamLeaderResponseMessage.prototype.messagePayloadSchema = {
+    'id': '/MessagePayload',
+    'type': 'object',
+    'properties': {
+        '_decision': {
+            'type': 'boolean'
+        },
+        '_contestantId': {
+            'type': 'string'
+        },
+        '_sessionId': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        '_decision', '_contestantId', '_sessionId'
+    ]
+};
+
+module.exports = InquireTeamLeaderResponseMessage;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 14:21:44 GMT+1000 (AEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

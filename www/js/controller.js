@@ -51,6 +51,12 @@ function createSession(values) {
                     settings.teamNames = values['team-names'];
                 }
             }
+            if (values['team-selection-mode'] === 'SmallestTeam') {
+                settings.teamSelectionMethod = buzzapi.constants.teamSelectionMethod.SMALLEST_TEAM;
+            }
+            if (values['team-selection-mode'] === 'PlayerChoice') {
+                settings.teamSelectionMethod = buzzapi.constants.teamSelectionMethod.PLAYER_CHOICE;
+            }
         } else { //set max-players if teams option is false
             if (validateNumber(values['max-players']) && parseInt(values['max-players']) !== 0) {
                 settings.maxContestants = parseInt(values['max-players']);
@@ -152,6 +158,9 @@ function redirectContestant() {
     window.location.href = '/Contestant';
 }
 
+/**
+ * Handlers: handleTeamLeaderPositionRequest, handleChooseTeam
+ */
 /* eslint-disable no-unused-vars */
 function joinSession(values) {
     /* eslint-enable no-unused-vars */
@@ -162,6 +171,9 @@ function joinSession(values) {
     }
     if (values['session-username']) {
         cjr.username = values['session-username'];
+    }
+    if (values['choose-team-choice']) {
+        cjr.teamName = values['choose-team-choice'];
     }
 
     client.emit(messageConstants.CONTESTANT_JOIN_REQUEST, cjr, function (m) {
@@ -187,6 +199,8 @@ function joinSession(values) {
                 } else {
                     redirectContestant();
                 }
+            } else if (rm.mustChooseTeam) {
+                handleChooseTeam(rm.teams);
             } else {
                 alertBootstrap(rm.failedRequestReason, 'danger');
             }
@@ -271,9 +285,13 @@ function rejoinSession(sessionId, participantId, type) {
         //console.clear();
         console.log(ob);
         if (ob.gameState.isCompleted) { //Let client know that the session has been completed
-            alertBootstrap('Session has been completed', 'info',true);
+            alertBootstrap('Session has been completed', 'info', true);
             $('.container > .row  div:not(:first)').hide();
+            $('#participant-info-header').text('Final Score');
+            $('#participant-info').show().parents().show();;
         } else {
+            ob.sessionId = sessionId;
+            ob.participantId = participantId;
             updateShareView(ob);
         }
     });
@@ -398,4 +416,22 @@ function getParameterByName(name, url) {
         return '';
     }
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+function playSuccessSound() {
+        var audio = new Audio('media/success.wav');
+        audio.play();
+        return 'success';
+}
+
+function playRejectSound() {
+        var audio = new Audio('media/reject.wav');
+        audio.play();
+        return 'reject';
+}
+
+function playBuzzerSound() {
+        var audio = new Audio('media/buzzer.wav');
+        audio.play();
+        return 'buzzer';
 }

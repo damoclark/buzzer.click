@@ -1,4 +1,4 @@
-<!DOCTYPE hml>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -42,7 +42,7 @@
 						</div>
 					</div>
 					<div class="col-sm-6">
-						<h4 id="session-participant-header">Participants</h4>
+						<h4 id="participant-info-header">Participants</h4>
 						<div id="participant-info" class="well well-lg no-bullets-all">
 							<ul class="top-header">
 								<li>test <span class="badge badge-primary">3</span></li>
@@ -90,6 +90,10 @@
 	<script src="js/controller.js"></script>
 	<script src="js/jquery-qrcode-0.14.0.min.js"></script>
 	<script>
+		//Global firstLoad (stops music from playing when page loads)
+		var firstLoad = true;
+		var lastPlayed = 'reject';
+
 		//Updates view based on observer updates - called from controller.js
 		var updateShareView = function(values)
 		{
@@ -98,6 +102,7 @@
 			
 			if(values.gameState.currentState === 'pending'){
 				if(values.gameState.pendingWinner){
+					(!firstLoad && lastPlayed !=='buzzer') ? lastPlayed = playBuzzerSound() : null ;
 					$('#round-winner-header').text("Buzzed in");
 					$('#round-winner').addClass("bg-success");
 					$('#round-winner').text(values.gameState.pendingWinner);
@@ -106,7 +111,7 @@
 
 			$('#session-id').text(values.gameState.settings.sessionName);
 			if(values.gameState.settings.hasTeams){
-				$('#session-participant-header').text('Teams');
+				$('#participant-info-header').text('Teams');
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
 					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
@@ -137,11 +142,15 @@
 			}
 
 			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
+				(!firstLoad && lastPlayed !=='success') ? lastPlayed = playSuccessSound() : null ;
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}else if(values.gameState.roundWinner === null){
-                $('#round-winner').text();
+			}else if(values.gameState.roundWinner === null && values.gameState.currentState !== 'pending'){
+				(!firstLoad && lastPlayed !=='reject') ? lastPlayed = playRejectSound() : null ;
+				$('#round-winner-header').text("Round winner");
+				$('#round-winner').removeClass("bg-success");
+                $('#round-winner').text('');
             }
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
@@ -149,6 +158,7 @@
 			});
 			$('<style></style>').appendTo($(document.body)).remove();  //this forces the styles to take affect. see: http://stackoverflow.com/a/5258893
 
+			firstLoad = false;
 		}
 		$(function(){
 			handleDisconnect();
@@ -175,7 +185,7 @@
 					rejoinSession(session);
 				}else{
 				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
-				$('.container > .row div:not(:first)').hide();
+					$('.container > .row div:not(:first)').hide();
 				}
 			}
 

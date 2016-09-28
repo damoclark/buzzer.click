@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Pollyfills.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Pollyfills.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * JS pollyfills module
+ * @module JS pollyfills
+ */
+
+/* eslint-disable no-extend-native */
+/* jshint ignore:start */
+
+if (!Array.prototype.find) {
+  Array.prototype.find = function(predicate) {
+    'use strict';
+    if (this == null) {
+      throw new TypeError('Array.prototype.find called on null or undefined');
+    }
+    if (typeof predicate !== 'function') {
+      throw new TypeError('predicate must be a function');
+    }
+    var list = Object(this);
+    var length = list.length >>> 0;
+    var thisArg = arguments[1];
+    var value;
+
+    for (var i = 0; i &lt; length; i++) {
+      value = list[i];
+      if (predicate.call(thisArg, value, i, list)) {
+        return value;
+      }
+    }
+    return undefined;
+  };
+}
+
+if (!Array.prototype.findIndex) {
+  Array.prototype.findIndex = function(predicate) {
+    'use strict';
+    if (this == null) {
+      throw new TypeError('Array.prototype.findIndex called on null or undefined');
+    }
+    if (typeof predicate !== 'function') {
+      throw new TypeError('predicate must be a function');
+    }
+    var list = Object(this);
+    var length = list.length >>> 0;
+    var thisArg = arguments[1];
+    var value;
+
+    for (var i = 0; i &lt; length; i++) {
+      value = list[i];
+      if (predicate.call(thisArg, value, i, list)) {
+        return i;
+      }
+    }
+    return -1;
+  };
+}
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.19
+// Reference: http://es5.github.io/#x15.4.4.19
+if (!Array.prototype.map) {
+
+  Array.prototype.map = function(callback, thisArg) {
+
+    var T, A, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling ToObject passing the |this| 
+    //    value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get internal 
+    //    method of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If IsCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let A be a new array created as if by the expression new Array(len) 
+    //    where Array is the standard built-in constructor with that name and 
+    //    len is the value of len.
+    A = new Array(len);
+
+    // 7. Let k be 0
+    k = 0;
+
+    // 8. Repeat, while k &lt; len
+    while (k &lt; len) {
+
+      var kValue, mappedValue;
+
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal 
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal 
+        //    method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Let mappedValue be the result of calling the Call internal 
+        //     method of callback with T as the this value and argument 
+        //     list containing kValue, k, and O.
+        mappedValue = callback.call(T, kValue, k, O);
+
+        // iii. Call the DefineOwnProperty internal method of A with arguments
+        // Pk, Property Descriptor
+        // { Value: mappedValue,
+        //   Writable: true,
+        //   Enumerable: true,
+        //   Configurable: true },
+        // and false.
+
+        // In browsers that support Object.defineProperty, use the following:
+        // Object.defineProperty(A, k, {
+        //   value: mappedValue,
+        //   writable: true,
+        //   enumerable: true,
+        //   configurable: true
+        // });
+
+        // For best browser support, use the following:
+        A[k] = mappedValue;
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+
+    // 9. return A
+    return A;
+  };
+}
+
+/* eslint-enable no-extend-native */
+/* jshint ignore:end */
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants.html">constants</a></li><li><a href="module-contestant.html">contestant</a></li><li><a href="module-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host.html">host</a></li><li><a href="module-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-JS%2520pollyfills.html">JS pollyfills</a></li><li><a href="module-messageFactory.html">messageFactory</a></li><li><a href="module-observer.html">observer</a></li><li><a href="module-ParamCheck.html">ParamCheck</a></li><li><a href="module-participant.html">participant</a></li><li><a href="module-participants.html">participants</a></li><li><a href="module-room%2520name%2520factory.html">room name factory</a></li><li><a href="module-session.html">session</a></li><li><a href="module-sessions.html">sessions</a></li><li><a href="module-settings.html">settings</a></li><li><a href="module-team.html">team</a></li><li><a href="module-team%2520factory.html">team factory</a></li><li><a href="module-teams.html">teams</a></li></ul><h3>Classes</h3><ul><li><a href="module-AddContestantResponse-AddContestantResponse.html">AddContestantResponse</a></li><li><a href="module-constants-Constants.html">Constants</a></li><li><a href="module-contestant-Contestant.html">Contestant</a></li><li><a href="module-GenericObjectFactory-GenericObjectFactory.html">GenericObjectFactory</a></li><li><a href="module-host-Host.html">Host</a></li><li><a href="module-IdentifierUtility-IdentifierUtility.html">IdentifierUtility</a></li><li><a href="module-messageFactory-MessageFactory.html">MessageFactory</a></li><li><a href="module-observer-Observer.html">Observer</a></li><li><a href="module-ParamCheck-ParamCheck.html">ParamCheck</a></li><li><a href="module-participants-Participants.html">Participants</a></li><li><a href="module-participant-Participant.html">Participant</a></li><li><a href="module-room%2520name%2520factory-RoomNameFactory.html">RoomNameFactory</a></li><li><a href="module-sessions-Sessions.html">Sessions</a></li><li><a href="module-session-Session.html">Session</a></li><li><a href="module-settings-Settings.html">Settings</a></li><li><a href="module-team%2520factory-TeamFactory.html">TeamFactory</a></li><li><a href="module-teams-Teams.html">Teams</a></li><li><a href="module-team-Team.html">Team</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AbstractMessage">AbstractMessage</a></li><li><a href="global.html#BuzzerActionCommandMessage">BuzzerActionCommandMessage</a></li><li><a href="global.html#ContestantBuzzerPressMessage">ContestantBuzzerPressMessage</a></li><li><a href="global.html#ContestantJoinRequestMessage">ContestantJoinRequestMessage</a></li><li><a href="global.html#ContestantJoinResponseMessage">ContestantJoinResponseMessage</a></li><li><a href="global.html#CreateSessionMessage">CreateSessionMessage</a></li><li><a href="global.html#CreateSessionResponseMessage">CreateSessionResponseMessage</a></li><li><a href="global.html#data">data</a></li><li><a href="global.html#ErrorMessage">ErrorMessage</a></li><li><a href="global.html#HostSettingsUpdateMessage">HostSettingsUpdateMessage</a></li><li><a href="global.html#HostTeamLeaderSetRequestMessage">HostTeamLeaderSetRequestMessage</a></li><li><a href="global.html#HostTeamNameUpdateRequestMessage">HostTeamNameUpdateRequestMessage</a></li><li><a href="global.html#InquireTeamLeaderResponseMessage">InquireTeamLeaderResponseMessage</a></li><li><a href="global.html#ObserverUpdateMessage">ObserverUpdateMessage</a></li><li><a href="global.html#protocol">protocol</a></li><li><a href="global.html#RejoinSessionMessage">RejoinSessionMessage</a></li><li><a href="global.html#RoundWonMessage">RoundWonMessage</a></li><li><a href="global.html#schema">schema</a></li><li><a href="global.html#SessionComplete">SessionComplete</a></li><li><a href="global.html#SessionCompleted">SessionCompleted</a></li><li><a href="global.html#SessionInformationRequestMessage">SessionInformationRequestMessage</a></li><li><a href="global.html#SessionInformationResponseMessage">SessionInformationResponseMessage</a></li><li><a href="global.html#SetTeamNameRequestMessage">SetTeamNameRequestMessage</a></li><li><a href="global.html#socketIo">socketIo</a></li><li><a href="global.html#SuccessMessage">SuccessMessage</a></li><li><a href="global.html#type">type</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 14:21:44 GMT+1000 (AEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
