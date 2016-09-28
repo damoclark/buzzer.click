@@ -173,18 +173,18 @@ describe('Session', function() {
             });
     });
     describe('#addContestant(contestant)', function() {
-        it('should not allow a contestant username with bad words', function(){
-                settings.maxContestants = 2;
-                
-                var s = new Session(id, settings, host);
+        it('should not allow a contestant username with bad words', function() {
+            settings.maxContestants = 2;
 
-                var c = new Contestant();
-                c.username = 'Penis #YOLO';
+            var s = new Session(id, settings, host);
 
-                var response = s.addContestant(c);
-                response.should.not.be.null();
-                response.wasSuccessful.should.be.false();
-                response.errorMessage.should.equal(constants.messages.USERNAME_CONTAINS_PROFANITY);
+            var c = new Contestant();
+            c.username = 'Penis #YOLO';
+
+            var response = s.addContestant(c);
+            response.should.not.be.null();
+            response.wasSuccessful.should.be.false();
+            response.errorMessage.should.equal(constants.messages.USERNAME_CONTAINS_PROFANITY);
         });
         describe('when in individual mode', function() {
             it('should add contestant when session is not full', function() {
@@ -456,7 +456,23 @@ describe('Session', function() {
                 c1.score.should.equal(1);
             });
             it('should update contestant\'s team score', function() {
-                // TODO
+                var c1 = new Contestant();
+                c1.username = 'testUser1';
+
+                settings.hasTeams = true;
+                settings.maxTeams = 1;
+                settings.teamSize = 1;
+
+                var s = new Session(id, settings, host);
+
+                s.addContestant(c1).wasSuccessful.should.be.true();
+
+                s.tryBuzzerPressRegister(c1.id).should.be.true();
+                s.tryBuzzerAction(constants.buzzerActionCommands.ACCEPT).should.be.true();
+                s.roundWinner.should.equal('testUser1');
+
+                c1.score.should.equal(1);
+                s.teams.all[0].score.should.equal(1);
             });
             it('should add previous round winner to winners list', function() {
                 var c1 = new Contestant();
@@ -815,6 +831,110 @@ describe('Session', function() {
             s.addContestant(c).wasSuccessful.should.be.true();
             s.currentState.should.equal('ready');
             should(s.pendingWinner).be.null();
+        });
+    });
+    describe('#updateSessionName(name)', function() {
+        it('should update session name', function() {
+            settings.maxContestants = 1;
+            settings.sessionName = 'session1';
+            var s = new Session(id, settings, host);
+            s.updateSessionName('session2');
+            settings.sessionName.should.equal('session2');
+        });
+    });
+    describe('#updateMaxContestants(maxContestants)', function() {
+        it('should update max contestants', function() {
+            settings.maxContestants = 1;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateMaxContestants(2);
+            r.should.be.true();
+            should.not.exist(e);
+            settings.maxContestants.should.equal(2);
+        });
+        it('should not allow below current connected amount', function() {
+            settings.maxContestants = 5;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+
+            var c1 = new Contestant();
+            c1.username = 'testUser1';
+            s.addContestant(c1).wasSuccessful.should.be.true();
+
+            var c2 = new Contestant();
+            c2.username = 'testUser2';
+            s.addContestant(c2).wasSuccessful.should.be.true();
+
+            var [r, e] = s.updateMaxContestants(1);
+            r.should.be.false();
+            e.should.equal(constants.messages.MAX_CONTESTANTS_MUST_BE_GREATER_THAN_ALREADY_CONNECTED);
+
+            settings.maxContestants.should.equal(5);
+        });
+    });
+    describe('#updateTeamSize(teamSize)', function() {
+        it('should update team size', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 1;
+            settings.maxTeams = 1;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateTeamSize(2);
+            r.should.be.true();
+            should.not.exist(e);
+            settings.teamSize.should.equal(2);
+        });
+        it('should not allow below current setting', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 5;
+            settings.maxTeams = 1;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateTeamSize(4);
+            r.should.be.false();
+            e.should.equal(constants.messages.TEAM_SIZE_MUST_BE_GREATER_THAN_ALREADY_SET);
+        });
+    });
+    describe('#updateMaxTeams(maxTeams)', function() {
+        it('should update max teams', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 1;
+            settings.maxTeams = 1;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateMaxTeams(2);
+            r.should.be.true();
+            should.not.exist(e);
+            settings.maxTeams.should.equal(2);
+        });
+        it('should add teams', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 1;
+            settings.maxTeams = 1;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateMaxTeams(5);
+            r.should.be.true();
+            should.not.exist(e);
+
+            s.teams.length.should.equal(5);
+        });
+        it('should not allow below current setting', function() {
+            settings.hasTeams = true;
+            settings.teamSize = 1;
+            settings.maxTeams = 5;
+            settings.sessionName = 'session1';
+
+            var s = new Session(id, settings, host);
+            var [r, e] = s.updateMaxTeams(4);
+            r.should.be.false();
+            e.should.equal(constants.messages.MAX_TEAMS_MUST_BE_GREATER_THAN_ALREADY_SET);
         });
     });
 });
