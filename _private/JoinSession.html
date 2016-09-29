@@ -122,6 +122,7 @@
         }
         
         var handleChooseTeam = function(values){
+            $('#choose-team-choice').empty();
             $.each(values,function(key,item){
                 $('#choose-team-choice').append('<option val="'+item+'">'+item+'</option>');
             });

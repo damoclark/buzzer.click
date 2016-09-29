@@ -182,7 +182,7 @@
 				alertBootstrap('No session data found, please join or create a session and try again','warning',true);
 				$('.container > .row  div:not(:first)').hide();
 			}
-			$('#buzzer').click(function(){
+			$('#buzzer').mousedown(function(){
 				pressBuzzer(sessionCookie,participantCookie);
 				playBuzzerSound();
 			});
