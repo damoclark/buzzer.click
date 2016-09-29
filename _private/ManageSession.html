@@ -15,30 +15,33 @@
         <!-- Main Row encapsulates whole interface -->
         <div class="row inline-headers">
             <h2>Buzzer control</h2>
-            <h2 class="pull-right"><a class="btn btn-info" href="/Share" target="share">Share Screen</a></h2>
+            <h2 class="pull-right">
+                <a class="btn btn-info" href="/Share" target="share">Share Screen</a>
+                <button id="email-session-url" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-envelope"></span> Email session link</button>
+			</h2>
         </div>
         <!-- Buttons row -->
         <div class="row">
             <div class="col-sm-4">
                 <div class="row row-buffer">
                     <div class="col-xs-12">
-                        <button id="btn-session-enable" type="button" class="btn btn-lg btn-primary" disabled>Enable</button>
-                        <button id="btn-session-disable" type="button" class="btn btn-lg btn-default">Disable</button>
+                        <button id="btn-session-enable" type="button" class="btn btn-lg btn-primary" disabled>Enable buzzer</button>
+                        <button id="btn-session-disable" type="button" class="btn btn-lg btn-default">Disable buzzer</button>
                     </div>
                 </div>
             </div>
             <div class="col-sm-4">
                 <div class="row row-buffer">
                     <div class="col-xs-12">
-                        <button id="btn-session-accept" type="button" class="btn btn-lg btn-success" disabled><span class="glyphicon glyphicon-thumbs-up"></span> Accept</button>
-                        <button id="btn-session-reject" type="button" class="btn btn-lg btn-warning" disabled><span class="glyphicon glyphicon-thumbs-down"></span> Reject</button>
+                        <button id="btn-session-accept" type="button" class="btn btn-lg btn-success" disabled><span class="glyphicon glyphicon-thumbs-up"></span> Correct</button>
+                        <button id="btn-session-reject" type="button" class="btn btn-lg btn-warning" disabled><span class="glyphicon glyphicon-thumbs-down"></span> Incorrect</button>
                     </div>
                 </div>
             </div>
             <div class="col-sm-4">
                 <div class="row row-buffer">
                     <div class="col-xs-12">
-                        <button id="btn-session-reset" type="button" class="btn btn-lg btn-default"><span class="glyphicon glyphicon-refresh"></span> Reset</button>
+                        <button id="btn-session-reset" type="button" class="btn btn-lg btn-default hidden"><span class="glyphicon glyphicon-refresh"></span> Reset</button>
                         <button id="btn-session-complete" type="button" class="btn btn-lg btn-danger"><span class="glyphicon glyphicon-remove-circle"></span> End Session</button>
                     </div>
                 </div>
@@ -139,14 +142,14 @@
                 <div class="row">
                     <div class="col-xs-12">
                     <h4>Previous winners</h4>
-                    <div id="previous-winners" class="well no-bullets-all"><ul></ul></div>
+                    <div id="previous-winners" class="well no-bullets-all"><ul class="list-group"></ul></div>
                     </div>
                 </div>
             </div>
             <div class="col-sm-6">
                 <h4 id="participant-info-header">Participants</h4>
                 <div id="participant-info" class="well well-lg no-bullets-all">
-                    <ul class="top-header">
+                    <ul class="top-header list-group">
                     </ul>
                 </div>
             </div>
@@ -310,15 +313,15 @@
                 $('#session-team-selection').text(Object.keys(buzzapi.constants.teamSelectionMethod)[values.gameState.settings.teamSelectionMethod]);
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
-					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					$('#participant-info > ul').append('<li class="list-group-item" id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul class="list-group"></ul></li>');
 					var listKey = key;
 					var totalScore = 0;
 					$.each(item.contestants, function(key,contestant){
 						if(contestant.disconnected){
-							$('#team-li-'+listKey + ' > ul').append('<li><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item"><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
 						
 						}else{
-							$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item">'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
 						}
                         totalScore += contestant.score;
 					});
@@ -335,10 +338,10 @@
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
                     if(item.disconnected){
-						$('#participant-info > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item"><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
 				
 					}else{
-						$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item">'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 					}
 				});
 			}
@@ -354,7 +357,7 @@
 
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
-				$('#previous-winners > ul').prepend('<li>'+item+'</li>');
+				$('#previous-winners > ul').prepend('<li class="list-group-item">'+item+'</li>');
 			});
 
             gameSettings = values.gameState.settings;
@@ -484,6 +487,14 @@
             $('#btn-session-reset').click(function(){
                 buzzerManageCommand(sessionCookie,participantCookie,buzzapi.constants.buzzerActionCommands.RESET);
             });
+
+            $('#email-session-url').click(function(){
+				var url = generateWebUrl() + '/Join?sessionid='+sessionCookie;
+
+				var sessionName = sessionInfo.session.settings.sessionName;
+				window.location.href = 'mailto:?to=&body=Please follow the folowing link to join: '+sessionName+'%0A'+url+'&subject=Join Trivia Session';
+				
+			});
 		});
 		
 	</script>

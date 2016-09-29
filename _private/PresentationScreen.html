@@ -35,7 +35,7 @@
 							<div class="col-xs-12">
 								<h4>Previous winners</h4>
 								<div id="previous-winners" class="well no-bullets-all">
-									<ul>
+									<ul class="list-group">
 									</ul>
 								</div>
 							</div>
@@ -44,7 +44,7 @@
 					<div class="col-sm-6">
 						<h4 id="participant-info-header">Participants</h4>
 						<div id="participant-info" class="well well-lg no-bullets-all">
-							<ul class="top-header">
+							<ul class="top-header list-group">
 							</ul>
 						</div>
 					</div>
@@ -68,7 +68,12 @@
 				</div>
 				<div class="row row-buffer">
 					<div class="col-sm-12">
-						URL:<div class="well well-sm" id="session-url"></div>
+						<button id="email-session-url" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-envelope"></span> Email session link</button>
+					</div>
+				</div>
+				<div class="row row-buffer">
+					<div class="col-sm-12">
+						URL:<div class="well well-sm" style="word-wrap: break-word;" id="session-url"></div>
 					</div>
 				</div>
 			</div>
@@ -83,7 +88,7 @@
 	<script>
 		//Global firstLoad (stops music from playing when page loads)
 		var firstLoad = true;
-		var lastPlayed = 'reject';
+		var lastPlayed = 'reject success';
 
 		//Updates view based on observer updates - called from controller.js
 		var updateShareView = function(values)
@@ -93,7 +98,7 @@
 			
 			if(values.gameState.currentState === 'pending'){
 				if(values.gameState.pendingWinner){
-					(!firstLoad && lastPlayed !=='buzzer') ? lastPlayed = playBuzzerSound() : null ;
+					(!firstLoad && lastPlayed.includes('buzzer') !== true) ? lastPlayed = playBuzzerSound() : null ;
 					$('#round-winner-header').text("Buzzed in");
 					$('#round-winner').addClass("bg-success");
 					$('#round-winner').text(values.gameState.pendingWinner);
@@ -105,47 +110,50 @@
 				$('#participant-info-header').text('Teams');
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
-					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					$('#participant-info > ul').append('<li class="list-group-item" id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul class="list-group"></li>');
 					var listKey = key;
 					var totalScore = 0;
 					$.each(item.contestants, function(key,contestant){
 						if(contestant.disconnected){
-							$('#team-li-'+listKey + ' > ul').append('<li><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item"><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
 						
 						}else{
-							$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item">'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
 						}
 						totalScore += contestant.score
 					});
 					
 					$('#team-li-'+listKey + ' > .total-team-score').text(totalScore);
 				});
+				
 			}else{ //non-teams game so list all players
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
 					if(item.disconnected){
-						$('#participant-info > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item"><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
 				
 					}else{
-						$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item">'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 					}
 				});
 			}
-
-			if(values.gameState.roundWinner && values.gameState.currentState !== 'pending'){
-				(!firstLoad && lastPlayed !== 'success') ? lastPlayed = playSuccessSound() : null ;
+			if(values.gameState.currentState === 'buzzerLock'){
+				lastPlayed= "success reject";
+			}
+			if(values.gameState.roundWinner && values.gameState.currentState === 'ready'){
+				(!firstLoad && lastPlayed.includes('success') !== true) ? lastPlayed = playSuccessSound() : null ;
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
 				$('#round-winner').text(values.gameState.roundWinner);
-			}else if(values.gameState.roundWinner === null && values.gameState.currentState !== 'pending'){
-				(!firstLoad && lastPlayed !=='reject') ? lastPlayed = playRejectSound() : null ;
+			}else if(values.gameState.roundWinner === null && values.gameState.currentState === 'ready'){
+				(!firstLoad && lastPlayed.includes('reject') !== true) ? lastPlayed = playRejectSound() : null ;
 				$('#round-winner-header').text("Round winner");
 				$('#round-winner').removeClass("bg-success");
                 $('#round-winner').text('');
             }
 			$('#previous-winners > ul').empty();
 			$.each(values.gameState.previousWinners,function(key,item){
-				$('#previous-winners > ul').prepend('<li>'+item+'</li>');
+				$('#previous-winners > ul').prepend('<li class="list-group-item">'+item+'</li>');
 			});
 			$('<style></style>').appendTo($(document.body)).remove();  //this forces the styles to take affect. see: http://stackoverflow.com/a/5258893
 
@@ -182,6 +190,12 @@
 
 			$('#session-url').click(function(){
 				window.open($(this).text());
+			});
+			$('#email-session-url').click(function(){
+				var url = $('#session-url').text();
+				var sessionName = $('#session-id').text();
+				window.location.href = 'mailto:?to=&body=Please follow the folowing link to join: '+sessionName+'%0A'+url+'&subject=Join Trivia Session';
+				
 			});
 		});
 	</script>

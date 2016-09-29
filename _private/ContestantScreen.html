@@ -60,7 +60,7 @@
 					</div>
 					<div class="row">
 						<h4 id="participant-info-header">Participants</h4>
-						<div id="participant-info" class="well no-bullets-all"><ul class="top-header"></ul></div>
+						<div id="participant-info" class="well no-bullets-all"><ul class="top-header list-group"></ul></div>
 					</div>
 				</div>
 			</div>
@@ -72,6 +72,7 @@
 	<script src="js/bundle.js"></script>
 	<script src="js/controller.js"></script>
 	<script>
+		var userName = null;
 		var handleExistingSession = function(){
 
 		}
@@ -80,8 +81,8 @@
 		}
 
 		var handleSessionInformationRequest = function(values){
-			var username = values.data._info.contestant.username ? values.data._info.contestant.username : '';
-			$('#session-username').text(username);
+			userName = values.data._info.contestant.username ? values.data._info.contestant.username : '';
+			$('#session-username').text(userName);
 			if(values.data._info.session.settings.hasTeams){
 				$('#session-team').text(values.data._info.team.teamName);
 				$('#session-team-members > ul').empty();
@@ -93,6 +94,12 @@
 						$('#session-team-members > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 					}
 				});
+			}
+
+			if(values.data._info.sessionState === 'pending'){
+				if(values.data._info.session.pendingWinContestant.username === userName){
+					$('#buzzer').addClass("buzzer-success");
+				}
 			}
 			
 			console.log(values);
@@ -114,6 +121,7 @@
 				}
 			}else if(values.gameState.currentState === 'ready'){
 				$('#buzzer').removeClass("buzzer-disabled");
+				$('#buzzer').removeClass("buzzer-success");
 			}else if(values.gameState.currentState === 'buzzerLock'){
 				$('#buzzer').addClass("buzzer-disabled");
 			}
@@ -124,15 +132,15 @@
 			if(values.gameState.settings.hasTeams){
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.teams, function(key,item){
-					$('#participant-info > ul').append('<li id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul></ul></li>');
+					$('#participant-info > ul').append('<li class="list-group-item" id="team-li-'+key+'">'+item.teamName+'<span class="total-team-score badge badge-primary pull-right"></span><ul class="list-group"></ul></li>');
 					var listKey = key;
 					var totalScore = 0;
 					$.each(item.contestants, function(key,contestant){
 						if(contestant.disconnected){
-							$('#team-li-'+listKey + ' > ul').append('<li><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item"><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
 						
 						}else{
-							$('#team-li-'+listKey + ' > ul').append('<li>'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item">'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
 						}
 						totalScore += contestant.score;
 					});
@@ -146,10 +154,10 @@
 				$('#participant-info > ul').empty();
 				$.each(values.gameState.contestants, function(key,item){
 					if(item.disconnected){
-						$('#participant-info > ul').append('<li><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item"><i>'+item.username+'</i><span class="badge pull-right">'+item.score+'</span></li>');
 				
 					}else{
-						$('#participant-info > ul').append('<li>'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
+						$('#participant-info > ul').append('<li class="list-group-item">'+item.username+' <span class="badge pull-right">'+item.score+'</span></li>');
 					}
 				});
 			}
@@ -184,7 +192,12 @@
 			}
 			$('#buzzer').mousedown(function(){
 				pressBuzzer(sessionCookie,participantCookie);
-				playBuzzerSound();
+				if($('#buzzer').hasClass('buzzer-disabled'))
+				{
+					playDisabledBuzzerSound();
+				}else{
+					playBuzzerSound();
+				}
 			});
 		});
 	</script>

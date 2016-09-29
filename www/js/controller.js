@@ -446,3 +446,8 @@ function playBuzzerSound() {
     audio.play();
     return 'buzzer';
 }
+function playDisabledBuzzerSound() {
+    var audio = new Audio('media/buzzer-disabled.mp3');
+    audio.play();
+    return 'buzzer';
+}

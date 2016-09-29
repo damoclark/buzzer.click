@@ -6,6 +6,13 @@
     background: #555555 !important;
 }
 
+.buzzer-success{
+    border-color: #027102 !important;
+    background: linear-gradient( #086f08,#14bd1f )!important;
+}
+.buzzer-success:after{
+    background: #027102 !important;
+}
 .buzzer{
   width:200px;
   height:200px;
