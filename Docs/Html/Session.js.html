@@ -181,7 +181,7 @@ Object.defineProperty(Session.prototype, 'roundsPlayed', {
  * Defines a property to get the @see {@link _winners} field.
  * @public
  * @throws on set value.
- * @return {Array{String}} the round winner collection.
+ * @return {String[]} the round winner collection.
  */
 Object.defineProperty(Session.prototype, 'previousWinners', {
     get: function() {
@@ -383,6 +383,13 @@ Session.prototype.addContestant = function(contestant, teamName) {
 
     var response = new AddContestantResponse();
 
+    if (!contestant.username || contestant.username.trim().length === 0) {
+        response.setNotSuccessful(constants.messages.USERNAME_IS_REQUIRED);
+        return response;
+    }
+
+    contestant.username = contestant.username.trim();
+
     filter = new Filter();
     if (filter.isProfane(contestant.username)) {
         response.setNotSuccessful(constants.messages.USERNAME_CONTAINS_PROFANITY);
@@ -397,9 +404,15 @@ Session.prototype.addContestant = function(contestant, teamName) {
     }
 
     if (this.settings.hasTeams) {
-        var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
-            response.enquireForTeamLeaderPosition = true;
-        }, teamName);
+         var result = this.teams.addContestant(contestant, this.settings, function() {
+             response.enquireForTeamLeaderPosition = true;
+         }, teamName);
+        // Hack - IE does not array destructuring
+        // var [success, message] = this.teams.addContestant(contestant, this.settings, function() {
+        //     response.enquireForTeamLeaderPosition = true;
+        // }, teamName);
+        var success = result[0];
+        var message = result[1];
 
         if (success) {
             this._participants.add(contestant);
@@ -531,6 +544,99 @@ Session.prototype.tryBuzzerAction = function(action) {
     return false;
 };
 
+/**
+ * Defines a method which updates the session's name.
+ * @public
+ * @param  {String} session name.
+ * @throw when param name is required and equates to false or is an incorrect type.
+ */
+Session.prototype.updateSessionName = function(name) {
+    if (!new ParamCheck().isInstanceAndTypeOf(name, 'String') || !name) {
+        throw new Error('Name is required and must of type String');
+    }
+
+    this.settings.sessionName = name;
+};
+
+/**
+ * Defines a method which updates the max contestants for this session.
+ * @public
+ * @param  {Number} maxContestants.
+ * @throw when param maxContestants is required and equates to false or is an incorrect type.
+ * @return {Boolean|String} the result.
+ */
+Session.prototype.updateMaxContestants = function(maxContestants) {
+    if (!new ParamCheck().isInstanceAndTypeOf(maxContestants, 'Number') || !maxContestants) {
+        throw new Error('Max contestants is required and must of type Number');
+    }
+    if (this.settings.hasTeams) {
+        throw new Error('This method can only be called in individual mode.');
+    }
+
+    if (maxContestants &lt; this.contestants.length) {
+        return [false, constants.messages.MAX_CONTESTANTS_MUST_BE_GREATER_THAN_ALREADY_CONNECTED];
+    }
+
+    this.settings.maxContestants = maxContestants;
+    return [true];
+};
+
+/**
+ * Defines a method which updates the team size for this session.
+ * @public
+ * @param  {Number} teamSize.
+ * @throw when param teamSize is required and equates to false or is an incorrect type.
+ * @return {Boolean | String} the result.
+ */
+Session.prototype.updateTeamSize = function(teamSize) {
+    if (!new ParamCheck().isInstanceAndTypeOf(teamSize, 'Number') || !teamSize) {
+        throw new Error('Team size is required and must of type Number');
+    }
+    if (!this.settings.hasTeams) {
+        throw new Error('This method can only be called in team mode.');
+    }
+
+    if (teamSize &lt; this.settings.teamSize) {
+        return [false, constants.messages.TEAM_SIZE_MUST_BE_GREATER_THAN_ALREADY_SET];
+    }
+
+    this.settings.teamSize = teamSize;
+    return [true];
+};
+
+/**
+ * Defines a method which updates the max teams for this session.
+ * @public
+ * @param  {Number} maxTeams.
+ * @throw when param maxTeams is required and equates to false or is an incorrect type.
+ * @return {Boolean | String} the result.
+ */
+Session.prototype.updateMaxTeams = function(maxTeams) {
+    if (!new ParamCheck().isInstanceAndTypeOf(maxTeams, 'Number') || !maxTeams) {
+        throw new Error('Max teams is required and must of type Number');
+    }
+    if (!this.settings.hasTeams) {
+        throw new Error('This method can only be called in team mode.');
+    }
+
+    if (maxTeams &lt; this.settings.maxTeams) {
+        return [false, constants.messages.MAX_TEAMS_MUST_BE_GREATER_THAN_ALREADY_SET];
+    }
+
+    if (this.settings.teamSelectionMethod === constants.teamSelectionMethod.PLAYER_CHOICE) {
+        return [false, constants.messages.MAX_TEAMS_CANNOT_BE_CHANGED_WHEN_PLAYER_CHOICE];
+    }
+
+    var increase = maxTeams - this.settings.maxTeams;
+    this.settings.maxTeams = maxTeams;
+
+    for (var i = 0; i &lt; increase; i++) {
+        teamFactory.add(this.teams, this.settings);
+    }
+
+    return [true];
+};
+
 //Export the class
 module.exports = Session;
 </code></pre>
@@ -549,7 +655,7 @@ module.exports = Session;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Sep 28 2016 14:21:44 GMT+1000 (AEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Sep 30 2016 11:32:46 GMT+1000 (AEST)
 </footer>
 
 <script> prettyPrint(); </script>

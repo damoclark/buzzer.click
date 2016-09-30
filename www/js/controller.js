@@ -35,7 +35,6 @@ function createSession(values) {
                 } else {
                     settings.maxTeams = teamInt;
                 }
-               
             }
             //Set teamleader selection setting
             if (values['team-leader-selection'] === 'Random') {

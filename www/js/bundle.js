@@ -1732,7 +1732,7 @@ Object.defineProperty(Session.prototype, 'roundsPlayed', {
  * Defines a property to get the @see {@link _winners} field.
  * @public
  * @throws on set value.
- * @return {Array{String}} the round winner collection.
+ * @return {String[]} the round winner collection.
  */
 Object.defineProperty(Session.prototype, 'previousWinners', {
     get: function() {
@@ -2114,7 +2114,7 @@ Session.prototype.updateSessionName = function(name) {
  * @public
  * @param  {Number} maxContestants.
  * @throw when param maxContestants is required and equates to false or is an incorrect type.
- * @return {[Boolean, String]} the result.
+ * @return {Boolean|String} the result.
  */
 Session.prototype.updateMaxContestants = function(maxContestants) {
     if (!new ParamCheck().isInstanceAndTypeOf(maxContestants, 'Number') || !maxContestants) {
@@ -2137,7 +2137,7 @@ Session.prototype.updateMaxContestants = function(maxContestants) {
  * @public
  * @param  {Number} teamSize.
  * @throw when param teamSize is required and equates to false or is an incorrect type.
- * @return {[Boolean, String]} the result.
+ * @return {Boolean | String} the result.
  */
 Session.prototype.updateTeamSize = function(teamSize) {
     if (!new ParamCheck().isInstanceAndTypeOf(teamSize, 'Number') || !teamSize) {
@@ -2160,7 +2160,7 @@ Session.prototype.updateTeamSize = function(teamSize) {
  * @public
  * @param  {Number} maxTeams.
  * @throw when param maxTeams is required and equates to false or is an incorrect type.
- * @return {[Boolean, String]} the result.
+ * @return {Boolean | String} the result.
  */
 Session.prototype.updateMaxTeams = function(maxTeams) {
     if (!new ParamCheck().isInstanceAndTypeOf(maxTeams, 'Number') || !maxTeams) {
@@ -2424,7 +2424,7 @@ Object.defineProperty(Settings.prototype, 'teamNames', {
 /**
  * Defines a method to validate whether the settings, in their current state, are valid for use to create a session.
  * @public
- * @return {[Boolean|String]} true when settings are valid; else false and the fail reason.
+ * @return {Boolean | String} true when settings are valid; else false and the fail reason.
  */
 Settings.prototype.validate = function() {
     if (!this._sessionName) {
@@ -2618,7 +2618,7 @@ Team.prototype._incrementScore = function() {
  * @param  {Boolean} hostOverride when set will ignore the current team leader and overwrite.
  * @throw when param contestant equates to false or is an incorrect type.
  * @throw when param hostOverride is an incorrect type.
- * @return {Boolean,String} whether the operation was successful, and when not, the
+ * @return {Boolean|String} whether the operation was successful, and when not, the
  * error message as to why it failed.
  */
 Team.prototype.tryAssignTeamLeader = function(contestant, hostOverride) {
@@ -2653,7 +2653,7 @@ Team.prototype.tryAssignTeamLeader = function(contestant, hostOverride) {
  * @param  {Settings} settings
  * @throw when param teamName equates to false or is an incorrect type.
  * @throw when param settings equates to false or is an incorrect type.
- * @return {Boolean,String} whether the operation was successful, and when not, the
+ * @return {Boolean|String} whether the operation was successful, and when not, the
  * error message as to why it failed.
  */
 Team.prototype.tryChangeName = function(teamName, settings, hostOverride) {
@@ -3080,7 +3080,7 @@ Teams.prototype.removeByTeamName = function(teamName) {
  * @throw when param inquireTeamLeaderCallback equates to false or is an incorrect type.
  * @throw when param teamName is required and equates to false or is an incorrect type.
  * @throw when @see {@link Settings.hasTeams} is false.
- * @return {[Boolean, String]} the result.
+ * @return {Boolean | String} the result.
  */
 Teams.prototype.addContestant = function(contestant, settings, inquireTeamLeaderCallback, teamName) {
     if (!new ParamCheck().isInstanceAndTypeOf(contestant, Contestant) || !contestant) {
