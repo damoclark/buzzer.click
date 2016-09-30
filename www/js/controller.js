@@ -251,6 +251,83 @@ function setTeamName(sessionId, contestantId, name) {
 }
 
 /**
+ * hostUpdateSettings
+ * Handlers:
+ *  handleUpdateSettingsError
+ *  handleUpdateSettingsSuccess
+ *
+ * Values can contain the following:
+ *  .teamSize
+ *  .sessionName
+ *  .maxTeams
+ *  .maxContestants
+ *  .teamNameChange -> .teamNameFrom, .teamNameTo
+ *  .teamLeaderChange -> .teamName, .teamLeaderUsername
+ */
+function hostUpdateSettings(sessionId, hostId, values){
+    var sur = buzzapi.messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
+    sur.hostId = hostId;
+    sur.sessionId = sessionId;
+    if (values.teamSize) {
+        sur.teamSize = values.teamSize;
+    }
+    if (values.sessionName) {
+        sur.sessionName = values.sessionName;
+    }
+    if (values.maxTeams) {
+        sur.maxTeams = values.maxTeams;
+    }
+    if (values.maxContestants) {
+        sur.maxContestants = values.maxContestants;
+    }
+    client.emit(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE, sur, function (m) {
+        if (m.type === messageConstants.ERROR) {
+            var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+            handleUpdateSettingsError(er);
+            return;
+        }
+    });
+    if (values.teamNameChange) {
+        $.each(values.teamNameChange, function (key, item) {
+            var tnc = buzzapi.messageFactory.create(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE);
+            tnc.hostId = hostId;
+            tnc.sessionId = sessionId;
+            tnc.teamNameFrom = item.teamNameFrom;
+            tnc.teamNameTo = item.teamNameTo;
+
+            client.emit(messageConstants.HOST_TEAM_NAME_UPDATE_REQUEST_MESSAGE, tnc, function (m) {
+                if (m.type === messageConstants.ERROR) {
+                    var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+                    handleUpdateSettingsError(er);
+                    return;
+                }
+            });
+        });
+        
+    }
+    if (values.teamLeaderChange) {
+        $.each(values.teamLeaderChange, function (key, item) {
+            var tls = buzzapi.messageFactory.create(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE);
+            tls.hostId = hostId;
+            tls.sessionId = sessionId;
+            tls.teamName = item.teamName;
+            tls.teamLeaderUsername = item.teamLeaderUsername;
+
+            client.emit(messageConstants.HOST_TEAM_LEADER_SET_REQUEST_MESSAGE, tls, function (m) {
+                if (m.type === messageConstants.ERROR) {
+                    var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
+                    handleUpdateSettingsError(er);
+                    return;
+                }
+            });
+        });
+    }
+
+    //Got this far must be all good.
+    handleUpdateSettingsSuccess();
+}
+
+/**
  * Request session info, calls handleSessionInformatonRequest() in the view
  */
 function sessionInformationRequest(sessionId, participantId) {

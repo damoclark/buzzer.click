@@ -18,7 +18,7 @@
             <h2 class="pull-right">
                 <a class="btn btn-info" href="/Share" target="share">Share Screen</a>
                 <button id="email-session-url" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-envelope"></span> Email session link</button>
-			</h2>
+            </h2>
         </div>
         <!-- Buttons row -->
         <div class="row">
@@ -65,7 +65,7 @@
                         Session Name:
                     </div>
                     <div id="session-name" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer">
@@ -73,7 +73,7 @@
                         Teams:
                     </div>
                     <div id="session-teams" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer hide-if-teams">
@@ -81,10 +81,10 @@
                         Max players:
                     </div>
                     <div id="session-max-players" class="col-xs-7">
-                        
+
                     </div>
                 </div>
-                
+
             </div>
             <div class="col-sm-6 hide-if-not-teams">
                 <div class="row row-buffer">
@@ -92,7 +92,7 @@
                         Max teams:
                     </div>
                     <div id="session-max-teams" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer">
@@ -100,7 +100,7 @@
                         Max players per teams:
                     </div>
                     <div id="session-max-team-players" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer">
@@ -108,7 +108,7 @@
                         Team selection mode:
                     </div>
                     <div id="session-team-selection" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer">
@@ -116,7 +116,7 @@
                         Team leader selection:
                     </div>
                     <div id="session-leader-selection" class="col-xs-7">
-                        
+
                     </div>
                 </div>
                 <div class="row row-buffer">
@@ -124,7 +124,7 @@
                         Team name editing:
                     </div>
                     <div id="session-team-name-edit" class="col-xs-7">
-                        
+
                     </div>
                 </div>
             </div>
@@ -135,14 +135,16 @@
             <div class="col-sm-6">
                 <div class="row">
                     <div class="col-xs-12">
-                    <h4 id="round-winner-header">Round winner</h4>
-                    <div id="round-winner" class="well"></div>
+                        <h4 id="round-winner-header">Round winner</h4>
+                        <div id="round-winner" class="well"></div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-xs-12">
-                    <h4>Previous winners</h4>
-                    <div id="previous-winners" class="well no-bullets-all"><ul class="list-group"></ul></div>
+                        <h4>Previous winners</h4>
+                        <div id="previous-winners" class="well no-bullets-all">
+                            <ul class="list-group"></ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -203,7 +205,7 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary">Update</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
                         </div>
                     </form>
                 </div>
@@ -260,7 +262,7 @@
                 </div>
             </div>
         </div>
-        
+
     </div>
 
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
@@ -269,10 +271,29 @@
     <script src="js/controller.js"></script>
     <script>
         var sessionInfo = null;
+        var sessionCookie;
+        var participantCookie;
         var handleSessionInformationRequest = function(values){
             sessionInfo = values.data._info;
             console.log(sessionInfo);
         }
+        var handleUpdateSettingsError = function(er){
+            if($('#modal-settings').is(':visible')){
+                alertBootstrap(er.error,'danger',true,'#modal-settings .modal-body');
+            }
+            if($('#modal-settings-teams').is(':visible')){
+                alertBootstrap(er.error,'danger',true,'#modal-settings-teams .modal-body');
+            }
+        }
+        var handleUpdateSettingsSuccess = function(){
+            if($('#modal-settings').is(':visible')){
+                $('#modal-settings').modal('hide');
+            }
+            if($('#modal-settings-teams').is(':visible')){
+                $('#modal-settings-teams').modal('hide');
+            }
+        }
+        
         var updateShareView = function(values){
             sessionInformationRequest(values.sessionId,values.participantId);
             //clear alerts
@@ -366,7 +387,7 @@
 		$(function(){ //UI Modal code
 			var teamNames = [];
 
-			$("#num-teams").on('keyup mouseup',function(){
+			/**$("#num-teams").on('keyup mouseup',function(){
 				
 				var loops = parseInt($('#num-teams').val());
 				if(loops == ""){return;}
@@ -394,27 +415,13 @@
 				}
 				
 			});
+            */
 			
 			$('#btn-session-complete').click(function(){
                 $('#modal-confirm-complete').modal();
             });
 
             $('#button-edit-settings').click(function(){
-                /**
-                 *  <tr>
-                    <td>
-                        Alpha
-                    </td>
-                    <td>
-                        <!-- we would generate these and append the teamname to the end for identification -->
-                        <select class="full-width" name="team-leader-Alpha">
-                            <option value="Nick">Nick</option>
-                            <option value="Wade">Wade</option>
-                        </select>
-                    </td>
-                </tr>
-                 */
-                
                 if(sessionInfo.session.settings.hasTeams){
                     $('#session-name-edit-teams').val(sessionInfo.session.settings.sessionName);
                     $('#num-teams').prop('min',sessionInfo.session.settings.maxTeams);
@@ -426,13 +433,19 @@
                     $('#team-leader-table tbody').empty();
                     $.each(sessionInfo.session.teams.teams,function(key,team){
                         var teamId = team.teamName.split(' ').join('-');
-                        $('#team-leader-table tbody').append('<tr><td><input id="session-edit-name-'+team.teamName+'" value="'+team.teamName+'" /></td>'+
-                            '<td><select class="full-width" id="team-leader-'+teamId+'" name="team-leader-'+teamId+'">'+
+                        $('#team-leader-table tbody').append('<tr><td><input class="team-name-item '+teamId+'" id="session-edit-name-'+teamId+'" value="'+team.teamName+'" /></td>'+
+                            '<td><select class="full-width team-leader-item" id="team-leader-'+teamId+'" name="'+teamId+'">'+
                              '</select></td></tr>');
                         $.each(team.contestants.participants,function(key,contestant){
-                            if(contestant === team.teamLeader){
+                            var teamLeader = null;
+                            try{
+                                teamLeader = team.teamLeader.username;
+                            }catch(exception){
+                                teamLeader = '';
+                            }
+                            if(contestant.username === teamLeader){
                                 $('#team-leader-'+teamId).append(
-                                    '<option value="'+contestant.username+'"><b>'+contestant.username+'</b></option>'
+                                    '<option selected value="'+contestant.username+'">'+contestant.username+'</option>'
                                 );
                             }else{
                                 $('#team-leader-'+teamId).append(
@@ -451,13 +464,78 @@
                     $('#modal-settings').modal();
                 }
             });
+
+            $('#form-change-settings').submit(function(event){
+                event.preventDefault();
+                var values = [];
+                var sessionName = $('#session-name-edit').val();
+                var maxContestants = $('#max-players').val();
+                if(sessionInfo.session.settings.sessionName !== sessionName){
+                    values.sessionName = sessionName;
+                }
+                if(sessionInfo.session.settings.maxContestants < maxContestants){
+                    values.maxContestants = parseInt(maxContestants);
+                }
+                hostUpdateSettings(sessionCookie,participantCookie,values);
+
+            });
+
+            $('#form-change-settings-teams').submit(function(event){
+                event.preventDefault();
+                var values = [];
+                var sessionName = $('#session-name-edit-teams').val();
+                if(sessionInfo.session.settings.sessionName !== sessionName){
+                    values.sessionName = sessionName;
+                }
+                var teamSize = $('#max-players-teams').val();
+                if(sessionInfo.session.settings.teamSize < teamSize){
+                    values.teamSize = parseInt(teamSize);
+                }
+                var maxTeams = $('#num-teams').val()
+                if(sessionInfo.session.settings.maxTeams < maxTeams){
+                    values.maxTeams = parseInt(maxTeams);
+                }
+
+                $.each($('.team-name-item'),function(key){
+                    var oldValue = $(this).prop('defaultValue');
+                    var newValue = $(this).val();
+                    if(newValue !== oldValue){
+                        if(values.teamNameChange === undefined){
+                            values.teamNameChange = [];
+                        }
+                        var nameChangeObject=[];
+                        nameChangeObject.teamNameFrom = oldValue;
+                        nameChangeObject.teamNameTo = newValue;
+                        values.teamNameChange.push(nameChangeObject);
+                    }
+                });
+                $.each($('.team-leader-item'),function(key){
+                    
+                    var newValue = $(this).val();
+                    var id = $(this).prop('name');
+                    
+                    if(newValue !== null){
+                    
+                        if(values.teamLeaderChange === undefined){
+                            values.teamLeaderChange = [];
+                        }
+                        var leaderChangeObject=[];
+                        leaderChangeObject.teamName = $('input.'+id).val();
+                        leaderChangeObject.teamLeaderUsername = newValue;
+                        values.teamLeaderChange.push(leaderChangeObject);
+                    }
+                    
+                });
+                
+                hostUpdateSettings(sessionCookie,participantCookie,values);
+            });
 		});
 
         $(function(){ //Messaging and socket updates
             handleDisconnect();
 			
-			var sessionCookie = buzzapi.Cookie.get('sessionId');
-            var participantCookie = buzzapi.Cookie.get('hostId');
+			sessionCookie = buzzapi.Cookie.get('sessionId');
+            participantCookie = buzzapi.Cookie.get('hostId');
 	
             if(sessionCookie != undefined && participantCookie != undefined){
                 rejoinSession(sessionCookie,participantCookie,buzzapi.constants.rejoinAs.HOST);
