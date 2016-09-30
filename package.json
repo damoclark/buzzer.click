@@ -12,7 +12,7 @@
     "build": "browserify browser.js --standalone buzzapi -o www/js/bundle.js",
     "watch": "watchify browser.js --standalone buzzapi -o www/js/bundle.js -verbose",
     "beautify-solution": "node beautify-solution.js",
-    "document": "jsdoc lib/* -r -d ./Docs/Html && jsdoc2md lib/**/*.js > ./Docs/Docs.md"
+    "document": "jsdoc lib/* -r -d ./Docs/Html && jsdoc2md lib/* > ./Docs/Docs.md"
   },
   "author": "Damien Clark, Nick Andjelkovic, Wade Baglin",
   "license": "GPL-3.0",
