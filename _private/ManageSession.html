@@ -278,19 +278,25 @@
             console.log(sessionInfo);
         }
         var handleUpdateSettingsError = function(er){
-            if($('#modal-settings').is(':visible')){
-                alertBootstrap(er.error,'danger',true,'#modal-settings .modal-body');
-            }
-            if($('#modal-settings-teams').is(':visible')){
-                alertBootstrap(er.error,'danger',true,'#modal-settings-teams .modal-body');
-            }
+            //if($('#modal-settings').is(':visible')){
+            //    alertBootstrap(er.error,'danger',true,'#modal-settings .modal-body');
+            //}
+            //if($('#modal-settings-teams').is(':visible')){
+            //    alertBootstrap(er.error,'danger',true,'#modal-settings-teams .modal-body');
+           //}
+            alertBootstrap(er.error,'danger',true);
         }
-        var handleUpdateSettingsSuccess = function(){
+        var handleUpdateSettingsSuccess = function(reopen){
             if($('#modal-settings').is(':visible')){
                 $('#modal-settings').modal('hide');
             }
             if($('#modal-settings-teams').is(':visible')){
                 $('#modal-settings-teams').modal('hide');
+            }
+            if (reopen){
+                setTimeout(function(){
+                    $('#button-edit-settings').click();
+                },500);
             }
         }
         
@@ -455,13 +461,12 @@
                                         
                         });
                     });
-
-                    $('#modal-settings-teams').modal();
+                    $('#modal-settings-teams').modal('show');
                 }else{
                     $('#session-name-edit').val(sessionInfo.session.settings.sessionName);
                     $('#max-players').prop('min',sessionInfo.session.settings.maxContestants);
                     $('#max-players').prop('placeholder',sessionInfo.session.settings.maxContestants + ', you can only increase from this number.');
-                    $('#modal-settings').modal();
+                    $('#modal-settings').modal('show');
                 }
             });
 

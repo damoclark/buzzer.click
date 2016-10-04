@@ -254,7 +254,7 @@ function setTeamName(sessionId, contestantId, name) {
  * hostUpdateSettings
  * Handlers:
  *  handleUpdateSettingsError
- *  handleUpdateSettingsSuccess
+ *  handleUpdateSettingsSuccess(reopen)
  *
  * Values can contain the following:
  *  .teamSize
@@ -264,7 +264,8 @@ function setTeamName(sessionId, contestantId, name) {
  *  .teamNameChange -> .teamNameFrom, .teamNameTo
  *  .teamLeaderChange -> .teamName, .teamLeaderUsername
  */
-function hostUpdateSettings(sessionId, hostId, values){
+function hostUpdateSettings(sessionId, hostId, values) {
+    var reopen = false; //Specifies that the modal should re-open after update.
     var sur = buzzapi.messageFactory.create(messageConstants.HOST_SETTINGS_UPDATE_MESSAGE);
     sur.hostId = hostId;
     sur.sessionId = sessionId;
@@ -276,6 +277,7 @@ function hostUpdateSettings(sessionId, hostId, values){
     }
     if (values.maxTeams) {
         sur.maxTeams = values.maxTeams;
+        reopen = true;
     }
     if (values.maxContestants) {
         sur.maxContestants = values.maxContestants;
@@ -284,7 +286,6 @@ function hostUpdateSettings(sessionId, hostId, values){
         if (m.type === messageConstants.ERROR) {
             var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
             handleUpdateSettingsError(er);
-            return;
         }
     });
     if (values.teamNameChange) {
@@ -299,11 +300,9 @@ function hostUpdateSettings(sessionId, hostId, values){
                 if (m.type === messageConstants.ERROR) {
                     var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
                     handleUpdateSettingsError(er);
-                    return;
                 }
             });
         });
-        
     }
     if (values.teamLeaderChange) {
         $.each(values.teamLeaderChange, function (key, item) {
@@ -317,14 +316,13 @@ function hostUpdateSettings(sessionId, hostId, values){
                 if (m.type === messageConstants.ERROR) {
                     var er = buzzapi.messageFactory.restore(m, messageConstants.ERROR);
                     handleUpdateSettingsError(er);
-                    return;
                 }
             });
         });
     }
 
     //Got this far must be all good.
-    handleUpdateSettingsSuccess();
+    handleUpdateSettingsSuccess(reopen);
 }
 
 /**
