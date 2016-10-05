@@ -573,8 +573,10 @@ function saveCss(href,name) {
 function loadCss() {
     if (storageAvailable('localStorage')) {
         var theme = localStorage.getItem('theme');
-        $('link[title=theme]').attr('href', theme);
-        return localStorage.getItem('themeName');
+        if (theme !== null) {
+            $('link[title=theme]').attr('href', theme);
+            return localStorage.getItem('themeName');
+        }
     }
 }
 
