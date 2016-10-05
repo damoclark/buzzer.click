@@ -525,3 +525,68 @@ function playDisabledBuzzerSound() {
     audio.play();
     return 'buzzer';
 }
+
+//Bootswatch theme picker for all pages
+$(function () {
+    var THEMES_TO_LOAD = ['Paper','Cerulean','Flatly','Journal','Lumen','Readable','Sandstone','Simplex','Spacelab','United','Yeti'];
+    $('.container').append('<hr />').append('<div class="pull-right">Theme: <select id="theme-picker" /></div>');
+    var currentTheme = loadCss();
+    $.getJSON('https://bootswatch.com/api/3.json', function (data) {
+        var themes = data.themes;
+        var select = $('#theme-picker');
+        select.show();
+        themes.forEach(function (value, index) {
+            if ($.inArray(value.name, THEMES_TO_LOAD) > -1) {
+                if (value.name === currentTheme) {
+                    select.append($('<option />')
+                        .val(index)
+                        .text(value.name)
+                        .attr('selected', 'selected'));
+                } else {
+                    select.append($('<option />')
+                        .val(index)
+                        .text(value.name));
+                }
+            }
+        });
+
+        select.change(function () {
+            var theme = themes[$(this).val()];
+            saveCss(theme.cssMin,theme.name);
+        });
+
+        }, 'json').fail(function () {
+            alertBootstrap('Error fetching theme list');
+        });
+});
+
+function saveCss(href,name) {
+    if (storageAvailable('localStorage')) {
+        localStorage.setItem('theme', href);
+        localStorage.setItem('themeName', name);
+        $('link[title=theme]').attr('href', href);
+    } else {
+        alertBootstrap('Local storage is not supported, we cannot save this theme for next time.', 'info');
+    }
+}
+
+function loadCss() {
+    if (storageAvailable('localStorage')) {
+        var theme = localStorage.getItem('theme');
+        $('link[title=theme]').attr('href', theme);
+        return localStorage.getItem('themeName');
+    }
+}
+
+function storageAvailable(type) {
+	try {
+		var storage = window[type],
+			x = '__storage_test__';
+		storage.setItem(x, x);
+		storage.removeItem(x);
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+

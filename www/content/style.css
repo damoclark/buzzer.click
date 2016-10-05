@@ -6,6 +6,7 @@
 .no-bullets{
     list-style: none;
     padding-left:5px;
+    padding-top:5px !important;
 }
 
 .no-bullets-all > li,
@@ -31,7 +32,7 @@
 }
 
 .btn-lg{
-    width:150px;
+    min-width:150px;
 }
 
 .full-width{
