@@ -191,11 +191,11 @@
 				$('.container > .row  div:not(:first)').hide();
 			}
 			$('#buzzer').mousedown(function(){
-				pressBuzzer(sessionCookie,participantCookie);
 				if($('#buzzer').hasClass('buzzer-disabled'))
 				{
 					playDisabledBuzzerSound();
-				}else{
+				}else{					
+					pressBuzzer(sessionCookie,participantCookie);
 					playBuzzerSound();
 				}
 			});
