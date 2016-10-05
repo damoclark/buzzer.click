@@ -534,6 +534,7 @@ $(function () {
     $.getJSON('https://bootswatch.com/api/3.json', function (data) {
         var themes = data.themes;
         var select = $('#theme-picker');
+        select.append($('<option />').text("Please choose...").attr('disabled', 'disabled').attr('selected', 'selected'));
         select.show();
         themes.forEach(function (value, index) {
             if ($.inArray(value.name, THEMES_TO_LOAD) > -1) {
@@ -558,6 +559,7 @@ $(function () {
         }, 'json').fail(function () {
             alertBootstrap('Error fetching theme list');
         });
+
 });
 
 function saveCss(href,name) {
