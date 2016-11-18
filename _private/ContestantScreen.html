@@ -137,10 +137,10 @@
 					var totalScore = 0;
 					$.each(item.contestants, function(key,contestant){
 						if(contestant.disconnected){
-							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item"><i>'+contestant.username+' </i><span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item"><i>'+contestant.username+' </i></li>');
 						
 						}else{
-							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item">'+contestant.username+' <span class="badge pull-right">'+contestant.score+'</span></li>');
+							$('#team-li-'+listKey + ' > ul').append('<li class="list-group-item">'+contestant.username+'</li>');
 						}
 						totalScore += contestant.score;
 					});
