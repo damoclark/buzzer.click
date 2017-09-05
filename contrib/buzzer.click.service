@@ -1,0 +1,27 @@
+# systemd service file to start buzzer.click
+
+[Unit]
+Description=Buzzer.click is an online synchronous quiz game
+Wants=network.target
+
+[Service]
+Type=simple
+# Run as normal user - feel free to change...
+User=buzzer
+Group=software
+WorkingDirectory=/var/www/buzzer.click
+Nice=0
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/node/bin"
+Environment="port=3000"
+Environment="ip=localhost"
+ExecStart=/usr/bin/env node server.js 
+# Use SIGINT to stop
+KillSignal=SIGINT
+# Auto restart on crash
+Restart=on-failure
+# Tag things in the log
+SyslogIdentifier=buzzer.click
+#StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target
