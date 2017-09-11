@@ -7,8 +7,8 @@
     "node": "6.5.0"
   },
   "scripts": {
-    "tests-bdd": "Mocha tests/BDD/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-BDD",
-    "tests-functional": "Mocha tests/Functional/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-Functional",
+    "tests-bdd": "mocha tests/BDD/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-BDD",
+    "tests-functional": "mocha tests/Functional/**/*.js --reporter mochawesome --reporter-options reportDir=Docs/Test-Functional",
     "build": "browserify browser.js --standalone buzzapi -o www/js/bundle.js",
     "watch": "watchify browser.js --standalone buzzapi -o www/js/bundle.js -verbose",
     "beautify-solution": "node beautify-solution.js",

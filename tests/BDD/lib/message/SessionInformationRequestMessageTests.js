@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 var should = require('should');
 /* eslint-enable no-unused-vars */
-var constants = require('../../../../lib/constants');
+var constants = require('../../../../lib/Constants');
 var SessionInformationRequestMessage = require('../../../../lib/message/SessionInformationRequestMessage');
 
 describe('SessionInformationRequestMessage', function() {
