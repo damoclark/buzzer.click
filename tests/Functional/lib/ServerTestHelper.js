@@ -7,7 +7,7 @@ var http = require('http');
 var socketIoWildcardPatch = require('socketio-wildcard')(io.Manager);
 var BuzzerServer = require('../../../lib/BuzzerServer');
 var messageFactory = require('../../../lib/MessageFactory');
-var constants = require('../../../lib/constants');
+var constants = require('../../../lib/Constants');
 var messageConstants = constants.socketMessageNames;
 var isDebug = false;
 

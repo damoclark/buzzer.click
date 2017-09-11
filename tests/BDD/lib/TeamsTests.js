@@ -4,7 +4,7 @@ var should = require('should');
 
 var Teams = require('../../../lib/Teams');
 var Team = require('../../../lib/Team');
-var teamFactory = require('../../../lib/teamFactory');
+var teamFactory = require('../../../lib/TeamFactory');
 var Settings = require('../../../lib/Settings');
 var Contestant = require('../../../lib/Contestant');
 var constants = require('../../../lib/Constants');
